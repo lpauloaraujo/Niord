@@ -1,5 +1,5 @@
 import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform, StyleSheet, Button } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AnimatedIcon } from '@/components/animated-icon';
@@ -8,6 +8,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { WebBadge } from '@/components/web-badge';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+
+import { FloatingBubbleHelper } from 'tylo-floating-bubble';
 
 function getDevMenuHint() {
   if (Platform.OS === 'web') {
@@ -29,6 +31,37 @@ function getDevMenuHint() {
 }
 
 export default function HomeScreen() {
+  const showBubble = async () => {
+    const bubbleData = {
+      // Bubble params
+      title: "New Order #1234",
+      subtitle: "Tap to view order details",
+      showBadge: true,
+      badgeCount: 0,
+      
+      // Popup params
+      popupTitle: "New Ride Request",
+      popupPrice: "$24.50",
+      popupDuration: "15 min",
+      popupDistance: "8.2 km",
+      popupPickupAddress: "123 Main Street, Downtown Area",
+      popupDestinationAddress: "456 Business Center, Tech District",
+      popupPaymentMethod: "Credit Card",
+      popupAcceptText: "Accept",
+      popupRejectText: "Reject",
+    };
+    let perm = false; 
+    if(await FloatingBubbleHelper.checkPermission()){
+      perm = await FloatingBubbleHelper.requestPermission();
+    }
+    if(perm){
+      if(!await FloatingBubbleHelper.isVisible()){
+        await FloatingBubbleHelper.showBubble(bubbleData);
+      }else{
+        await FloatingBubbleHelper.hideBubble();
+      }
+    }
+  };
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -41,6 +74,10 @@ export default function HomeScreen() {
             Best
           </ThemedText>
         </ThemedView>
+        <Button
+        title="Mostrar Overlay"
+        onPress={showBubble}
+        />
 
         <ThemedText type="code" style={styles.code}>
           get started
