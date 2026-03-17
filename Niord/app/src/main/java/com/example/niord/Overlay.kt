@@ -25,7 +25,7 @@ import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 
-class OverlayManager(private val context: Context){
+open class OverlayManager(private val context: Context){
     private var winManager: WindowManager? = null
     init {
         winManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
@@ -60,7 +60,7 @@ class OverlayManager(private val context: Context){
             setViewTreeSavedStateRegistryOwner(lifecycleOwner)
             setContent {
                 NiordTheme {
-                    Floating(text = "Hello float")
+                    PropComposable()
                 }
             }
         }
@@ -91,6 +91,14 @@ class OverlayManager(private val context: Context){
         }
     }
 
+    @Composable
+    open fun PropComposable(){
+        /*
+        Override this function to have different Composables in an overlay
+         */
+        Floating(text = "Hello float")
+    }
+
     fun showing(): Boolean {return isShowing}
 }
 
@@ -118,6 +126,16 @@ class FloatingLifecycleOwner : LifecycleOwner, ViewModelStoreOwner, SavedStateRe
     fun onDestroy() {
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
         store.clear()
+    }
+}
+
+
+class ExampleCustomOverlay(context: Context) : OverlayManager(context){
+    @Composable
+    override fun PropComposable(){
+        Floating(
+            text="ALTERNATIVE CUSTOM BUTTON"
+        )
     }
 }
 

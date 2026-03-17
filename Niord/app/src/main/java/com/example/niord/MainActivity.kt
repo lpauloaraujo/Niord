@@ -27,6 +27,7 @@ import androidx.core.net.toUri
 
 class MainActivity : ComponentActivity() {
     private lateinit var overlayManager: OverlayManager
+    private lateinit var overlayManager2: OverlayManager
 
     @RequiresApi(Build.VERSION_CODES.O)
     //Overlay permission trigger
@@ -76,7 +77,9 @@ class MainActivity : ComponentActivity() {
             }
         }
         overlayManager = OverlayManager(this)
-        overlayManager.show()
+        overlayManager2 = ExampleCustomOverlay(this)
+        overlayManager2.show()
+
     }
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onDestroy() {
