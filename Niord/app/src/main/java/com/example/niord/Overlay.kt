@@ -8,16 +8,15 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.WindowManager
-import android.widget.Button
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.res.painterResource
 import com.example.niord.ui.theme.NiordTheme
 
 import androidx.lifecycle.Lifecycle
@@ -60,7 +59,7 @@ open class OverlayManager(private val context: Context){
         height = WindowManager.LayoutParams.WRAP_CONTENT
     }
 
-    private val isDraggable = true
+    var isDraggable = true
     //Starting X,Y coordinates
     private var defaultPos = Pair(0, 0)
     //Used for calculations and defines the current position thereafter
@@ -68,6 +67,10 @@ open class OverlayManager(private val context: Context){
     private var firstPos = Pair(0, 0)
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
     var moved = false
+
+    protected open fun clickEvent(){
+        println("Click")
+    }
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun buildOnTouchListener(): View.OnTouchListener {
@@ -115,7 +118,7 @@ open class OverlayManager(private val context: Context){
 
                 MotionEvent.ACTION_UP -> {
                     if(!moved) {
-                        println("Clique")
+                        clickEvent()
                         view.performClick()
                     }
                 }
@@ -232,6 +235,17 @@ class FloatingLifecycleOwner : LifecycleOwner, ViewModelStoreOwner, SavedStateRe
     }
 }
 
+class MainOverlayButton(context: Context) : OverlayManager(context){
+    @Composable
+    override fun DefaultComposable() {
+        Icon(
+            painter = painterResource(R.drawable.ic_launcher_foreground),
+            contentDescription = "Icon"
+        )
+
+    }
+}
+
 
 class ExampleCustomOverlay(context: Context) : OverlayManager(context){
     private var text = "DEFAULT TEXT"
@@ -253,10 +267,6 @@ class ExampleCustomOverlay(context: Context) : OverlayManager(context){
             }
         }
     }
-}
-
-class CustomButton(context: Context ) : Button(context) {
-
 }
 
 @Composable

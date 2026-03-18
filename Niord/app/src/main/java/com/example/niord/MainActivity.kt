@@ -26,7 +26,7 @@ import androidx.core.net.toUri
 
 
 class MainActivity : ComponentActivity() {
-    private lateinit var overlayManager: OverlayManager
+    private lateinit var overlayManager: MainOverlayButton
     private lateinit var overlayManager2: ExampleCustomOverlay
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -78,9 +78,8 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-        overlayManager = OverlayManager(this)
+        overlayManager = MainOverlayButton(this)
         overlayManager.setVisibility(false)
-        overlayManager.composable = {Greeting("Floater")}
         overlayManager.invoke()
         overlayManager2 = ExampleCustomOverlay(this)
         overlayManager2.invoke()
