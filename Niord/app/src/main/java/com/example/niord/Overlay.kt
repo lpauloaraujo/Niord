@@ -4,8 +4,10 @@ import android.content.Context
 import android.graphics.PixelFormat
 import android.os.Build
 import android.view.Gravity
+import android.view.View
 import android.view.WindowManager
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,12 +29,20 @@ import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 
 open class OverlayManager(private val context: Context){
     private var winManager: WindowManager? = null
+    private var lifecycleOwner: FloatingLifecycleOwner? = null
+    protected var floatingView: ComposeView? = null
     init {
         winManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        lifecycleOwner = FloatingLifecycleOwner().apply {
+            onCreate()
+            onResume()
+        }
+        floatingView = buildView()
     }
-    private var isShowing = false
-    private var floatingView: ComposeView? = null
-    private var lifecycleOwner: FloatingLifecycleOwner? = null
+    var isInvoked = false
+    var isVisible = true
+
+    var composable: @Composable ()->Unit = { DefaultComposable() }
 
     @RequiresApi(Build.VERSION_CODES.O)
     private val layoutParams = WindowManager.LayoutParams().apply {
@@ -44,30 +54,38 @@ open class OverlayManager(private val context: Context){
         height = WindowManager.LayoutParams.WRAP_CONTENT
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
-    fun show(){
-        if(isShowing){return}
-
-        lifecycleOwner = FloatingLifecycleOwner().apply {
-            onCreate()
-            onResume()
-        }
-
-        floatingView = ComposeView(context.applicationContext).apply {
+    fun buildView(): ComposeView {
+        return ComposeView(context.applicationContext).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
             setViewTreeLifecycleOwner(lifecycleOwner)
             setViewTreeViewModelStoreOwner(lifecycleOwner)
             setViewTreeSavedStateRegistryOwner(lifecycleOwner)
             setContent {
                 NiordTheme {
-                    PropComposable()
+                    composable()
                 }
             }
         }
+    }
+
+    //Change the view composable for state change
+    fun refreshView(view: ComposeView?, newComposable: @Composable ()->Unit = {DefaultComposable()}){
+        view?.setContent {
+            NiordTheme {
+                newComposable()
+            }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun invoke(){
+        if(isInvoked){return}
+
+        //refreshView(floatingView)
         floatingView?.let { view ->
             try {
                 winManager?.addView(view, layoutParams)
-                isShowing = true
+                isInvoked = true
             } catch (e: Exception) {
                 e.printStackTrace()
                 // Handle errors (e.g., missing permission)
@@ -76,14 +94,12 @@ open class OverlayManager(private val context: Context){
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun hide(){
-        if(!isShowing){return}
+    fun dismiss(){
+        if(!isInvoked){return}
         floatingView?.let { view ->
             try {
                 winManager?.removeView(view)
-                isShowing = false
-                lifecycleOwner?.onDestroy()
-                lifecycleOwner = null
+                isInvoked = false
             } catch (e: Exception) {
                 e.printStackTrace()
                 // Handle errors (e.g., missing permission)
@@ -91,15 +107,30 @@ open class OverlayManager(private val context: Context){
         }
     }
 
+    fun setVisibility(state: Boolean){
+        if(state){
+            floatingView?.visibility = View.VISIBLE
+            isVisible = true
+        }else{
+            floatingView?.visibility = View.INVISIBLE
+            isVisible = false
+        }
+    }
+
     @Composable
-    open fun PropComposable(){
+    open fun DefaultComposable(){
         /*
         Override this function to have different Composables in an overlay
          */
         Floating(text = "Hello float")
     }
 
-    fun showing(): Boolean {return isShowing}
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun onDestroy(){
+        dismiss()
+        lifecycleOwner?.onDestroy()
+        lifecycleOwner = null
+    }
 }
 
 
@@ -131,11 +162,22 @@ class FloatingLifecycleOwner : LifecycleOwner, ViewModelStoreOwner, SavedStateRe
 
 
 class ExampleCustomOverlay(context: Context) : OverlayManager(context){
+    private var text = "DEFAULT TEXT"
+
     @Composable
-    override fun PropComposable(){
-        Floating(
-            text="ALTERNATIVE CUSTOM BUTTON"
-        )
+    override fun DefaultComposable(){
+        Column() {
+            Floating(
+                text = text
+            )
+            Button(onClick = {
+                //View update Example
+                text = "NEW UPDATED TEXT"
+                refreshView(floatingView, {DefaultComposable()})
+            }){
+                Text("Change")
+            }
+        }
     }
 }
 

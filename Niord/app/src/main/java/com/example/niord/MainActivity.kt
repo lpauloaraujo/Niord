@@ -27,7 +27,7 @@ import androidx.core.net.toUri
 
 class MainActivity : ComponentActivity() {
     private lateinit var overlayManager: OverlayManager
-    private lateinit var overlayManager2: OverlayManager
+    private lateinit var overlayManager2: ExampleCustomOverlay
 
     @RequiresApi(Build.VERSION_CODES.O)
     //Overlay permission trigger
@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
     ) {
         // After returning from settings, check if permission is granted
         if (Settings.canDrawOverlays(this)) {
-            overlayManager.show()
+            overlayManager.invoke()
         }
     }
 
@@ -54,10 +54,12 @@ class MainActivity : ComponentActivity() {
                         //Overlay Demo
                         Button(onClick = {
                             if (Settings.canDrawOverlays(applicationContext)) {
-                                if(overlayManager.showing()){
-                                    overlayManager.hide()
+                                if(overlayManager.isVisible){
+                                    overlayManager.setVisibility(false)
+                                    overlayManager2.setVisibility(true)
                                 }else {
-                                    overlayManager.show()
+                                    overlayManager.setVisibility(true)
+                                    overlayManager2.setVisibility(false)
                                 }
                             } else {
                                 // Open settings to grant permission
@@ -77,13 +79,16 @@ class MainActivity : ComponentActivity() {
             }
         }
         overlayManager = OverlayManager(this)
+        overlayManager.setVisibility(false)
+        overlayManager.invoke()
         overlayManager2 = ExampleCustomOverlay(this)
-        overlayManager2.show()
+        overlayManager2.invoke()
 
     }
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onDestroy() {
-        overlayManager.hide() // Always remove the view when activity is destroyed
+        overlayManager.onDestroy() // Always remove the view when activity is destroyed
+        overlayManager2.onDestroy()
         super.onDestroy()
     }
 }
