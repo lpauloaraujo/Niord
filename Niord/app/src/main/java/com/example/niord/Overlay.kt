@@ -31,7 +31,9 @@ import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.example.niord.ui.theme.NiordTheme
 import kotlin.math.abs
 
-open class OverlayManager(private val context: Context, var lifecycleOwner: FloatingLifecycleOwner){
+open class OverlayManager(private val context: Context, var lifecycleOwner: FloatingLifecycleOwner,
+    var defaultPos: Pair<Int, Int> = Pair(500, 0)
+    ){
     var winManager: WindowManager? = null
     //private var lifecycleOwner: FloatingLifecycleOwner? = null
     var floatingView: ComposeView? = null
@@ -46,7 +48,7 @@ open class OverlayManager(private val context: Context, var lifecycleOwner: Floa
 
 
     //Starting X,Y coordinates
-    var defaultPos = Pair(500, 0)
+    //var defaultPos = Pair(500, 0)
     @RequiresApi(Build.VERSION_CODES.O)
     val layoutParams = WindowManager.LayoutParams().apply {
         format = PixelFormat.TRANSLUCENT
@@ -242,41 +244,22 @@ class FloatingLifecycleOwner : LifecycleOwner, ViewModelStoreOwner, SavedStateRe
 @RequiresApi(Build.VERSION_CODES.O)
 class MainOverlayButton(context: Context, lifecycleOwner: FloatingLifecycleOwner) : OverlayManager(context, lifecycleOwner){
 
-    var secondaryOverlay: OverlayManager? = null
-    val secondaryOverlayOffset = Pair(0, 200)
-
-    init{
-        secondaryOverlay = OverlayManager(context, lifecycleOwner)
-        secondaryOverlay?.composable = {
-            Column {
-                Floating("MOCK")
-                Floating("MOCK")
-            }
+    private var addIsVisible = false
+    private var additionalButtons: @Composable ()->Unit = {
+        Column {
+            Floating("MOCK")
+            Floating("MOCK")
         }
-        secondaryOverlay?.layoutParams?.x = defaultPos.first + secondaryOverlayOffset.first
-        secondaryOverlay?.layoutParams?.y = defaultPos.second + secondaryOverlayOffset.second
-        secondaryOverlay?.refreshView()
-        secondaryOverlay?.invoke()
-        secondaryOverlay?.isDraggable = false
-        secondaryOverlay?.setVisibility(false)
-    }
-
-    override fun setVisibility(state: Boolean){
-        super.setVisibility(state)
-        if(!state){
-            secondaryOverlay?.setVisibility(false)
-        }
-    }
-
-    override fun moveEvent(delta: Pair<Int, Int>) {
-        secondaryOverlay?.layoutParams?.x += delta.first
-        secondaryOverlay?.layoutParams?.y += delta.second
-        secondaryOverlay?.winManager?.
-        updateViewLayout(secondaryOverlay?.floatingView, secondaryOverlay?.layoutParams)
     }
 
     override fun clickEvent() {
-        secondaryOverlay?.setVisibility(!secondaryOverlay!!.isVisible)
+        addIsVisible = !addIsVisible
+        composable = if (addIsVisible) {
+            {FullComposable()}
+        } else {
+            {DefaultComposable()}
+        }
+        refreshView()
     }
 
     @Composable
@@ -285,8 +268,16 @@ class MainOverlayButton(context: Context, lifecycleOwner: FloatingLifecycleOwner
             painter = painterResource(R.drawable.ic_launcher_foreground),
             contentDescription = "Icon"
         )
-
     }
+    @Composable
+    fun FullComposable(){
+        Column{
+            DefaultComposable()
+            additionalButtons()
+        }
+    }
+
+
 }
 
 
