@@ -17,8 +17,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
-import com.example.niord.ui.theme.NiordTheme
-
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
@@ -30,18 +28,16 @@ import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import com.example.niord.ui.theme.NiordTheme
 import kotlin.math.abs
 
-open class OverlayManager(private val context: Context){
-    private var winManager: WindowManager? = null
-    private var lifecycleOwner: FloatingLifecycleOwner? = null
-    protected var floatingView: ComposeView? = null
+open class OverlayManager(private val context: Context, var lifecycleOwner: FloatingLifecycleOwner){
+    var winManager: WindowManager? = null
+    //private var lifecycleOwner: FloatingLifecycleOwner? = null
+    var floatingView: ComposeView? = null
+
     init {
         winManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        lifecycleOwner = FloatingLifecycleOwner().apply {
-            onCreate()
-            onResume()
-        }
         floatingView = buildView()
     }
     var isInvoked = false
@@ -49,19 +45,22 @@ open class OverlayManager(private val context: Context){
     var composable: @Composable ()->Unit = { DefaultComposable() }
 
 
+    //Starting X,Y coordinates
+    var defaultPos = Pair(500, 0)
     @RequiresApi(Build.VERSION_CODES.O)
-    private val layoutParams = WindowManager.LayoutParams().apply {
+    val layoutParams = WindowManager.LayoutParams().apply {
         format = PixelFormat.TRANSLUCENT
         flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
         type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-        gravity = Gravity.CENTER
+        gravity = Gravity.START + Gravity.TOP
         width = WindowManager.LayoutParams.WRAP_CONTENT
         height = WindowManager.LayoutParams.WRAP_CONTENT
+        x = defaultPos.first
+        y = defaultPos.second
     }
 
     var isDraggable = true
-    //Starting X,Y coordinates
-    private var defaultPos = Pair(0, 0)
+
     //Used for calculations and defines the current position thereafter
     private var lastPos = Pair(0, 0)
     private var firstPos = Pair(0, 0)
@@ -70,6 +69,9 @@ open class OverlayManager(private val context: Context){
 
     protected open fun clickEvent(){
         println("Click")
+    }
+
+    protected open fun moveEvent(delta: Pair<Int, Int>){
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -109,10 +111,12 @@ open class OverlayManager(private val context: Context){
                     }
                     if(isDraggable && moved) {
                         //Moves based on last "tick"
+                        //TO-DO Restrain the Pos Values to the screen dimensions
                         layoutParams.x += deltaPos.first
                         layoutParams.y += deltaPos.second
 
                         winManager?.updateViewLayout(view, layoutParams)
+                        moveEvent(deltaPos)
                     }
                 }
 
@@ -144,8 +148,8 @@ open class OverlayManager(private val context: Context){
     }
 
     //Change the view composable for state change
-    fun refreshView(view: ComposeView?, newComposable: @Composable ()->Unit = {DefaultComposable()}){
-        view?.setContent {
+    fun refreshView(newComposable: @Composable ()->Unit = composable){
+        floatingView?.setContent {
             NiordTheme {
                 newComposable()
             }
@@ -182,7 +186,7 @@ open class OverlayManager(private val context: Context){
         }
     }
 
-    fun setVisibility(state: Boolean){
+    open fun setVisibility(state: Boolean){
         if(state){
             floatingView?.visibility = View.VISIBLE
             isVisible = true
@@ -203,8 +207,8 @@ open class OverlayManager(private val context: Context){
     @RequiresApi(Build.VERSION_CODES.O)
     fun onDestroy(){
         dismiss()
-        lifecycleOwner?.onDestroy()
-        lifecycleOwner = null
+        //lifecycleOwner.onDestroy()
+        //lifecycleOwner = null
     }
 }
 
@@ -235,7 +239,46 @@ class FloatingLifecycleOwner : LifecycleOwner, ViewModelStoreOwner, SavedStateRe
     }
 }
 
-class MainOverlayButton(context: Context) : OverlayManager(context){
+@RequiresApi(Build.VERSION_CODES.O)
+class MainOverlayButton(context: Context, lifecycleOwner: FloatingLifecycleOwner) : OverlayManager(context, lifecycleOwner){
+
+    var secondaryOverlay: OverlayManager? = null
+    val secondaryOverlayOffset = Pair(0, 200)
+
+    init{
+        secondaryOverlay = OverlayManager(context, lifecycleOwner)
+        secondaryOverlay?.composable = {
+            Column {
+                Floating("MOCK")
+                Floating("MOCK")
+            }
+        }
+        secondaryOverlay?.layoutParams?.x = defaultPos.first + secondaryOverlayOffset.first
+        secondaryOverlay?.layoutParams?.y = defaultPos.second + secondaryOverlayOffset.second
+        secondaryOverlay?.refreshView()
+        secondaryOverlay?.invoke()
+        secondaryOverlay?.isDraggable = false
+        secondaryOverlay?.setVisibility(false)
+    }
+
+    override fun setVisibility(state: Boolean){
+        super.setVisibility(state)
+        if(!state){
+            secondaryOverlay?.setVisibility(false)
+        }
+    }
+
+    override fun moveEvent(delta: Pair<Int, Int>) {
+        secondaryOverlay?.layoutParams?.x += delta.first
+        secondaryOverlay?.layoutParams?.y += delta.second
+        secondaryOverlay?.winManager?.
+        updateViewLayout(secondaryOverlay?.floatingView, secondaryOverlay?.layoutParams)
+    }
+
+    override fun clickEvent() {
+        secondaryOverlay?.setVisibility(!secondaryOverlay!!.isVisible)
+    }
+
     @Composable
     override fun DefaultComposable() {
         Icon(
@@ -247,12 +290,12 @@ class MainOverlayButton(context: Context) : OverlayManager(context){
 }
 
 
-class ExampleCustomOverlay(context: Context) : OverlayManager(context){
+class ExampleCustomOverlay(context: Context, lifecycleOwner: FloatingLifecycleOwner) : OverlayManager(context, lifecycleOwner){
     private var text = "DEFAULT TEXT"
 
     @Composable
     override fun DefaultComposable(){
-        Column() {
+        Column{
             Floating(
                 text = text
             )
@@ -260,7 +303,7 @@ class ExampleCustomOverlay(context: Context) : OverlayManager(context){
                 onClick = {
                 //View update Example
                 text = "NEW UPDATED TEXT"
-                refreshView(floatingView, {DefaultComposable()})
+                refreshView({DefaultComposable()})
             }
             ){
                 Text("Change")

@@ -40,6 +40,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    var lifecycleOwner = FloatingLifecycleOwner().apply {
+        onCreate()
+        onResume()
+    }
+
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,10 +83,10 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-        overlayManager = MainOverlayButton(this)
+        overlayManager = MainOverlayButton(this, lifecycleOwner)
         overlayManager.setVisibility(false)
         overlayManager.invoke()
-        overlayManager2 = ExampleCustomOverlay(this)
+        overlayManager2 = ExampleCustomOverlay(this, lifecycleOwner)
         overlayManager2.invoke()
 
     }
@@ -89,6 +94,7 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         overlayManager.onDestroy() // Always remove the view when activity is destroyed
         overlayManager2.onDestroy()
+        lifecycleOwner.onDestroy()
         super.onDestroy()
     }
 }
