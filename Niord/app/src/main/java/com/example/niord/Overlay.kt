@@ -4,13 +4,18 @@ import android.content.Context
 import android.graphics.PixelFormat
 import android.os.Build
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.WindowManager
+import android.widget.Button
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import com.example.niord.ui.theme.NiordTheme
@@ -26,6 +31,7 @@ import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import kotlin.math.abs
 
 open class OverlayManager(private val context: Context){
     private var winManager: WindowManager? = null
@@ -41,8 +47,8 @@ open class OverlayManager(private val context: Context){
     }
     var isInvoked = false
     var isVisible = true
-
     var composable: @Composable ()->Unit = { DefaultComposable() }
+
 
     @RequiresApi(Build.VERSION_CODES.O)
     private val layoutParams = WindowManager.LayoutParams().apply {
@@ -52,6 +58,72 @@ open class OverlayManager(private val context: Context){
         gravity = Gravity.CENTER
         width = WindowManager.LayoutParams.WRAP_CONTENT
         height = WindowManager.LayoutParams.WRAP_CONTENT
+    }
+
+    private val isDraggable = true
+    //Starting X,Y coordinates
+    private var defaultPos = Pair(0, 0)
+    //Used for calculations and defines the current position thereafter
+    private var lastPos = Pair(0, 0)
+    private var firstPos = Pair(0, 0)
+    private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
+    var moved = false
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun buildOnTouchListener(): View.OnTouchListener {
+        /*
+         The default Button composable consumes the touch events
+         Making it inconvenient to use them in a draggable view
+         */
+
+        return View.OnTouchListener{view, event ->
+            val action = event.action
+            var deltaPos: Pair<Int, Int>
+            var totalDeltaPos: Pair<Int, Int>
+
+            when(action){
+                MotionEvent.ACTION_DOWN -> {
+                    lastPos = Pair(event.rawX.toInt(), event.rawY.toInt())
+                    firstPos = Pair(event.rawX.toInt(), event.rawY.toInt())
+                    moved = false
+                }
+
+                MotionEvent.ACTION_MOVE -> {
+                    val x = event.rawX.toInt()
+                    val y = event.rawY.toInt()
+                    deltaPos = Pair(
+                        x - lastPos.first,
+                        y - lastPos.second
+                    )
+                    totalDeltaPos = Pair(
+                        x - firstPos.first,
+                        y - firstPos.second
+                    )
+                    lastPos = Pair(x, y)
+                    //Guarantees minimum distance from start
+                    if (abs(totalDeltaPos.first) > touchSlop || abs(totalDeltaPos.second) > touchSlop) {
+                        moved = true
+                    }
+                    if(isDraggable && moved) {
+                        //Moves based on last "tick"
+                        layoutParams.x += deltaPos.first
+                        layoutParams.y += deltaPos.second
+
+                        winManager?.updateViewLayout(view, layoutParams)
+                    }
+                }
+
+                MotionEvent.ACTION_UP -> {
+                    if(!moved) {
+                        println("Clique")
+                        view.performClick()
+                    }
+                }
+
+
+            }
+            moved
+        }
     }
 
     fun buildView(): ComposeView {
@@ -80,7 +152,7 @@ open class OverlayManager(private val context: Context){
     @RequiresApi(Build.VERSION_CODES.O)
     fun invoke(){
         if(isInvoked){return}
-
+        floatingView?.setOnTouchListener(buildOnTouchListener())
         //refreshView(floatingView)
         floatingView?.let { view ->
             try {
@@ -170,15 +242,21 @@ class ExampleCustomOverlay(context: Context) : OverlayManager(context){
             Floating(
                 text = text
             )
-            Button(onClick = {
+            Button(
+                onClick = {
                 //View update Example
                 text = "NEW UPDATED TEXT"
                 refreshView(floatingView, {DefaultComposable()})
-            }){
+            }
+            ){
                 Text("Change")
             }
         }
     }
+}
+
+class CustomButton(context: Context ) : Button(context) {
+
 }
 
 @Composable

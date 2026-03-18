@@ -80,6 +80,7 @@ class MainActivity : ComponentActivity() {
         }
         overlayManager = OverlayManager(this)
         overlayManager.setVisibility(false)
+        overlayManager.composable = {Greeting("Floater")}
         overlayManager.invoke()
         overlayManager2 = ExampleCustomOverlay(this)
         overlayManager2.invoke()
