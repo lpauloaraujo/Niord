@@ -11,6 +11,10 @@ android {
         }
     }
 
+    testOptions{
+        unitTests.isIncludeAndroidResources = true
+    }
+
     defaultConfig {
         applicationId = "com.example.niord"
         minSdk = 25

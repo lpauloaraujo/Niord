@@ -19,23 +19,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent {
-            NiordTheme {
-                Scaffold( modifier = Modifier.fillMaxSize() ) { innerPadding ->
-                    Column(modifier = Modifier.padding(innerPadding)){
-                        Greeting(
-                            name = "Luz"
-                        )
-                        Button(onClick = { println("Hello") }) {
-                            Text(
-                                text = "Hi"
-                            )
-                        }
-
-                    }
-                }
-            }
-        }
+        setContentView(R.layout.configuracao)
     }
 }
 
