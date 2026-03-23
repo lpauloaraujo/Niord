@@ -68,9 +68,11 @@ class MainActivity : ComponentActivity() {
             //Permission checking
             if (!Settings.canDrawOverlays(this)) {
                 permission.getOverlayPermissions{
-                    buttonOverlay.setVisibility(bool)
-                    //Invoke may fail if permission is disabled on app startup
-                    buttonOverlay.invoke()
+                    if (Settings.canDrawOverlays(this)) {
+                        buttonOverlay.setVisibility(bool)
+                        //Invoke may fail if permission is disabled on app startup
+                        buttonOverlay.invoke()
+                    }
                 }
             }else{
                 buttonOverlay.invoke()

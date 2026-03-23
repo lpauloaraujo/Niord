@@ -12,25 +12,21 @@ class Permission(var context: Context){
     //context == this and caller == this
     var caller = context as ActivityResultCaller
 
-    //Immutable by design
-    val permissionLauncherShowOverlay = caller.registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (!Settings.canDrawOverlays(context)) {
-            overlayCallback?.invoke(result)
-        }
-    }
+    //This callback defines what will run after the user comes back from other apps
+    var activityCallback: ((ActivityResult)->Unit)? = null
 
-    //This callback defines what will run after the user comes back from OS settings
-    var overlayCallback: ((ActivityResult)->Unit)? = null
+    //Immutable by design
+    val activityLauncher = caller.registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result -> activityCallback?.invoke(result) }
+
     fun getOverlayPermissions(callback: (ActivityResult)->Unit) {
         val intent = Intent(
             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
             "package:$context.packageName".toUri()
         )
-        overlayCallback = callback
-        permissionLauncherShowOverlay.launch(intent)
-        overlayCallback = null
+        activityCallback = callback
+        activityLauncher.launch(intent)
     }
 }
 
