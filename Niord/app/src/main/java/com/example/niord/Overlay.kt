@@ -14,6 +14,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
@@ -243,8 +248,15 @@ class FloatingLifecycleOwner : LifecycleOwner, ViewModelStoreOwner, SavedStateRe
 
 @RequiresApi(Build.VERSION_CODES.O)
 class MainOverlayButton(context: Context, lifecycleOwner: FloatingLifecycleOwner) : OverlayManager(context, lifecycleOwner){
+    init{
+        composable = {FullComposable()}
+    }
 
-    private var addIsVisible = false
+    class StatePacket{
+        var addIsVisible by mutableStateOf(false)
+    }
+    var statePacket = StatePacket()
+
     private var additionalButtons: @Composable ()->Unit = {
         Column {
             Floating("MOCK")
@@ -253,48 +265,51 @@ class MainOverlayButton(context: Context, lifecycleOwner: FloatingLifecycleOwner
     }
 
     override fun clickEvent() {
-        addIsVisible = !addIsVisible
-        composable = if (addIsVisible) {
-            {FullComposable()}
-        } else {
-            {DefaultComposable()}
-        }
-        refreshView()
+        statePacket.addIsVisible = !statePacket.addIsVisible
     }
 
-    @Composable
-    override fun DefaultComposable() {
-        Icon(
-            painter = painterResource(R.drawable.ic_launcher_foreground),
-            contentDescription = "Icon"
-        )
-    }
     @Composable
     fun FullComposable(){
-        Column{
-            DefaultComposable()
-            additionalButtons()
-        }
+        ComposableUnit(statePacket.addIsVisible)
     }
 
+    @Composable
+    fun ComposableUnit(addIsVisible: Boolean){
+        Column{
+            Icon(
+                painter = painterResource(R.drawable.ic_launcher_foreground),
+                contentDescription = "Icon"
+            )
+            if (addIsVisible) additionalButtons()
+        }
+    }
 
 }
 
 
+//Use this class as an example of use case
 class ExampleCustomOverlay(context: Context, lifecycleOwner: FloatingLifecycleOwner) : OverlayManager(context, lifecycleOwner){
-    private var text = "DEFAULT TEXT"
+    //It's possible to have the mutable variables inside the composable
+    //But changing the variables is limited by functions only inside the composable
+    class StatePacket{
+        var text by mutableStateOf("DEFAULT TEXT")
+    }
+    var statePacket = StatePacket()
+
+    fun exampleOutsideChange(){
+        statePacket.text = "EXAMPLE CHANGE"
+    }
 
     @Composable
     override fun DefaultComposable(){
         Column{
             Floating(
-                text = text
+                text = statePacket.text
             )
             Button(
                 onClick = {
                 //View update Example
-                text = "NEW UPDATED TEXT"
-                refreshView({DefaultComposable()})
+                statePacket.text = "NEW UPDATED TEXT"
             }
             ){
                 Text("Change")
