@@ -3,25 +3,49 @@ package com.example.niord
 import android.content.Context
 import android.graphics.PixelFormat
 import android.os.Build
+import android.service.chooser.AdditionalContentContract
+import android.util.DisplayMetrics
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.WindowManager
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.snap
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.painter.BrushPainter
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
@@ -35,6 +59,8 @@ import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.example.niord.ui.theme.NiordTheme
 import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 
 open class OverlayManager(private val context: Context, var lifecycleOwner: FloatingLifecycleOwner,
     var defaultPos: Pair<Int, Int> = Pair(500, 0)
@@ -57,7 +83,7 @@ open class OverlayManager(private val context: Context, var lifecycleOwner: Floa
     @RequiresApi(Build.VERSION_CODES.O)
     val layoutParams = WindowManager.LayoutParams().apply {
         format = PixelFormat.TRANSLUCENT
-        flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+        flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE + WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
         type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
         gravity = Gravity.START + Gravity.TOP
         width = WindowManager.LayoutParams.WRAP_CONTENT
@@ -67,12 +93,14 @@ open class OverlayManager(private val context: Context, var lifecycleOwner: Floa
     }
 
     var isDraggable = true
+    var dragPaddingDp: Float = 100f
 
     //Used for calculations and defines the current position thereafter
     private var lastPos = Pair(0, 0)
     private var firstPos = Pair(0, 0)
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
     var moved = false
+    val displayMetrics = DisplayMetrics()
 
     protected open fun clickEvent(){
         println("Click")
@@ -80,6 +108,7 @@ open class OverlayManager(private val context: Context, var lifecycleOwner: Floa
 
     protected open fun moveEvent(delta: Pair<Int, Int>){
     }
+
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun buildOnTouchListener(): View.OnTouchListener {
@@ -121,6 +150,17 @@ open class OverlayManager(private val context: Context, var lifecycleOwner: Floa
                         //TO-DO Restrain the Pos Values to the screen dimensions
                         layoutParams.x += deltaPos.first
                         layoutParams.y += deltaPos.second
+
+
+                        winManager?.defaultDisplay?.getMetrics(displayMetrics)
+
+                        val width = displayMetrics.widthPixels
+                        val height = displayMetrics.heightPixels
+                        val pxValue = dpToPx(context,dragPaddingDp)
+
+                        println(pxValue)
+                        layoutParams.x = intervalLimit(0, layoutParams.x, width - pxValue)
+                        layoutParams.y = intervalLimit(0, layoutParams.y, height - pxValue)
 
                         winManager?.updateViewLayout(view, layoutParams)
                         moveEvent(deltaPos)
@@ -247,41 +287,86 @@ class FloatingLifecycleOwner : LifecycleOwner, ViewModelStoreOwner, SavedStateRe
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-class MainOverlayButton(context: Context, lifecycleOwner: FloatingLifecycleOwner) : OverlayManager(context, lifecycleOwner){
+class MainOverlayButton(context: Context, lifecycleOwner: FloatingLifecycleOwner) :
+    OverlayManager(context, lifecycleOwner, defaultPos = Pair(0, 0)){
     init{
         composable = {FullComposable()}
+        floatingView?.layoutDirection = View.LAYOUT_DIRECTION_LTR
     }
 
     class StatePacket{
         var addIsVisible by mutableStateOf(false)
+        var isVertical by mutableStateOf(false)
+        var isLtr by mutableStateOf(true)
     }
     var statePacket = StatePacket()
 
-    private var additionalButtons: @Composable ()->Unit = {
-        Column {
-            Floating("MOCK")
-            Floating("MOCK")
-        }
+    override fun moveEvent(delta: Pair<Int, Int>) {
+        //Use layoutParams to get position to decide Row or Column
     }
+
 
     override fun clickEvent() {
         statePacket.addIsVisible = !statePacket.addIsVisible
     }
 
+    //ltr == Left to Right
+    fun setDirection(ltr: Boolean){
+        statePacket.isLtr = ltr
+        if (!ltr) floatingView?.layoutDirection = View.LAYOUT_DIRECTION_RTL
+        else floatingView?.layoutDirection = View.LAYOUT_DIRECTION_LTR
+    }
+
+    var additionalButtons: List<@Composable ()->Unit> = listOf(
+        {Floating("MOCK")},
+        {Floating("MOCK")}
+        )
+
     @Composable
-    fun FullComposable(){
-        ComposableUnit(statePacket.addIsVisible)
+    fun MainIcon(){
+        Icon(
+            painter = painterResource(R.drawable.ic_launcher_foreground),
+            contentDescription = "Icon"
+        )
     }
 
     @Composable
-    fun ComposableUnit(addIsVisible: Boolean){
-        Column{
-            Icon(
-                painter = painterResource(R.drawable.ic_launcher_foreground),
-                contentDescription = "Icon"
+    fun FullButtonList(addIsVisible: Boolean){
+        val fullList = remember(addIsVisible) {
+            val list: MutableList<@Composable () -> Unit> = mutableListOf(
+                { MainIcon() }
             )
-            if (addIsVisible) additionalButtons()
+            if (addIsVisible) list.addAll(additionalButtons)
+            list
         }
+        fullList.forEach { it() }
+    }
+
+
+    @Composable
+    fun FullComposable(){
+        ComposableUnit(
+            statePacket.addIsVisible,
+            statePacket.isVertical
+        )
+    }
+
+    @Composable
+    fun ComposableUnit(addIsVisible: Boolean, isVertical: Boolean){
+        if (isVertical) Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ){
+            FullButtonList(addIsVisible)
+        }
+        if (!isVertical)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                FullButtonList(addIsVisible)
+            }
+
     }
 
 }
