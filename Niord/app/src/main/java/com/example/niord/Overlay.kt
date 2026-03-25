@@ -18,7 +18,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.size
@@ -58,6 +60,7 @@ import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.example.niord.ui.theme.NiordTheme
+import kotlin.Pair
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -158,9 +161,8 @@ open class OverlayManager(private val context: Context, var lifecycleOwner: Floa
                         val height = displayMetrics.heightPixels
                         val pxValue = dpToPx(context,dragPaddingDp)
 
-                        println(pxValue)
                         layoutParams.x = intervalLimit(0, layoutParams.x, width - pxValue)
-                        layoutParams.y = intervalLimit(0, layoutParams.y, height - pxValue)
+                        layoutParams.y = intervalLimit(0, layoutParams.y, height - (pxValue*2))
 
                         winManager?.updateViewLayout(view, layoutParams)
                         moveEvent(deltaPos)
@@ -252,7 +254,7 @@ open class OverlayManager(private val context: Context, var lifecycleOwner: Floa
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun onDestroy(){
+    open fun onDestroy(){
         dismiss()
         //lifecycleOwner.onDestroy()
         //lifecycleOwner = null
@@ -287,86 +289,123 @@ class FloatingLifecycleOwner : LifecycleOwner, ViewModelStoreOwner, SavedStateRe
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-class MainOverlayButton(context: Context, lifecycleOwner: FloatingLifecycleOwner) :
+class MainOverlayButton(var context: Context, lifecycleOwner: FloatingLifecycleOwner) :
     OverlayManager(context, lifecycleOwner, defaultPos = Pair(0, 0)){
-    init{
-        composable = {FullComposable()}
-        floatingView?.layoutDirection = View.LAYOUT_DIRECTION_LTR
-    }
 
+    private var additionalOverlay: OverlayManager
+    var expandedOffset: Pair<Int, Int> = Pair(-100, 100)
+    var expandedOffsetH: Pair<Int, Int> = Pair(150, 0)
+    var statePacket: StatePacket
+
+    var minForHorizontal: Float = 0.65f
+
+    init{
+        statePacket = StatePacket()
+        composable = {MainIcon()}
+        floatingView?.layoutDirection = View.LAYOUT_DIRECTION_LTR
+        dragPaddingDp = 50f
+
+        additionalOverlay = OverlayManager(context, lifecycleOwner,
+            defaultPos=Pair(
+                defaultPos.first + expandedOffset.first,
+                defaultPos.second + expandedOffset.second
+                ))
+        additionalOverlay.composable = {ComposableUnit(statePacket.isVertical, statePacket.isLtr)}
+        additionalOverlay.refreshView()
+        additionalOverlay.floatingView?.layoutDirection = floatingView?.layoutDirection!!
+        additionalOverlay.setVisibility(false)
+        additionalOverlay.isDraggable = false
+        additionalOverlay.invoke()
+        //moveEvent(Pair(0,0))
+    }
+    override fun onDestroy(){
+        additionalOverlay.dismiss()
+        super.onDestroy()
+    }
     class StatePacket{
         var addIsVisible by mutableStateOf(false)
-        var isVertical by mutableStateOf(false)
+        var isVertical by mutableStateOf(true)
         var isLtr by mutableStateOf(true)
     }
-    var statePacket = StatePacket()
+
 
     override fun moveEvent(delta: Pair<Int, Int>) {
-        //Use layoutParams to get position to decide Row or Column
+        val width = displayMetrics.widthPixels
+        val height = displayMetrics.heightPixels
+        statePacket.isLtr = layoutParams.x <= width/2
+        statePacket.isVertical = layoutParams.y < height*minForHorizontal
+        var invCorrection = 0
+        //Offset inverts side
+        if(!statePacket.isLtr){
+            invCorrection = floatingView!!.width
+        }
+
+        if(statePacket.isVertical) {
+            additionalOverlay.layoutParams.x = layoutParams.x + expandedOffset.first
+            additionalOverlay.layoutParams.y = layoutParams.y + expandedOffset.second
+        }else{
+            additionalOverlay.layoutParams.x =
+                layoutParams.x + (expandedOffsetH.first - invCorrection)
+            additionalOverlay.layoutParams.y = layoutParams.y + expandedOffsetH.second
+        }
+
+
+
+        if(statePacket.isVertical){
+
+        }
+
+        if(statePacket.isLtr || statePacket.isVertical){
+            additionalOverlay.layoutParams.gravity = layoutParams.gravity
+        }else{
+            //Gravity makes the 0,0 point the Right-Top, necessary for manipulation
+            additionalOverlay.layoutParams.gravity = Gravity.END + Gravity.TOP
+            //Gravity.END inverts the X axis, mirror geometry needed
+            //This subtracts the original position to the midpoint times 2 to get the distance
+            //Then subtracts with the mirrored position to align both
+            additionalOverlay.layoutParams.x -= (layoutParams.x - width/2) * 2
+        }
+
+
+        additionalOverlay.winManager?.
+        updateViewLayout(additionalOverlay.floatingView, additionalOverlay.layoutParams)
+
     }
 
 
     override fun clickEvent() {
         statePacket.addIsVisible = !statePacket.addIsVisible
+        additionalOverlay.setVisibility(statePacket.addIsVisible)
     }
 
-    //ltr == Left to Right
-    fun setDirection(ltr: Boolean){
-        statePacket.isLtr = ltr
-        if (!ltr) floatingView?.layoutDirection = View.LAYOUT_DIRECTION_RTL
-        else floatingView?.layoutDirection = View.LAYOUT_DIRECTION_LTR
-    }
 
     var additionalButtons: List<@Composable ()->Unit> = listOf(
         {Floating("MOCK")},
-        {Floating("MOCK")}
+        {Floating("MOCK22")}
         )
 
     @Composable
     fun MainIcon(){
         Icon(
-            painter = painterResource(R.drawable.ic_launcher_foreground),
+            //painter = painterResource(R.drawable.ic_launcher_foreground),
+            painter = painterResource(R.drawable.test_icon),
             contentDescription = "Icon"
         )
     }
 
     @Composable
-    fun FullButtonList(addIsVisible: Boolean){
-        val fullList = remember(addIsVisible) {
-            val list: MutableList<@Composable () -> Unit> = mutableListOf(
-                { MainIcon() }
-            )
-            if (addIsVisible) list.addAll(additionalButtons)
-            list
-        }
-        fullList.forEach { it() }
-    }
-
-
-    @Composable
-    fun FullComposable(){
-        ComposableUnit(
-            statePacket.addIsVisible,
-            statePacket.isVertical
-        )
-    }
-
-    @Composable
-    fun ComposableUnit(addIsVisible: Boolean, isVertical: Boolean){
+    fun ComposableUnit(isVertical: Boolean, isLtr: Boolean){
         if (isVertical) Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ){
-            FullButtonList(addIsVisible)
+            additionalButtons.forEach { it() }
         }
         if (!isVertical)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                FullButtonList(addIsVisible)
+            Row( verticalAlignment = Alignment.CenterVertically){
+                if(isLtr) additionalButtons.forEach { it() }
+                else additionalButtons.reversed().forEach { it() }
+                //additionalButtons.forEach { it() }
             }
-
     }
 
 }
