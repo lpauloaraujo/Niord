@@ -3,54 +3,33 @@ package com.example.niord
 import android.content.Context
 import android.graphics.PixelFormat
 import android.os.Build
-import android.service.chooser.AdditionalContentContract
 import android.util.DisplayMetrics
-import android.util.TypedValue
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.WindowManager
 import androidx.annotation.RequiresApi
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.snap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.painter.BrushPainter
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
@@ -66,8 +45,6 @@ import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.example.niord.ui.theme.NiordTheme
 import kotlin.Pair
 import kotlin.math.abs
-import kotlin.math.max
-import kotlin.math.min
 
 open class OverlayManager(private val context: Context, var lifecycleOwner: FloatingLifecycleOwner,
     var defaultPos: Pair<Int, Int> = Pair(500, 0)
@@ -76,9 +53,12 @@ open class OverlayManager(private val context: Context, var lifecycleOwner: Floa
     //private var lifecycleOwner: FloatingLifecycleOwner? = null
     var floatingView: ComposeView? = null
 
+    val displayMetrics = DisplayMetrics()
+
     init {
         winManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         floatingView = buildView()
+        winManager?.defaultDisplay?.getMetrics(displayMetrics)
     }
     var isInvoked = false
     var isVisible = true
@@ -108,7 +88,7 @@ open class OverlayManager(private val context: Context, var lifecycleOwner: Floa
     private var firstPos = Pair(0, 0)
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
     var moved = false
-    val displayMetrics = DisplayMetrics()
+
 
     protected open fun clickEvent(){
         println("Click")
@@ -314,7 +294,7 @@ class MainOverlayButton(var context: Context,
     lateinit var expandedOffsetH: Pair<Int, Int>
     var statePacket: StatePacket
 
-    var minForHorizontal: Float = 0.65f
+    var minForHorizontal: Float = 0.50f
 
     init{
         statePacket = StatePacket()
@@ -358,8 +338,8 @@ class MainOverlayButton(var context: Context,
         var isVertical by mutableStateOf(true)
         var isLtr by mutableStateOf(true)
         var iconSizeDp by mutableFloatStateOf(64f)
-        var subIconScale by mutableFloatStateOf(0.7f)
-        var iconSpacingDp by mutableFloatStateOf(16f)
+        var subIconScale by mutableFloatStateOf(0.75f)
+        var iconSpacingDp by mutableFloatStateOf(8f)
     }
 
 
@@ -376,6 +356,7 @@ class MainOverlayButton(var context: Context,
         val height = displayMetrics.heightPixels
         statePacket.isLtr = layoutParams.x <= width/2
         statePacket.isVertical = layoutParams.y < height*minForHorizontal
+        println(height)
         var invCorrection = 0
         //Offset inverts side
         if(!statePacket.isLtr){
@@ -413,28 +394,42 @@ class MainOverlayButton(var context: Context,
         additionalOverlay.setVisibility(statePacket.addIsVisible)
     }
 
-    var additionalButtons: List<@Composable ()->Unit> = listOf(
-        {IconBox(R.drawable.main_button, statePacket.iconSizeDp * statePacket.subIconScale)},
-        {IconBox(R.drawable.main_button, statePacket.iconSizeDp * statePacket.subIconScale)}
-        )
 
     @Composable
-    fun IconBox(resource: Int, sizeDp: Float){
-        Box(modifier = Modifier.size(
-            sizeDp.dp,
-            sizeDp.dp),
-            propagateMinConstraints = true){
+    fun IconBox(resource: Int, sizeDp: Float, enabled: Boolean = true, onClick: () -> Unit = {}){
+        if(enabled) {
+            Box (modifier = Modifier.requiredSize(sizeDp.dp), propagateMinConstraints = true){
+                IconButton(onClick = onClick) {
+                    Image(
+                        modifier = Modifier.size(sizeDp.dp),
+                        painter = painterResource(resource),
+                        contentDescription = "Icon",
+                    )
+                }
+            }
+        } else{
             Image(
-                //painter = painterResource(R.drawable.ic_launcher_foreground),
                 painter = painterResource(resource),
-                contentDescription = "Icon"
+                contentDescription = "Icon",
+                modifier = Modifier.size(sizeDp.dp)
             )
         }
+
     }
+
+    var secondaryButtonSize = statePacket.iconSizeDp * statePacket.subIconScale
+    var additionalButtons: List<@Composable ()->Unit> = listOf(
+        {IconBox(R.drawable.health, secondaryButtonSize)},
+        {IconBox(R.drawable.cops, secondaryButtonSize)},
+        {IconBox(R.drawable.alert, secondaryButtonSize)},
+        {IconBox(R.drawable.plt_vigia, secondaryButtonSize)},
+        {IconBox(R.drawable.contacts, secondaryButtonSize)},
+        {IconBox(R.drawable.insurance, secondaryButtonSize)}
+    )
 
     @Composable
     fun MainIcon(){
-        IconBox(R.drawable.main_button, statePacket.iconSizeDp)
+        IconBox(R.drawable.main_button, statePacket.iconSizeDp, false)
     }
 
     @Composable
