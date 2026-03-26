@@ -93,6 +93,7 @@ open class OverlayManager(private val context: Context, var lifecycleOwner: Floa
         height = WindowManager.LayoutParams.WRAP_CONTENT
         x = defaultPos.first
         y = defaultPos.second
+        windowAnimations = 0
     }
 
     var isDraggable = true
@@ -110,6 +111,14 @@ open class OverlayManager(private val context: Context, var lifecycleOwner: Floa
     }
 
     protected open fun moveEvent(delta: Pair<Int, Int>){
+    }
+
+    protected open fun downEvent(){
+
+    }
+
+    protected open fun upEvent(){
+
     }
 
 
@@ -130,6 +139,7 @@ open class OverlayManager(private val context: Context, var lifecycleOwner: Floa
                     lastPos = Pair(event.rawX.toInt(), event.rawY.toInt())
                     firstPos = Pair(event.rawX.toInt(), event.rawY.toInt())
                     moved = false
+                    downEvent()
                 }
 
                 MotionEvent.ACTION_MOVE -> {
@@ -173,6 +183,7 @@ open class OverlayManager(private val context: Context, var lifecycleOwner: Floa
                     if(!moved) {
                         clickEvent()
                         view.performClick()
+                        upEvent()
                     }
                 }
 
@@ -289,12 +300,18 @@ class FloatingLifecycleOwner : LifecycleOwner, ViewModelStoreOwner, SavedStateRe
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-class MainOverlayButton(var context: Context, lifecycleOwner: FloatingLifecycleOwner) :
-    OverlayManager(context, lifecycleOwner, defaultPos = Pair(0, 0)){
+class MainOverlayButton(var context: Context,
+                        lifecycleOwner: FloatingLifecycleOwner,
+                        localDefaultPos: Pair<Int, Int> = Pair(100, 100)) :
+    OverlayManager(context, lifecycleOwner, defaultPos = localDefaultPos){
 
     private var additionalOverlay: OverlayManager
-    var expandedOffset: Pair<Int, Int> = Pair(-100, 100)
-    var expandedOffsetH: Pair<Int, Int> = Pair(150, 0)
+    var expandedOffset: Pair<Int, Int> = dpToPxPair(context,
+        Pair(-30f, 10f)
+    )
+    var expandedOffsetH: Pair<Int, Int> = dpToPxPair(context,
+        Pair(5f, 0f)
+    )
     var statePacket: StatePacket
 
     var minForHorizontal: Float = 0.65f
@@ -330,6 +347,14 @@ class MainOverlayButton(var context: Context, lifecycleOwner: FloatingLifecycleO
 
 
     override fun moveEvent(delta: Pair<Int, Int>) {
+        if (statePacket.addIsVisible) {
+            statePacket.addIsVisible = !statePacket.addIsVisible
+            additionalOverlay.setVisibility(statePacket.addIsVisible)
+        }
+    }
+
+    //Secondary overlay move logic
+    override fun upEvent() {
         val width = displayMetrics.widthPixels
         val height = displayMetrics.heightPixels
         statePacket.isLtr = layoutParams.x <= width/2
@@ -349,12 +374,6 @@ class MainOverlayButton(var context: Context, lifecycleOwner: FloatingLifecycleO
             additionalOverlay.layoutParams.y = layoutParams.y + expandedOffsetH.second
         }
 
-
-
-        if(statePacket.isVertical){
-
-        }
-
         if(statePacket.isLtr || statePacket.isVertical){
             additionalOverlay.layoutParams.gravity = layoutParams.gravity
         }else{
@@ -372,12 +391,10 @@ class MainOverlayButton(var context: Context, lifecycleOwner: FloatingLifecycleO
 
     }
 
-
     override fun clickEvent() {
         statePacket.addIsVisible = !statePacket.addIsVisible
         additionalOverlay.setVisibility(statePacket.addIsVisible)
     }
-
 
     var additionalButtons: List<@Composable ()->Unit> = listOf(
         {Floating("MOCK")},
@@ -396,12 +413,14 @@ class MainOverlayButton(var context: Context, lifecycleOwner: FloatingLifecycleO
     @Composable
     fun ComposableUnit(isVertical: Boolean, isLtr: Boolean){
         if (isVertical) Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.animateContentSize(snap())
         ){
             additionalButtons.forEach { it() }
         }
         if (!isVertical)
-            Row( verticalAlignment = Alignment.CenterVertically){
+            Row( verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.animateContentSize(snap())){
                 if(isLtr) additionalButtons.forEach { it() }
                 else additionalButtons.reversed().forEach { it() }
                 //additionalButtons.forEach { it() }

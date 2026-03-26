@@ -14,10 +14,14 @@ fun dpToPx(context: Context, dpValue: Float): Int {
     ).toInt()
 }
 
+fun dpToPxPair(context: Context, pair: Pair<Float, Float>): Pair<Int, Int> {
+    return Pair(dpToPx(context, pair.first), dpToPx(context, pair.second))
+}
+
 
 fun intervalLimit(a: Int, value: Int, b: Int): Int {
     // a < val < b -> return val
-    //val > b -> return b
-    //val < a -> return a
+    //val >= b -> return b
+    //val <= a -> return a
     return max(a, min(value, b))
 }
