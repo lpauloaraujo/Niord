@@ -14,6 +14,7 @@ import android.view.WindowManager
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.snap
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -40,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.BrushPainter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -48,6 +51,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
@@ -306,12 +310,8 @@ class MainOverlayButton(var context: Context,
     OverlayManager(context, lifecycleOwner, defaultPos = localDefaultPos){
 
     private var additionalOverlay: OverlayManager
-    var expandedOffset: Pair<Int, Int> = dpToPxPair(context,
-        Pair(-30f, 10f)
-    )
-    var expandedOffsetH: Pair<Int, Int> = dpToPxPair(context,
-        Pair(5f, 0f)
-    )
+    lateinit var expandedOffset: Pair<Int, Int>
+    lateinit var expandedOffsetH: Pair<Int, Int>
     var statePacket: StatePacket
 
     var minForHorizontal: Float = 0.65f
@@ -320,20 +320,34 @@ class MainOverlayButton(var context: Context,
         statePacket = StatePacket()
         composable = {MainIcon()}
         floatingView?.layoutDirection = View.LAYOUT_DIRECTION_LTR
-        dragPaddingDp = 50f
+
+        dragPaddingDp = statePacket.iconSizeDp
+        setOffset()
 
         additionalOverlay = OverlayManager(context, lifecycleOwner,
             defaultPos=Pair(
                 defaultPos.first + expandedOffset.first,
                 defaultPos.second + expandedOffset.second
                 ))
-        additionalOverlay.composable = {ComposableUnit(statePacket.isVertical, statePacket.isLtr)}
+        additionalOverlay.composable = {ComposableUnit(statePacket)}
         additionalOverlay.refreshView()
         additionalOverlay.floatingView?.layoutDirection = floatingView?.layoutDirection!!
         additionalOverlay.setVisibility(false)
         additionalOverlay.isDraggable = false
         additionalOverlay.invoke()
         //moveEvent(Pair(0,0))
+    }
+
+    fun setOffset(){
+        expandedOffsetH = dpToPxPair(context,
+            Pair(statePacket.iconSizeDp + statePacket.iconSpacingDp,
+                //centralizes in the Y axis considering the difference in size
+                statePacket.iconSizeDp*(1-statePacket.subIconScale)/2)
+        )
+        expandedOffset = dpToPxPair(context,
+            Pair(statePacket.iconSizeDp*(1-statePacket.subIconScale)/2,
+                statePacket.iconSizeDp + statePacket.iconSpacingDp)
+        )
     }
     override fun onDestroy(){
         additionalOverlay.dismiss()
@@ -343,6 +357,9 @@ class MainOverlayButton(var context: Context,
         var addIsVisible by mutableStateOf(false)
         var isVertical by mutableStateOf(true)
         var isLtr by mutableStateOf(true)
+        var iconSizeDp by mutableFloatStateOf(64f)
+        var subIconScale by mutableFloatStateOf(0.7f)
+        var iconSpacingDp by mutableFloatStateOf(16f)
     }
 
 
@@ -397,31 +414,41 @@ class MainOverlayButton(var context: Context,
     }
 
     var additionalButtons: List<@Composable ()->Unit> = listOf(
-        {Floating("MOCK")},
-        {Floating("MOCK22")}
+        {IconBox(R.drawable.main_button, statePacket.iconSizeDp * statePacket.subIconScale)},
+        {IconBox(R.drawable.main_button, statePacket.iconSizeDp * statePacket.subIconScale)}
         )
 
     @Composable
-    fun MainIcon(){
-        Icon(
-            //painter = painterResource(R.drawable.ic_launcher_foreground),
-            painter = painterResource(R.drawable.test_icon),
-            contentDescription = "Icon"
-        )
+    fun IconBox(resource: Int, sizeDp: Float){
+        Box(modifier = Modifier.size(
+            sizeDp.dp,
+            sizeDp.dp),
+            propagateMinConstraints = true){
+            Image(
+                //painter = painterResource(R.drawable.ic_launcher_foreground),
+                painter = painterResource(resource),
+                contentDescription = "Icon"
+            )
+        }
     }
 
     @Composable
-    fun ComposableUnit(isVertical: Boolean, isLtr: Boolean){
-        if (isVertical) Column(
+    fun MainIcon(){
+        IconBox(R.drawable.main_button, statePacket.iconSizeDp)
+    }
+
+    @Composable
+    fun ComposableUnit(statePacket: StatePacket){
+        if (statePacket.isVertical) Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.animateContentSize(snap())
+            verticalArrangement = Arrangement.spacedBy(statePacket.iconSpacingDp.dp)
         ){
             additionalButtons.forEach { it() }
         }
-        if (!isVertical)
+        if (!statePacket.isVertical)
             Row( verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.animateContentSize(snap())){
-                if(isLtr) additionalButtons.forEach { it() }
+                horizontalArrangement = Arrangement.spacedBy(statePacket.iconSpacingDp.dp)){
+                if(statePacket.isLtr) additionalButtons.forEach { it() }
                 else additionalButtons.reversed().forEach { it() }
                 //additionalButtons.forEach { it() }
             }
