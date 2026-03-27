@@ -458,7 +458,7 @@
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:src="@drawable/ic_chevron_right"
-                app:tint="#AAAAAA"
+                app:tint="#FF000000"
                 android:contentDescription="Seta" />
         </RelativeLayout>
 
