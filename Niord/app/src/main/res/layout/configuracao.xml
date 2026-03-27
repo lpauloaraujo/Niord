@@ -26,17 +26,17 @@
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
                 android:layout_marginStart="4dp"
-                android:background="#ffffff"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="Voltar"
                 android:src="@drawable/ic_arrow_back"
-                app:tint="#000000" />
+                app:tint="#FF000000" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
                 android:text="Configurações"
-                android:textColor="#000000"
+                android:textColor="#FF000000"
                 android:textSize="18sp"
                 android:textStyle="bold" />
         </RelativeLayout>
@@ -67,7 +67,7 @@
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
                 android:src="@drawable/ic_radio_button"
-                app:tint="#333333"
+                app:tint="#FF000000"
                 android:contentDescription="Ícone desativar" />
 
             <LinearLayout
@@ -82,7 +82,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Desativar Botão Flutuante"
-                    android:textColor="#000000"
+                    android:textColor="#FF000000"
                     android:textSize="15sp"
                     android:textStyle="bold" />
 
@@ -90,7 +90,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Acesso rápido e fácil em qualquer tela."
-                    android:textColor="#666666"
+                    android:textColor="#FF666666"
                     android:textSize="12sp" />
             </LinearLayout>
 
@@ -101,6 +101,7 @@
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:checked="false" />
+                android:buttonTint="#FF000000"
         </RelativeLayout>
 
         <View
@@ -130,7 +131,7 @@
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
                 android:src="@drawable/ic_radio_button"
-                app:tint="#333333"
+                app:tint="#FF000000"
                 android:contentDescription="Ícone fixar" />
 
             <LinearLayout
@@ -145,7 +146,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Fixar Botão"
-                    android:textColor="#000000"
+                    android:textColor="#FF000000"
                     android:textSize="15sp"
                     android:textStyle="bold" />
 
@@ -153,7 +154,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Impede que o ícone seja movido."
-                    android:textColor="#666666"
+                    android:textColor="#FF666666"
                     android:textSize="12sp" />
             </LinearLayout>
 
@@ -163,7 +164,9 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
-                android:checked="false"/>
+                android:checked="false"
+                app:thumbTint="#FFFFFFFF"
+                app:trackTint="@color/switch_track_color" />
         </RelativeLayout>
 
         <!-- Spacer -->
@@ -192,7 +195,7 @@
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
                 android:src="@drawable/ic_edit"
-                app:tint="#333333"
+                app:tint="#FF000000"
                 android:contentDescription="Ícone personalizar" />
 
             <TextView
@@ -201,7 +204,7 @@
                 android:layout_centerVertical="true"
                 android:layout_marginStart="48dp"
                 android:text="Personalizar Botão"
-                android:textColor="#000000"
+                android:textColor="#FF000000"
                 android:textSize="15sp" />
 
             <ImageView
@@ -210,7 +213,7 @@
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:src="@drawable/ic_chevron_right"
-                app:tint="#AAAAAA"
+                app:tint="#FF000000"
                 android:contentDescription="Seta" />
         </RelativeLayout>
 
@@ -241,7 +244,7 @@
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
                 android:src="@drawable/ic_phone"
-                app:tint="#333333"
+                app:tint="#FF000000"
                 android:contentDescription="Ícone contatos" />
 
             <TextView
@@ -250,7 +253,7 @@
                 android:layout_centerVertical="true"
                 android:layout_marginStart="48dp"
                 android:text="Contatos de Emergência"
-                android:textColor="#000000"
+                android:textColor="#FF000000"
                 android:textSize="15sp" />
 
             <ImageView
@@ -259,7 +262,7 @@
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:src="@drawable/ic_chevron_right"
-                app:tint="#AAAAAA"
+                app:tint="#FF000000"
                 android:contentDescription="Seta" />
         </RelativeLayout>
 
@@ -290,7 +293,7 @@
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
                 android:src="@drawable/ic_chat"
-                app:tint="#333333"
+                app:tint="#FF000000"
                 android:contentDescription="Ícone frases" />
 
             <TextView
@@ -299,7 +302,7 @@
                 android:layout_centerVertical="true"
                 android:layout_marginStart="48dp"
                 android:text="Definir Frases Secretas de Confirmação"
-                android:textColor="#000000"
+                android:textColor="#FF000000"
                 android:textSize="15sp" />
 
             <ImageView
@@ -308,7 +311,7 @@
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:src="@drawable/ic_chevron_right"
-                app:tint="#AAAAAA"
+                app:tint="#FF000000"
                 android:contentDescription="Seta" />
         </RelativeLayout>
 
@@ -339,7 +342,7 @@
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
                 android:src="@drawable/ic_favorite_border"
-                app:tint="#333333"
+                app:tint="#FF000000"
                 android:contentDescription="Ícone seguradoras" />
 
             <TextView
@@ -348,7 +351,7 @@
                 android:layout_centerVertical="true"
                 android:layout_marginStart="48dp"
                 android:text="Seguradoras"
-                android:textColor="#000000"
+                android:textColor="#FF000000"
                 android:textSize="15sp" />
 
             <ImageView
@@ -357,7 +360,7 @@
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:src="@drawable/ic_chevron_right"
-                app:tint="#AAAAAA"
+                app:tint="#FF000000"
                 android:contentDescription="Seta" />
         </RelativeLayout>
 
@@ -388,7 +391,7 @@
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
                 android:src="@drawable/ic_account_circle"
-                app:tint="#333333"
+                app:tint="#FF000000"
                 android:contentDescription="Ícone conta" />
 
             <TextView
@@ -397,7 +400,7 @@
                 android:layout_centerVertical="true"
                 android:layout_marginStart="48dp"
                 android:text="Informações da Conta"
-                android:textColor="#000000"
+                android:textColor="#FF000000"
                 android:textSize="15sp" />
 
             <ImageView
@@ -406,7 +409,7 @@
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:src="@drawable/ic_chevron_right"
-                app:tint="#AAAAAA"
+                app:tint="#FF000000"
                 android:contentDescription="Seta" />
         </RelativeLayout>
 
@@ -437,7 +440,7 @@
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
                 android:src="@drawable/ic_delete"
-                app:tint="#333333"
+                app:tint="#FF000000"
                 android:contentDescription="Ícone excluir" />
 
             <TextView
@@ -446,7 +449,7 @@
                 android:layout_centerVertical="true"
                 android:layout_marginStart="48dp"
                 android:text="Excluir Conta"
-                android:textColor="#000000"
+                android:textColor="#FF000000"
                 android:textSize="15sp" />
 
             <ImageView
@@ -455,7 +458,7 @@
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:src="@drawable/ic_chevron_right"
-                app:tint="#AAAAAA"
+                app:tint="#FF000000"
                 android:contentDescription="Seta" />
         </RelativeLayout>
 
