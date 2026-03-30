@@ -16,6 +16,7 @@ rules = "1.7.0"
 
 [libraries]
 androidx-appcompat = { module = "androidx.appcompat:appcompat" }
+androidx-appcompat-appcompat = { module = "androidx.appcompat:appcompat" }
 androidx-appcompat-resources = { module = "androidx.appcompat:appcompat-resources" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
