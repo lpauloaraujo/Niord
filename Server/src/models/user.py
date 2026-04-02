@@ -1,8 +1,8 @@
-from .db import Base
+from ..db.database import Base
 from .seguradora import Seguradora
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import mapped_column, Mapped
-
+from sqlalchemy.types import Boolean
 
 
 
@@ -17,7 +17,9 @@ class User(Base):
     cpf: Mapped[str] = mapped_column(nullable=False, unique=True)
     telephone: Mapped[str] = mapped_column(nullable=False)
     blood_type: Mapped[str] = mapped_column(nullable=True)
-      
+    
+    #For OTP
+    is_verified: Mapped[bool] = mapped_column(nullable=False)
 
     #relationship for ORM operations
     #One To Many
