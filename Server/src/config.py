@@ -7,6 +7,9 @@ class Settings(BaseSettings):
     ORIGINS: list[str] = []
     DB_URL: str = ''
     SECRET_KEY: str = ''
+    REDIS_HOST: str = ''
+    REDIS_PORT: int = -1
+    REDIS_PASSWORD: str = ''
     model_config = SettingsConfigDict(env_file='./.env')
 
 @lru_cache
