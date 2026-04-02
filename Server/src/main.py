@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from .models.db import create_tables
-from .models.redis import redis_engine 
+from .db.database import create_tables
+from .db.redis import redis_engine 
 from .endpoints.api import api_router
 
 #Initialization

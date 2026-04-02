@@ -41,7 +41,6 @@ async def register(session: SessionDep, background: BackgroundTasks, userData: U
     print(otp_code)
 
     return userData
-
 @router.delete("/register")
 def unregister(session: SessionDep):
     pass
@@ -141,7 +140,6 @@ def refresh(session: SessionDep, refresh_token: str,
 
         return RefreshSchema(**data)
     raise HTTPException(401, create_detail("Token inválido"))
-
 
 
 
