@@ -4,9 +4,16 @@ from ..config import get_settings
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase 
 from sqlalchemy.orm import Session
+from sqlalchemy.pool import StaticPool
 
+if get_settings().DEBUG:
+    engine = create_engine(get_settings().DB_URL, echo=True, 
+                       connect_args={"check_same_thread": False},
+                       poolclass= StaticPool)
+else:
+    engine = create_engine(get_settings().DB_URL, echo=True, 
+                       connect_args={"check_same_thread": False})
 
-engine = create_engine(get_settings().DB_URL, echo=True, connect_args={"check_same_thread": False})
 
 class Base(DeclarativeBase):
     pass

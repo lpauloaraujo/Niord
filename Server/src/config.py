@@ -3,6 +3,7 @@ from functools import lru_cache
 
 #Server variables, supports default values and enviroment variables
 class Settings(BaseSettings):
+    DEBUG: bool = False
     SERVER_NAME: str = 'Niord'
     ORIGINS: list[str] = []
     DB_URL: str = ''
@@ -10,6 +11,7 @@ class Settings(BaseSettings):
     REDIS_HOST: str = ''
     REDIS_PORT: int = -1
     REDIS_PASSWORD: str = ''
+    OTP_EXPIRE: int = -1
     model_config = SettingsConfigDict(env_file='./.env')
 
 @lru_cache
