@@ -419,7 +419,7 @@ class MainOverlayButton(var context: Context,
 
     var secondaryButtonSize = statePacket.iconSizeDp * statePacket.subIconScale
     var additionalButtons: List<@Composable ()->Unit> = listOf(
-        {IconBox(R.drawable.health, secondaryButtonSize)},
+        {IconBox(R.drawable.health, secondaryButtonSize, onClick = { CallManager().toCall(context, "144") })},
         {IconBox(R.drawable.cops, secondaryButtonSize)},
         {IconBox(R.drawable.alert, secondaryButtonSize)},
         {IconBox(R.drawable.plt_vigia, secondaryButtonSize)},
