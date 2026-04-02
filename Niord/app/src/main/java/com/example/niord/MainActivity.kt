@@ -43,6 +43,16 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         buttonOverlayInit()
 
+        buttonOverlay.onEmergencyClick = { number ->
+
+            permission.requestCallPermission { granted ->
+                if (granted) {
+                    CallManager().toCall(this, number)
+                }
+            }
+
+        }
+
         val inflater = LayoutInflater.from(this)
         val layout = LinearLayout(this)
         val view = inflater.inflate(R.layout.configuracao, layout, false)
