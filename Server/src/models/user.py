@@ -1,5 +1,5 @@
-from ..db.database import Base
-from .seguradora import Seguradora
+from src.db.database import Base
+from src.models.seguradora import Seguradora
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import mapped_column, Mapped
 from sqlalchemy.types import Boolean
