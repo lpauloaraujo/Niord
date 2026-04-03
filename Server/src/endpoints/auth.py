@@ -1,7 +1,7 @@
 from fastapi import APIRouter, BackgroundTasks
 from ..db.database import SessionDep
 from ..db.redis import redis
-from ..models.user import User, UserModel
+from ..models.user import User, UserCredentials
 from ..middle.user import get_user_by_email, hash_password
 from ..middle.auth import send_mail_code
 import sqlalchemy.exc as db_exception
@@ -11,7 +11,7 @@ from fastapi import HTTPException, Response
 router = APIRouter(prefix="/auth")
 
 @router.post("/register")
-async def register(session: SessionDep, background: BackgroundTasks, userData: UserModel):
+async def register(session: SessionDep, background: BackgroundTasks, userData: UserCredentials):
     try:
         data = userData.model_dump()
         user = User(**data, is_verified=False)
