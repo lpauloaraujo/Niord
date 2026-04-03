@@ -3,6 +3,8 @@ from .seguradora import Seguradora
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import mapped_column, Mapped
 from sqlalchemy.types import Boolean
+from pydantic import BaseModel, EmailStr, SecretStr
+from typing import Annotated
 
 
 
@@ -21,9 +23,17 @@ class User(Base):
     #For OTP
     is_verified: Mapped[bool] = mapped_column(nullable=False)
 
-    #relationship for ORM operations
-    #One To Many
-    #items: Mapped[List["Item"]] = relationship(back_populates="user")
+
+
+class UserModel(BaseModel):
+    name: str
+    email: EmailStr
+    password: Annotated[str, SecretStr] #Doc formatting
+    registration_plate: str
+    cpf: str
+    telephone: str
+    blood_type: str | None = None
+
 
 
 class User_Seguradora(Base):
@@ -33,20 +43,4 @@ class User_Seguradora(Base):
     id_seguradora: Mapped[int] = mapped_column(ForeignKey(f"{Seguradora.__tablename__}.id"), primary_key=True)
     n_apolice: Mapped[str] = mapped_column(nullable=False, unique=True)
     cpf_cnpj: Mapped[str] = mapped_column(nullable=False)
-
-
-
-
-"""
-class Item(Base):
-    __tablename__ = "item"
-       
-    id: Mapped[int] = mapped_column(primary_key=True)
-    item_name: Mapped[str] = mapped_column(nullable=False)
-    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
-   
-    #continuation
-    user: Mapped[User] = relationship(back_populates="items")
-"""
-
 
