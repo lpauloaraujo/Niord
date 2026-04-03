@@ -1,8 +1,9 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, BackgroundTasks
 from ..db.database import SessionDep
 from ..db.redis import redis
-from ..models.user import User
+from ..models.user import User, UserModel
 from ..middle.user import get_user_by_email, hash_password
+from ..middle.auth import send_mail_code
 import sqlalchemy.exc as db_exception
 from typing import Any
 from fastapi import HTTPException, Response
@@ -10,9 +11,10 @@ from fastapi import HTTPException, Response
 router = APIRouter(prefix="/auth")
 
 @router.post("/register")
-def register(session: SessionDep, register_data: dict[str, Any]):
+async def register(session: SessionDep, background: BackgroundTasks, userData: UserModel):
     try:
-        user = User(**register_data, is_verified=False)
+        data = userData.model_dump()
+        user = User(**data, is_verified=False)
         user.password = hash_password(user.password)
         session.add(user)
         session.commit()
@@ -22,10 +24,11 @@ def register(session: SessionDep, register_data: dict[str, Any]):
         raise HTTPException(status_code=409, detail="Erro de integridade dos dados")
 
     session.refresh(user)
-    redis.create_otp(user.email)
-    #DEBUG
-    print(redis.client.get(f"otp:{user.email}"))
-    #TO-DO send to user.email
+    
+    otp_code = redis.create_otp(user.email)
+    #Avoid response delay from sending the email
+    background.add_task(send_mail_code, user.email, otp_code)
+
     return user 
 
 @router.delete("/register")

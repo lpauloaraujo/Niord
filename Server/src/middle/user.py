@@ -1,9 +1,5 @@
 from ..db.database import SessionDep
-from ..db.redis import redis
 from ..models.user import User
-from sqlalchemy import select
-import sqlalchemy.exc as db_exception
-from typing import Any
 from pwdlib import PasswordHash
 
 
