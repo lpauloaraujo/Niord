@@ -20,11 +20,13 @@ class RedisEngine:
             print("Redis not initialized")
             print(e)
     
-    def create_otp(self, email: str):
+    def create_otp(self, email: str) -> int:
+        code = sys_random.randint(100000, 999999)
         #Expires in 5 minutes
         self.client.set(f"otp:{email}", 
-                        sys_random.randint(100000, 999999), 
+                        code, 
                         ex=get_settings().OTP_EXPIRE)
+        return code
     
     def check_otp(self, email: str, code: int):
         otp_code = self.client.get(f"otp:{email}")
