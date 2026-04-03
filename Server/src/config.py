@@ -13,17 +13,11 @@ class Settings(BaseSettings):
     REDIS_PORT: int = -1
     REDIS_PASSWORD: str = ''
     OTP_EXPIRE: int = -1
-    
-    MAIL_FROM_NAME: str = ''
-    MAIL_USERNAME: str = ''
-    MAIL_PASSWORD: SecretStr = SecretStr('')
-    MAIL_FROM: EmailStr = ''
-    MAIL_PORT: int = -1
-    MAIL_SERVER: str = ''
-    MAIL_STARTTLS: bool = False 
-    MAIL_SSL_TLS: bool = False
-    USE_CREDENTIALS: bool = False 
-    VALIDATE_CERTS: bool = False 
+   
+    EMAIL_URL: str = ""
+    EMAIL_FROM: str = ""
+    EMAIL_API_KEY: str = ""
+    EMAIL_NAME: str = ""
 
     model_config = SettingsConfigDict(env_file='./.env')
 

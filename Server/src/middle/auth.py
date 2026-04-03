@@ -1,33 +1,27 @@
-from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
+import httpx
 from ..config import get_settings 
 from pydantic import NameEmail
 
 
-settings = get_settings()
-conf = ConnectionConfig(
-        MAIL_FROM_NAME=settings.MAIL_FROM_NAME,
-        MAIL_USERNAME= settings.MAIL_USERNAME,
-        MAIL_PASSWORD=settings.MAIL_PASSWORD,
-        MAIL_PORT=settings.MAIL_PORT,
-        MAIL_FROM=settings.MAIL_FROM,
-        MAIL_SERVER=settings.MAIL_SERVER,
-        MAIL_STARTTLS = settings.MAIL_STARTTLS,
-        MAIL_SSL_TLS = settings.MAIL_SSL_TLS,
-        USE_CREDENTIALS = settings.USE_CREDENTIALS,
-        VALIDATE_CERTS = settings.VALIDATE_CERTS
-)
-
-fast_mail = FastMail(conf)
-
 async def send_mail_code(email_str: str, code: int):
-    email = NameEmail._validate(email_str)
-    
-    #TO-DO email body html
-    message = MessageSchema(
-            subject="Código de confirmação",
-            recipients=[email],
-            body=str(code),
-            subtype=MessageType.html
-            )
-    await fast_mail.send_message(message)
-    return True
+    recipient_mail = NameEmail._validate(email_str).email
+    response = await send_mail([recipient_mail], str(code))
+    return response 
+
+
+
+async def send_mail(email_recipients: list[str], message: str):
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+                get_settings().EMAIL_URL,
+                headers={"Authorization": f"Bearer {get_settings().EMAIL_API_KEY}"},
+                json={
+                    "from": {"email":get_settings().EMAIL_FROM, 
+                             "name": get_settings().EMAIL_NAME},
+                    "to": [{"email": e for e in email_recipients}],
+                    "subject": "Código de confirmação",
+                    "text": message
+                    }
+                ) 
+    return response 
+

@@ -25,7 +25,7 @@ class User(Base):
 
 
 
-class UserModel(BaseModel):
+class UserCredentials(BaseModel):
     name: str
     email: EmailStr
     password: Annotated[str, SecretStr] #Doc formatting
