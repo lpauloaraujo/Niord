@@ -1,9 +1,9 @@
 from fastapi import APIRouter, BackgroundTasks
-from ..db.database import SessionDep
-from ..db.redis import redis
-from ..models.user import User, UserCredentials
-from ..middle.user import get_user_by_email, hash_password
-from ..middle.auth import send_mail_code
+from src.db.database import SessionDep
+from src.db.redis import redis
+from src.models.user import User, UserCredentials
+from src.middle.user import get_user_by_email, hash_password
+from src.middle.auth import send_mail_code
 import sqlalchemy.exc as db_exception
 from typing import Any
 from fastapi import HTTPException, Response
