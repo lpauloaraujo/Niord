@@ -1,0 +1,13 @@
+services:
+  niord:
+    build: ./server
+    image: niord
+    ports: ["80:80"]
+    env_file: ./server/.env
+    container_name: server
+
+  redis:
+    build: ./redis
+    image: redis 
+    env_file: ./redis/.env
+    container_name: redis_db 
