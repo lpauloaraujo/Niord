@@ -16,7 +16,6 @@ services:
     image: redis 
     env_file: ./redis/.env
     container_name: redis_db 
-
   db:
     image: postgres
     env_file: ./.env
