@@ -1,5 +1,5 @@
 from redis import Redis
-from ..config import get_settings 
+from src.config import get_settings 
 from secrets import SystemRandom
 
 sys_random = SystemRandom()
@@ -19,7 +19,7 @@ class RedisEngine:
         except Exception as e:
             print("Redis not initialized")
             print(e)
-    
+
     def create_otp(self, email: str) -> int:
         code = sys_random.randint(100000, 999999)
         #Expires in 5 minutes

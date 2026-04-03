@@ -1,5 +1,5 @@
-from ..db.database import Base
-from .user import User
+from src.db.database import Base
+from src.models.user import User
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import mapped_column, Mapped
 

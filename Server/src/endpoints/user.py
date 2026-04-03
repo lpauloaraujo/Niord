@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-from ..db.database import SessionDep
-from ..models.user import User
+from src.db.database import SessionDep
+from src.models.user import User
 from sqlalchemy import select
 
 

@@ -1,5 +1,5 @@
 import httpx
-from ..config import get_settings 
+from src.config import get_settings 
 from pydantic import NameEmail
 
 
