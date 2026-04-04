@@ -4,7 +4,7 @@ from src.db.redis import redis
 from src.models.user import User, UserCredentials, UserLogin
 from src.middle.user import get_user_by_email, hash_password, check_hash
 from src.middle.auth import send_mail_code
-from src.middle.auth import create_refresh_token, create_access_token, refresh_access_token, decode_token, delete_refresh_by_id, is_refresh_update_age, get_user_by_id
+from src.middle.auth import create_refresh_token, create_access_token, refresh_access_token, decode_token, delete_refresh_by_id, is_refresh_update_age, get_user_by_id, verify_refresh
 import sqlalchemy.exc as db_exception
 from typing import Annotated
 from fastapi import HTTPException, Response, Depends
@@ -77,7 +77,7 @@ def login(session: SessionDep, user_form: Annotated[UserLogin, Depends()]):
 @router.delete("/login", status_code=200)
 def logout(session: SessionDep, refresh_token: str):
     decoded = decode_token(refresh_token)
-    if decoded:
+    if decoded and verify_refresh(session, decoded, refresh_token):
         delete_refresh_by_id(session, decoded.id)
         session.commit()
         return {"detail":"Refresh token apagado com sucesso"}

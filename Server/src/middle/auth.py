@@ -5,7 +5,6 @@ from src.models.token import RefreshToken, TokenDecoded
 from src.models.user import User
 from src.middle.user import get_user_by_id
 from src.db.database import SessionDep
-from fastapi.security import OAuth2PasswordBearer
 import jwt
 from datetime import timedelta, timezone, datetime
 
@@ -33,21 +32,17 @@ async def send_mail(email_recipients: list[str], message: str):
 
 
 def create_access_token(user: User, fresh: bool = False) -> str:
-    data = {"id": user.id,
-            "exp": datetime.now(timezone.utc) + 
-            timedelta(seconds=get_settings().TOKEN_EXPIRE_SECONDS),
-            "fresh": fresh}
-    encoded = jwt.encode(data, get_settings().SECRET_KEY, algorithm=get_settings().ALGO)
-
+    encoded = encode_token(user.id, datetime.now(timezone.utc) + 
+                           timedelta(seconds=get_settings().TOKEN_EXPIRE_SECONDS), 
+                           fresh)
     return encoded
 
 
 def create_refresh_token(session: SessionDep, user: User) -> RefreshToken:
     delete_refresh_by_id(session, user.id)
-    data = {"id": user.id,
-            "exp": datetime.now(timezone.utc) + timedelta(days=get_settings().REFRESH_EXPIRE_DAYS)
-            }
-    encoded = jwt.encode(data, get_settings().SECRET_KEY, algorithm=get_settings().ALGO)
+    encoded = encode_token(user.id, 
+                           datetime.now(timezone.utc) + timedelta(days=get_settings().REFRESH_EXPIRE_DAYS), 
+                           None)
     refresh_token = RefreshToken(id_user=user.id, token=encoded)
     session.add(refresh_token)
     return refresh_token
@@ -79,6 +74,13 @@ def is_refresh_update_age(refresh_token: str):
             return True
     return False
 
+
+def encode_token(id: int, exp: datetime, fresh: bool | None):
+    data = {"id": id, "exp": exp}
+    if fresh:
+        data["fresh"] = fresh
+
+    return jwt.encode(data, get_settings().SECRET_KEY, algorithm=get_settings().ALGO)
 
 def decode_token(token: str) -> TokenDecoded | None:
     try:
