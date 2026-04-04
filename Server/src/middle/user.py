@@ -17,4 +17,3 @@ def get_user_by_id(session: SessionDep, user_id: int):
 def get_user_by_email(session: SessionDep, email:str) -> User | None:
     return session.query(User).filter(User.email == email).one_or_none()
 
-

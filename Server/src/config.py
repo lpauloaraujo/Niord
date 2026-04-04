@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     EMAIL_API_KEY: str = ""
     EMAIL_NAME: str = ""
 
+    REFRESH_EXPIRE_DAYS: int = 0
+    REFRESH_UPDATE_DAYS: int = 0
+    TOKEN_EXPIRE_SECONDS: int = 0
+    ALGO:str = ""
+
     model_config = SettingsConfigDict(env_file='./.env')
 
 @lru_cache
