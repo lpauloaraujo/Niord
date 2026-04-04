@@ -17,9 +17,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -418,9 +420,11 @@ class MainOverlayButton(var context: Context,
     }
 
     var secondaryButtonSize = statePacket.iconSizeDp * statePacket.subIconScale
-    var onEmergencyClick: ((String) -> Unit)? = null
+
+    var onCallClick: ((String) -> Unit)? = null
+
     var additionalButtons: List<@Composable ()->Unit> = listOf(
-        {IconBox(R.drawable.health, secondaryButtonSize, onClick = { onEmergencyClick?.invoke("144") })},
+        {IconBox(R.drawable.health, secondaryButtonSize, onClick = {onCallClick?.invoke("144")})},
         {IconBox(R.drawable.cops, secondaryButtonSize)},
         {IconBox(R.drawable.alert, secondaryButtonSize)},
         {IconBox(R.drawable.plt_vigia, secondaryButtonSize)},
@@ -448,10 +452,10 @@ class MainOverlayButton(var context: Context,
                 else additionalButtons.reversed().forEach { it() }
                 //additionalButtons.forEach { it() }
             }
+
     }
 
 }
-
 
 //Use this class as an example of use case
 class ExampleCustomOverlay(context: Context, lifecycleOwner: FloatingLifecycleOwner) : OverlayManager(context, lifecycleOwner){

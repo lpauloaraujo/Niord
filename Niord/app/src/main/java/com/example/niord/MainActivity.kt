@@ -38,19 +38,14 @@ class MainActivity : ComponentActivity() {
     }
     private lateinit var buttonOverlay: MainOverlayButton
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         buttonOverlayInit()
 
-        buttonOverlay.onEmergencyClick = { number ->
-
-            permission.requestCallPermission { granted ->
-                if (granted) {
-                    CallManager().toCall(this, number)
-                }
-            }
-
+        buttonOverlay.onCallClick = { number ->
+            showCallDialog(number)
         }
 
         val inflater = LayoutInflater.from(this)
@@ -93,6 +88,48 @@ class MainActivity : ComponentActivity() {
         findViewById<SwitchCompat>(R.id.switchFixar).setOnCheckedChangeListener { button, bool ->
             buttonOverlay.isDraggable = !bool
         }
+    }
+
+    private fun showCallDialog(number: String) {
+
+        val title: String
+        val message: String
+        val positiveText: String
+        val negativeText: String
+
+        when (number) {
+
+            "144" -> {
+                title = "Ligar para Emergência?"
+                message = "Você será direcionado para a chamada telefônica. Confirme para discar imediatamente."
+                positiveText = "Ligar Agora"
+                negativeText = "Cancelar"
+            }
+
+            else -> {
+                title = "Chamada"
+                message = "Deseja realmente ligar para $number?"
+                positiveText = "Confirmar"
+                negativeText = "Cancelar"
+            }
+        }
+
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton(positiveText) { _, _ ->
+
+                permission.requestCallPermission { granted ->
+                    if (granted) {
+                        CallManager().toCall(this, number)
+                    }
+                }
+
+            }
+            .setNegativeButton(negativeText, null)
+            .create()
+
+        dialog.show()
     }
 }
 
