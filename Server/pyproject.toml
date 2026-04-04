@@ -9,6 +9,7 @@ dependencies = [
     "fastapi-mail>=1.6.2",
     "fastapi[standard]>=0.135.1",
     "pwdlib[argon2]>=0.3.0",
+    "pyjwt>=2.12.1",
     "redis[hiredis]>=7.4.0",
     "sqlalchemy>=2.0.48",
 ]

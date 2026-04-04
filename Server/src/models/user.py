@@ -34,6 +34,9 @@ class UserCredentials(BaseModel):
     telephone: str
     blood_type: str | None = None
 
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: Annotated[str, SecretStr]
 
 
 class User_Seguradora(Base):
