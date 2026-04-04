@@ -1422,6 +1422,7 @@ dependencies = [
     { name = "pwdlib", extra = ["argon2"] },
     { name = "pyjwt" },
     { name = "pwdlib", extra = ["argon2"] },
+    { name = "pyjwt" },
     { name = "redis", extra = ["hiredis"] },
     { name = "sqlalchemy" },
 ]
@@ -1440,6 +1441,7 @@ requires-dist = [
     { name = "pwdlib", extras = ["argon2"], specifier = ">=0.3.0" },
     { name = "pyjwt", specifier = ">=2.12.1" },
     { name = "pwdlib", extras = ["argon2"], specifier = ">=0.3.0" },
+    { name = "pyjwt", specifier = ">=2.12.1" },
     { name = "redis", extras = ["hiredis"], specifier = ">=7.4.0" },
     { name = "sqlalchemy", specifier = ">=2.0.48" },
 ]
