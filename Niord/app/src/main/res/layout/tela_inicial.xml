@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#FFFFFF"
+    android:gravity="center_horizontal"
+    android:paddingStart="32dp"
+    android:paddingEnd="32dp">
+
+    <!-- Título -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
+        android:text="Niord"
+        android:textColor="#000000"
+        android:textSize="24sp"
+        android:textStyle="bold" />
+
+    <!-- Ícone circular -->
+    <ImageView
+        android:id="@+id/imgLogo"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_marginTop="32dp"
+        android:src="@drawable/main_button"
+        android:background="@drawable/main_button"
+        android:scaleType="centerCrop"
+        android:contentDescription="Logo Niord" />
+
+    <!-- Mensagem de boas vindas -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:text="Olá! É bom ver você por aqui."
+        android:textColor="#333333"
+        android:textSize="16sp" />
+
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="48dp" />
+
+    <!-- Botão Entrar -->
+    <Button
+        android:id="@+id/btnEntrar"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginBottom="16dp"
+        android:text="Entrar"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:backgroundTint="#4A6CF7"
+        android:cornerRadius="8dp" />
+
+    <!-- Botão Criar Conta -->
+    <Button
+        android:id="@+id/btnCriarConta"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginBottom="48dp"
+        android:text="Criar Conta"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:backgroundTint="#4A6CF7"
+        android:cornerRadius="8dp" />
+
+</LinearLayout>
