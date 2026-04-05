@@ -11,8 +11,7 @@ if get_settings().DEBUG:
                        connect_args={"check_same_thread": False},
                        poolclass= StaticPool)
 else:
-    engine = create_engine(get_settings().DB_URL, echo=True, 
-                       connect_args={"check_same_thread": False})
+    engine = create_engine(get_settings().DB_URL, echo=True)
 
 
 class Base(DeclarativeBase):
