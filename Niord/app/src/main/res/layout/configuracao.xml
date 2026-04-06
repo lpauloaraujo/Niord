@@ -101,7 +101,7 @@
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:buttonTint="#FF000000"
-                android:checked="true" />
+                android:checked="false" />
         </RelativeLayout>
 
         <View
