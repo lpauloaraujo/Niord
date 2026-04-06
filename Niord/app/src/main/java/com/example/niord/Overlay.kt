@@ -412,9 +412,8 @@ class MainOverlayButton(var context: Context,
     }
 
     override fun setVisibility(state: Boolean) {
-        if (!state && additionalOverlay.isVisible) {
-            statePacket.addIsVisible = false
-            additionalOverlay.setVisibility(false)
+        if(!state and additionalOverlay.isVisible){
+            additionalOverlay.setVisibility(state)
         }
         super.setVisibility(state)
     }
