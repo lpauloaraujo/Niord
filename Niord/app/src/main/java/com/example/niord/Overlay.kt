@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.PixelFormat
 import android.os.Build
 import android.util.DisplayMetrics
+import android.util.Log
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -252,7 +253,12 @@ open class OverlayManager(private val context: Context, var lifecycleOwner: Floa
 
     @RequiresApi(Build.VERSION_CODES.O)
     open fun onDestroy(){
-        dismiss()
+        if(isInvoked){
+            if(floatingView?.isAttachedToWindow == true){
+                winManager?.removeViewImmediate(floatingView)
+            }
+        }
+        floatingView?.disposeComposition()
         //lifecycleOwner.onDestroy()
         //lifecycleOwner = null
     }
@@ -332,7 +338,7 @@ class MainOverlayButton(var context: Context,
         )
     }
     override fun onDestroy(){
-        additionalOverlay.dismiss()
+        additionalOverlay.onDestroy()
         super.onDestroy()
     }
     class StatePacket{
@@ -386,8 +392,16 @@ class MainOverlayButton(var context: Context,
         }
 
 
-        additionalOverlay.winManager?.
-        updateViewLayout(additionalOverlay.floatingView, additionalOverlay.layoutParams)
+        if (additionalOverlay.floatingView?.isAttachedToWindow == true) {
+            try {
+                additionalOverlay.winManager?.
+                updateViewLayout(additionalOverlay.floatingView, additionalOverlay.layoutParams)
+            } catch (e: IllegalArgumentException) {
+                // Log it or handle the fact that the view was detached mid-execution
+                Log.e("Overlay", "View detached during update: ${e.message}")
+            }
+        }
+
 
     }
 
