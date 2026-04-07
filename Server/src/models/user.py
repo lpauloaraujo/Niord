@@ -26,9 +26,10 @@ class User(Base):
 
 
 class UserCredentials(BaseModel):
+    model_config = {"validate_assignment": True}
     name: str
     email: EmailStr
-    password: Annotated[str, SecretStr] #Doc formatting
+    password: str  
     registration_plate: str
     cpf: str
     telephone: str
