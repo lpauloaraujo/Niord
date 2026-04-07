@@ -100,6 +100,7 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
+                android:buttonTint="#FF000000"
                 android:checked="false" />
                 android:buttonTint="#FF000000"
         </RelativeLayout>
