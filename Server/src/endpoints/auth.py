@@ -98,13 +98,25 @@ def logout(session: SessionDep, refresh_token: str):
     
 
 @router.post("/refresh")
-def refresh(session: SessionDep, refresh_token: str):
-    access_token = refresh_access_token(session, refresh_token)
+def refresh(session: SessionDep, refresh_token: str, 
+            user_form: Annotated[UserLogin, Depends()] | None = None):
+    is_fresh = False
+    if user_form is not None:
+        user = get_user_by_email(session, user_form.email)
+        if user and check_hash(user_form.password, user.password):
+            is_fresh=True
+            #DEBUG
+            print("Creating fresh access token")
+        else:
+            raise HTTPException(401, "Credenciais incorretas")
+
+
+    access_token = refresh_access_token(session, refresh_token, is_fresh)
     refresh_should_update = is_refresh_update_age(refresh_token)
     if access_token:
         data = dict()
         data["access"] = access_token
-
+        
         if refresh_should_update:
             #Returns new refresh token if it's near expiring
             decoded = decode_token(refresh_token)
