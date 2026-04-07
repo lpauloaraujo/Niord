@@ -55,12 +55,12 @@ def delete_refresh_by_id(session: SessionDep, user_id: int):
     refresh_token = session.get(RefreshToken, user_id)
     delete_refresh_token(session, refresh_token)
 
-def refresh_access_token(session: SessionDep, refresh_token: str) -> str | None:
+def refresh_access_token(session: SessionDep, refresh_token: str, fresh: bool = False) -> str | None:
     decoded = decode_token(refresh_token)
     if decoded and verify_refresh(session, decoded, refresh_token):
         user = get_user_by_id(session, decoded.id)
         if user:
-            return create_access_token(user)
+            return create_access_token(user, fresh)
     return None
 
 def is_refresh_update_age(refresh_token: str):
