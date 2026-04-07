@@ -34,8 +34,8 @@ async def register(session: SessionDep, background: BackgroundTasks, userData: U
     redis.add_to_verify_user(userData)
     otp_code = redis.create_otp(userData.email)
     #Avoid response delay from sending the email
-    background.add_task(send_mail_code, userData.email, otp_code)
-    #print(otp_code)
+    #background.add_task(send_mail_code, userData.email, otp_code)
+    print(otp_code)
 
     return userData
 
@@ -45,11 +45,12 @@ def unregister(session: SessionDep):
 
 @router.post("/resend", status_code=200)
 def resend_otp(session: SessionDep, background: BackgroundTasks, email: str, password: Annotated[str, SecretStr]):
-    user: User|None = get_user_by_email(session, email)
-    if user and not user.is_verified and check_hash(password, user.password):
+    user: UserCredentials|None = redis.get_to_verify_user(email)
+    if user and check_hash(password, user.password):
         otp_code = redis.create_otp(email)
         #Avoid response delay from sending the email
-        background.add_task(send_mail_code, email, otp_code)
+        #background.add_task(send_mail_code, email, otp_code)
+        print(otp_code)
         return {"detail": "Código reenviado"}
     else:
         raise HTTPException(401, "Dados incorretos ou email não aguarda OTP")
