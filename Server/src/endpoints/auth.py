@@ -24,7 +24,14 @@ async def register(session: SessionDep, background: BackgroundTasks, userData: U
         if not is_valid_cpf(user.cpf):
             raise HTTPException(401, "CPF inválido")
 
-        user.password = hash_password(user.password)
+        
+        #Checks if there's an unverified user with same email to overwrite
+        db_user = get_user_by_email(session, user.email)
+        if db_user and not db_user.is_verified:
+            session.delete(db_user)
+            session.commit()
+
+        user.password = hash_password(user.password) 
         session.add(user)
         session.commit()
     except db_exception.IntegrityError as e:
