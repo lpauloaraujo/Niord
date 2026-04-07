@@ -2,7 +2,7 @@ import httpx
 from src.config import get_settings 
 from pydantic import NameEmail
 from src.models.token import RefreshToken, TokenDecoded
-from src.models.user import User
+from src.models.user import User, UserCredentials
 from src.middle.user import get_user_by_id
 from src.db.database import SessionDep
 import jwt
@@ -29,6 +29,13 @@ async def send_mail(email_recipients: list[str], message: str):
                     }
                 ) 
     return response 
+
+
+def add_user_db(session: SessionDep, userData: UserCredentials, verified: bool = False):
+    data = userData.model_dump()
+    user = User(**data, is_verified=verified)
+    session.add(user)
+    return user
 
 
 def create_access_token(user: User, fresh: bool = False) -> str:

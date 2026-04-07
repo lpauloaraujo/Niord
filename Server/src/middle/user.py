@@ -17,6 +17,8 @@ def get_user_by_id(session: SessionDep, user_id: int):
 def get_user_by_email(session: SessionDep, email:str) -> User | None:
     return session.query(User).filter(User.email == email).one_or_none()
 
+def get_user_by_cpf(session: SessionDep, cpf:str) -> User | None:
+    return session.query(User).filter(User.cpf == cpf).one_or_none()
 
 def is_valid_cpf(cpf: str) -> bool:
     splitted = split_cpf(cpf)

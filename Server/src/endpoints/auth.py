@@ -2,8 +2,8 @@ from fastapi import APIRouter, BackgroundTasks
 from src.db.database import SessionDep
 from src.db.redis import redis
 from src.models.user import User, UserCredentials, UserLogin
-from src.middle.user import get_user_by_email, hash_password, check_hash, is_valid_cpf
-from src.middle.auth import send_mail_code
+from src.middle.user import get_user_by_email, hash_password, check_hash, is_valid_cpf, get_user_by_cpf
+from src.middle.auth import send_mail_code, add_user_db
 from src.middle.auth import create_refresh_token, create_access_token, refresh_access_token, decode_token, delete_refresh_by_id, is_refresh_update_age, get_user_by_id, verify_refresh
 import sqlalchemy.exc as db_exception
 from typing import Annotated
@@ -17,35 +17,25 @@ oauth2_bearer = OAuth2PasswordBearer("auth/login", "auth/refresh")
 
 @router.post("/register", status_code=200)
 async def register(session: SessionDep, background: BackgroundTasks, userData: UserCredentials):
-    try:
-        data = userData.model_dump()
-        user = User(**data, is_verified=False)
-       
-        if not is_valid_cpf(user.cpf):
-            raise HTTPException(401, "CPF inválido")
 
-        
-        #Checks if there's an unverified user with same email to overwrite
-        db_user = get_user_by_email(session, user.email)
-        if db_user and not db_user.is_verified:
-            session.delete(db_user)
-            session.commit()
+    if not is_valid_cpf(userData.cpf):
+        raise HTTPException(401, "CPF inválido")
 
-        user.password = hash_password(user.password) 
-        session.add(user)
-        session.commit()
-    except db_exception.IntegrityError as e:
-        #DEBUG
-        print(e)
-        raise HTTPException(status_code=409, detail="Erro de integridade dos dados")
-
-    session.refresh(user)
+    user = get_user_by_email(session, userData.email)
+    if user:
+        raise HTTPException(401, "Email já em uso")
+    user = get_user_by_cpf(session, userData.cpf)
+    if user:
+        raise HTTPException(401, "CPF já em uso") 
     
-    otp_code = redis.create_otp(user.email)
+    userData.password = hash_password(userData.password)
+    redis.add_to_verify_user(userData)
+    otp_code = redis.create_otp(userData.email)
     #Avoid response delay from sending the email
-    background.add_task(send_mail_code, user.email, otp_code)
+    background.add_task(send_mail_code, userData.email, otp_code)
+    #print(otp_code)
 
-    return user 
+    return userData
 
 @router.delete("/register")
 def unregister(session: SessionDep):
@@ -67,12 +57,16 @@ def resend_otp(session: SessionDep, background: BackgroundTasks, email: str, pas
 def verify_account(session: SessionDep, email: str, code:int):
     otp_check = redis.check_otp(email, code)
     if otp_check:
-        user = get_user_by_email(session, email)
+        user = redis.get_to_verify_user(email)
         if user:
-            user.is_verified = True
-            session.commit()
-            return {"detail": "Conta verificada com sucesso"}
-        #Should happen only if the email exists on Redis but not on DB
+            try:
+                add_user_db(session, user, True)
+                session.commit()
+                return {"detail": "Conta verificada com sucesso"}
+            except db_exception.IntegrityError as e:
+                #DEBUG
+                print(e)
+                raise HTTPException(status_code=409, detail="Erro de integridade dos dados")
         raise HTTPException(404, "Usuário não encontrado")
     if otp_check == None:
         raise HTTPException(404, "Email não aguarda OTP ou expirou")
