@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     REDIS_PORT: int = -1
     REDIS_PASSWORD: str = ''
     OTP_EXPIRE: int = -1
+    UNVERIFIED_EXPIRE: int = -1
    
     EMAIL_URL: str = ""
     EMAIL_FROM: str = ""
