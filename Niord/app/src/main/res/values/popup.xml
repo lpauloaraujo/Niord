@@ -1,0 +1,29 @@
+<resources>
+
+    <style name="CustomAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+
+        <!-- fundo do dialog -->
+        <item name="colorSurfaceContainerHigh">@color/white</item>
+
+        <item name="colorOnSurface">@color/black</item>
+
+        <!-- cor do texto principal -->
+        <item name="colorOnSurfaceVariant">@color/black</item>
+
+        <!-- cor dos botões -->
+        <item name="colorPrimary">@color/white</item>
+
+        <!-- bordas arredondadas -->
+        <item name="shapeAppearanceMediumComponent">@style/DialogShape</item>
+
+        <item name="buttonBarPositiveButtonStyle">@style/PositiveDialogButton</item>
+        <item name="buttonBarNegativeButtonStyle">@style/NegativeDialogButton</item>
+
+    </style>
+
+    <style name="DialogShape">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">28dp</item>
+    </style>
+
+</resources>

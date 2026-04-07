@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="DialogTitle">
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
+    <style name="PositiveDialogButton">
+        <item name="android:textColor">@android:color/white</item>
+        <item name="backgroundTint">@color/positive_dialog_blue</item>
+        <item name="android:layout_marginLeft">12dp</item>
+        <item name="android:layout_marginStart">12dp</item>
+    </style>
+
+    <style name="NegativeDialogButton">
+        <item name="android:textColor">@android:color/white</item>
+        <item name="backgroundTint">@color/negative_dialog_blue</item>
+    </style>
+
+</resources>

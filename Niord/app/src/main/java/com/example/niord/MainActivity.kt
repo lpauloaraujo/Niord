@@ -114,7 +114,10 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
+            this,
+            R.style.CustomAlertDialog
+        )
             .setTitle(title)
             .setMessage(message)
             .setPositiveButton(positiveText) { _, _ ->
