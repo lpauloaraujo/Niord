@@ -392,6 +392,7 @@ class MainOverlayButton(var context: Context,
         }
 
 
+        additionalOverlay.invoke()
         if (additionalOverlay.floatingView?.isAttachedToWindow == true) {
             try {
                 additionalOverlay.winManager?.
