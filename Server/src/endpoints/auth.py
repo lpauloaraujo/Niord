@@ -2,11 +2,12 @@ from fastapi import APIRouter, BackgroundTasks
 from src.db.database import SessionDep
 from src.db.redis import redis
 from src.models.user import User, UserCredentials
-from src.middle.user import get_user_by_email, hash_password
+from src.middle.user import get_user_by_email, hash_password, check_hash
 from src.middle.auth import send_mail_code
 import sqlalchemy.exc as db_exception
-from typing import Any
+from typing import Annotated
 from fastapi import HTTPException, Response
+from pydantic import SecretStr
 
 router = APIRouter(prefix="/auth")
 
@@ -34,6 +35,18 @@ async def register(session: SessionDep, background: BackgroundTasks, userData: U
 @router.delete("/register")
 def unregister(session: SessionDep):
     pass
+
+@router.post("/resend", status_code=200)
+def resend_otp(session: SessionDep, background: BackgroundTasks, email: str, password: Annotated[str, SecretStr]):
+    user: User|None = get_user_by_email(session, email)
+    if user and not user.is_verified and check_hash(password, user.password):
+        otp_code = redis.create_otp(email)
+        #Avoid response delay from sending the email
+        background.add_task(send_mail_code, email, otp_code)
+        return {"detail": "Código reenviado"}
+    else:
+        raise HTTPException(401, "Dados incorretos ou email não aguarda OTP")
+
 
 @router.post("/verify")
 def verify_account(session: SessionDep, email: str, code:int):
