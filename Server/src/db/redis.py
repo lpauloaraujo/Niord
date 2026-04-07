@@ -1,6 +1,8 @@
 from redis import Redis
 from src.config import get_settings 
 from secrets import SystemRandom
+from src.models.user import UserCredentials
+from pydantic import BaseModel
 
 sys_random = SystemRandom()
 
@@ -19,6 +21,13 @@ class RedisEngine:
         except Exception as e:
             print("Redis not initialized")
             print(e)
+
+    def add_to_verify_user(self, user: UserCredentials):
+        self.client.set(f"unverified:{user.email}", user.model_dump_json())
+
+    def get_to_verify_user(self, email: str) -> UserCredentials:
+        entry = str(self.client.get(f"unverified:{email}"))
+        return UserCredentials.model_validate_json(entry)
 
     def create_otp(self, email: str) -> int:
         code = sys_random.randint(100000, 999999)
