@@ -1,4 +1,4 @@
-from src.middle.user import hash_password, check_hash
+from src.middle.user import hash_password, check_hash, check_cpf_format, split_cpf, check_cpf_validity
 from src.middle.auth import decode_token, encode_token
 from datetime import datetime, timezone, timedelta
 from random import randint
@@ -30,4 +30,37 @@ def test_token_expiration():
     encoded = encode_token(test_id, test_exp, None)
     decoded = decode_token(encoded)
     assert decoded is None
+
+
+def test_cpf_split():
+    test_cpf = "123.456.789-00"
+    test_cpf_bad = "12.34,56-78"
+    test_cpf_bad_2 = "123456"
+    assert split_cpf(test_cpf) == ["123", "456", "789", "00"]
+    assert split_cpf(test_cpf_bad) == ["12", "34,56", "78"]
+    assert split_cpf(test_cpf_bad_2) == ["123456"]
+
+def test_cpf_format():
+    test_cpf_good = "123.456.789-00"
+    test_cpf_bad = ["123.456-22", "123.456-00", "123.456.789-0", "12.34.56-00"]
+    assert check_cpf_format(split_cpf(test_cpf_good))
+    for c in test_cpf_bad:
+        assert not check_cpf_format(split_cpf(c))
+
+def test_cpf_validator():
+    test_cpf_good = ["529.982.247-25"]
+    test_cpf_bad = ["123.456.789-00", "123.456.999-00", "111.111.111-11", "222.222.222-22"]
+    for cpf in test_cpf_good:
+        assert check_cpf_validity(split_cpf(cpf))
+    for cpf in test_cpf_bad:
+        assert not check_cpf_validity(split_cpf(cpf))
+
+
+
+
+
+
+
+
+
 
