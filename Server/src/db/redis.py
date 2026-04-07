@@ -3,6 +3,8 @@ from src.config import get_settings
 from secrets import SystemRandom
 from src.models.user import UserCredentials
 from pydantic import BaseModel
+import json
+from typing import Any
 
 sys_random = SystemRandom()
 
@@ -23,11 +25,16 @@ class RedisEngine:
             print(e)
 
     def add_to_verify_user(self, user: UserCredentials):
-        self.client.set(f"unverified:{user.email}", user.model_dump_json())
+        self.client.set(f"unverified:{user.email}", 
+                        user.model_dump_json(),
+                        ex=get_settings().UNVERIFIED_EXPIRE)
 
-    def get_to_verify_user(self, email: str) -> UserCredentials:
-        entry = str(self.client.get(f"unverified:{email}"))
-        return UserCredentials.model_validate_json(entry)
+    def get_to_verify_user(self, email: str) -> UserCredentials | None:
+        query = self.client.get(f"unverified:{email}")
+        if query is None:
+            return None
+        entry: dict[str, Any] = json.loads(str(query))
+        return UserCredentials.model_validate(entry)
 
     def create_otp(self, email: str) -> int:
         code = sys_random.randint(100000, 999999)
