@@ -1,4 +1,4 @@
-from src.middle.user import hash_password, check_hash, check_cpf_format, split_cpf, check_cpf_validity
+from src.middle.user import hash_password, check_hash, check_cpf_format, split_cpf, check_cpf_validity, is_valid_plate
 from src.middle.auth import decode_token, encode_token
 from datetime import datetime, timezone, timedelta
 from random import randint
@@ -56,7 +56,13 @@ def test_cpf_validator():
         assert not check_cpf_validity(split_cpf(cpf))
 
 
-
+def test_plate_validator():
+    test_plate_good = ["ABC1234", "ABC1D23", "CCC6D77", "GGG1111"]
+    test_plate_bad = ["ABCD123", "111AVCD", "!!a882nasd8912", "555D5DD"]
+    for plate in test_plate_good:
+        assert is_valid_plate(plate)
+    for plate in test_plate_bad:
+        assert not is_valid_plate(plate)
 
 
 

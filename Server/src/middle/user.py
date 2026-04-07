@@ -20,6 +20,25 @@ def get_user_by_email(session: SessionDep, email:str) -> User | None:
 def get_user_by_cpf(session: SessionDep, cpf:str) -> User | None:
     return session.query(User).filter(User.cpf == cpf).one_or_none()
 
+def is_valid_plate(plate: str) -> bool:
+    if len(plate) != 7:
+        return False
+    return verify_plate(plate) or verify_old_plate(plate)
+
+def verify_plate(plate: str) -> bool:
+    #ABC1D23
+    number_con = plate[3].isdigit() and plate[5:7].isdigit()
+    letter_con = plate[0:3].isalpha() and plate[4].isalpha()
+    if letter_con and number_con:
+        return True
+    return False
+
+def verify_old_plate(plate: str) -> bool:
+    #ABC1234
+    if plate[3:7].isdigit() and plate[0:3].isalpha():
+        return True
+    return False
+
 def is_valid_cpf(cpf: str) -> bool:
     splitted = split_cpf(cpf)
     if not check_cpf_format(splitted):

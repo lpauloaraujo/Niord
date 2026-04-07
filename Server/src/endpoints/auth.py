@@ -2,7 +2,7 @@ from fastapi import APIRouter, BackgroundTasks
 from src.db.database import SessionDep
 from src.db.redis import redis
 from src.models.user import User, UserCredentials, UserLogin
-from src.middle.user import get_user_by_email, hash_password, check_hash, is_valid_cpf, get_user_by_cpf
+from src.middle.user import get_user_by_email, hash_password, check_hash, is_valid_cpf, get_user_by_cpf, is_valid_plate
 from src.middle.auth import send_mail_code, add_user_db
 from src.middle.auth import create_refresh_token, create_access_token, refresh_access_token, decode_token, delete_refresh_by_id, is_refresh_update_age, get_user_by_id, verify_refresh
 import sqlalchemy.exc as db_exception
@@ -20,6 +20,8 @@ async def register(session: SessionDep, background: BackgroundTasks, userData: U
 
     if not is_valid_cpf(userData.cpf):
         raise HTTPException(401, "CPF inválido")
+    if not is_valid_plate(userData.registration_plate):
+        raise HTTPException(401, "Placa inválida")
 
     user = get_user_by_email(session, userData.email)
     if user:
