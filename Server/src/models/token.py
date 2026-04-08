@@ -18,3 +18,12 @@ class TokenDecoded(BaseModel):
     id: int
     exp: datetime
     fresh: bool | None = None
+
+
+class TokenLoginSchema(BaseModel):
+    refresh: str
+    access: str
+
+class RefreshSchema(BaseModel):
+    refresh: str | None = None
+    access: str

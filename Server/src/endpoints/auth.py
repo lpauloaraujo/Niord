@@ -2,6 +2,7 @@ from fastapi import APIRouter, BackgroundTasks
 from src.db.database import SessionDep
 from src.db.redis import redis
 from src.models.user import User, UserCredentials, UserLogin
+from src.models.token import TokenLoginSchema, RefreshSchema
 from src.middle.user import get_user_by_email, hash_password, check_hash, is_valid_cpf, get_user_by_cpf, is_valid_plate
 from src.middle.auth import send_mail_code, add_user_db
 from src.middle.auth import create_refresh_token, create_access_token, refresh_access_token, decode_token, delete_refresh_by_id, is_refresh_update_age, get_user_by_id, verify_refresh
@@ -77,7 +78,7 @@ def verify_account(session: SessionDep, email: str, code:int):
 
 
 @router.post("/login")
-def login(session: SessionDep, user_form: Annotated[UserLogin, Depends()]):
+def login(session: SessionDep, user_form: Annotated[UserLogin, Depends()]) -> TokenLoginSchema:
     credential_exception = HTTPException(401, "Dados incorretos")
     user = get_user_by_email(session, user_form.email)
     if not user:
@@ -93,7 +94,7 @@ def login(session: SessionDep, user_form: Annotated[UserLogin, Depends()]):
     session.commit()
     session.refresh(refresh_token)
     
-    return {"refresh": refresh_token.token, "access": access_token}
+    return TokenLoginSchema(**{"refresh": refresh_token.token, "access": access_token})
 
 @router.delete("/login", status_code=200)
 def logout(session: SessionDep, refresh_token: str):
@@ -107,7 +108,7 @@ def logout(session: SessionDep, refresh_token: str):
 
 @router.post("/refresh")
 def refresh(session: SessionDep, refresh_token: str, 
-            user_form: Annotated[UserLogin, Depends()] | None = None):
+            user_form: Annotated[UserLogin, Depends()] | None = None) -> RefreshSchema:
     is_fresh = False
     if user_form is not None:
         user = get_user_by_email(session, user_form.email)
@@ -136,7 +137,7 @@ def refresh(session: SessionDep, refresh_token: str,
                     session.refresh(new_refresh)
                     data["refresh"] = new_refresh.token
 
-        return data
+        return RefreshSchema(**data)
     raise HTTPException(401, "Token inválido")
 
 
