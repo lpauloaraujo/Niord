@@ -25,4 +25,11 @@ Para registrar e autenticar um usuário realize os seguintes passos
 - O token `access` será o token utilizado para identificar o usuário, ele é decodificado de forma independente do banco de dados, contendo informações como id ou roles do usuário.
 - O token `refresh` define a sessão do usuário, sendo utilizado para gerar tokens de acesso, sendo feitas consultas no banco de dados para validar o token refresh e codificar o token access com informações úteis.
 
+- As **responses** de erro, como `401 unauthorized` por exemplo, seguem o padrão descrito no Schema, na parte inferior desta página, com o nome `ErrorMessage`. 
+    - Ela contém o item `detail` com os campos:
+        - `message: string` detalhando o erro.
+        - `type: string` e tem por valores `"invalid"` e `"conflict"`.
+        - `field: string|null` que é opcional e determina um campo do request que é problemático, ou uma parte específica como **query** ou **body**. (Nem sempre um campo específico é problemático, ou é omitido por questões de segurança).
+
 """
+
