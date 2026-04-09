@@ -11,26 +11,28 @@ from typing import Annotated
 from fastapi import HTTPException, Response, Depends
 from fastapi.security import OAuth2PasswordBearer 
 from pydantic import SecretStr
+from src.models.error import ErrorMessage, create_detail, ErrorType
 
 router = APIRouter(prefix="/auth")
 
 oauth2_bearer = OAuth2PasswordBearer("auth/login", "auth/refresh")
 
-@router.post("/register", status_code=200)
+@router.post("/register", status_code=200, 
+             responses={401: {"model": ErrorMessage, "detail":"Wrong info"}})
 async def register(session: SessionDep, background: BackgroundTasks, userData: UserCredentials):
 
     if not is_valid_cpf(userData.cpf):
-        raise HTTPException(401, "CPF inválido")
+        raise HTTPException(401, create_detail(message="CPF inválido", field="cpf"))
     if not is_valid_plate(userData.registration_plate):
-        raise HTTPException(401, "Placa inválida")
+        raise HTTPException(401, create_detail(message="Placa inválida", field="registration_plate"))
 
     user = get_user_by_email(session, userData.email)
     if user:
-        raise HTTPException(401, "Email já em uso")
+        raise HTTPException(401, create_detail(message="Email já em uso",type=ErrorType.conflict, field="email"))
     user = get_user_by_cpf(session, userData.cpf)
     if user:
-        raise HTTPException(401, "CPF já em uso") 
-    
+        raise HTTPException(401, create_detail(message="CPF inválido",type=ErrorType.conflict, field="cpf"))    
+
     userData.password = hash_password(userData.password)
     redis.add_to_verify_user(userData)
     otp_code = redis.create_otp(userData.email)
@@ -44,7 +46,7 @@ async def register(session: SessionDep, background: BackgroundTasks, userData: U
 def unregister(session: SessionDep):
     pass
 
-@router.post("/resend", status_code=200)
+@router.post("/resend", status_code=200, responses={401: {"model": ErrorMessage}})
 def resend_otp(session: SessionDep, background: BackgroundTasks, email: str, password: Annotated[str, SecretStr]):
     user: UserCredentials|None = redis.get_to_verify_user(email)
     if user and check_hash(password, user.password):
@@ -54,10 +56,10 @@ def resend_otp(session: SessionDep, background: BackgroundTasks, email: str, pas
         print(otp_code)
         return {"detail": "Código reenviado"}
     else:
-        raise HTTPException(401, "Dados incorretos ou email não aguarda OTP")
+        raise HTTPException(401, create_detail(message="Dados incorretos ou email não aguarda OTP"))
 
 
-@router.post("/verify", status_code=200)
+@router.post("/verify", status_code=200, responses={401:{"model": ErrorMessage}, 404:{"model": ErrorMessage}})
 def verify_account(session: SessionDep, email: str, code:int):
     otp_check = redis.check_otp(email, code)
     if otp_check:
@@ -70,21 +72,21 @@ def verify_account(session: SessionDep, email: str, code:int):
             except db_exception.IntegrityError as e:
                 #DEBUG
                 print(e)
-                raise HTTPException(status_code=409, detail="Erro de integridade dos dados")
-        raise HTTPException(404, "Usuário não encontrado")
+                raise HTTPException(status_code=401, detail=create_detail(message="Erro de integridade dos dados"))
+        raise HTTPException(404, create_detail(message="Usuário não encontrado"))
     if otp_check == None:
-        raise HTTPException(404, "Email não aguarda OTP ou expirou")
-    raise HTTPException(400, "Código incorreto")
+        raise HTTPException(404, create_detail("Email não aguarda OTP ou expirou"))
+    raise HTTPException(401, create_detail("Código incorreto", field="code"))
 
 
-@router.post("/login")
+@router.post("/login", status_code=200, responses={401:{"model": ErrorMessage}})
 def login(session: SessionDep, user_form: Annotated[UserLogin, Depends()]) -> TokenLoginSchema:
-    credential_exception = HTTPException(401, "Dados incorretos")
+    credential_exception = HTTPException(401, create_detail(message="Dados incorretos"))
     user = get_user_by_email(session, user_form.email)
     if not user:
         raise credential_exception
     if not user.is_verified:
-        raise HTTPException(401, "Verificação de conta pendente")
+        raise HTTPException(401, create_detail(message="Verificação de conta pendente"))
     if not check_hash(user_form.password, user.password):
         raise credential_exception
 
@@ -96,17 +98,17 @@ def login(session: SessionDep, user_form: Annotated[UserLogin, Depends()]) -> To
     
     return TokenLoginSchema(**{"refresh": refresh_token.token, "access": access_token})
 
-@router.delete("/login", status_code=200)
+@router.delete("/login", status_code=200, responses={401:{"model": ErrorMessage}})
 def logout(session: SessionDep, refresh_token: str):
     decoded = decode_token(refresh_token)
     if decoded and verify_refresh(session, decoded, refresh_token):
         delete_refresh_by_id(session, decoded.id)
         session.commit()
         return {"detail":"Refresh token apagado com sucesso"}
-    raise HTTPException(401, "Token inválido")
+    raise HTTPException(401, create_detail("Token inválido"))
     
 
-@router.post("/refresh")
+@router.post("/refresh", status_code=200, responses={401:{"model": ErrorMessage}})
 def refresh(session: SessionDep, refresh_token: str, 
             user_form: Annotated[UserLogin, Depends()] | None = None) -> RefreshSchema:
     is_fresh = False
@@ -117,7 +119,7 @@ def refresh(session: SessionDep, refresh_token: str,
             #DEBUG
             print("Creating fresh access token")
         else:
-            raise HTTPException(401, "Credenciais incorretas")
+            raise HTTPException(401, create_detail("Credenciais incorretas", field="body"))
 
 
     access_token = refresh_access_token(session, refresh_token, is_fresh)
@@ -138,7 +140,7 @@ def refresh(session: SessionDep, refresh_token: str,
                     data["refresh"] = new_refresh.token
 
         return RefreshSchema(**data)
-    raise HTTPException(401, "Token inválido")
+    raise HTTPException(401, create_detail("Token inválido"))
 
 
 
