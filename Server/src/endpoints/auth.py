@@ -31,7 +31,7 @@ async def register(session: SessionDep, background: BackgroundTasks, userData: U
         raise HTTPException(401, create_detail(message="Email já em uso",type=ErrorType.conflict, field="email"))
     user = get_user_by_cpf(session, userData.cpf)
     if user:
-        raise HTTPException(401, create_detail(message="CPF inválido",type=ErrorType.conflict, field="cpf"))    
+        raise HTTPException(401, create_detail(message="CPF já em uso",type=ErrorType.conflict, field="cpf"))    
 
     userData.password = hash_password(userData.password)
     redis.add_to_verify_user(userData)
