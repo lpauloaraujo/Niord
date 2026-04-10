@@ -57,124 +57,47 @@
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
-            <TextView
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="4dp" android:layout_marginBottom="4dp" android:text="Nome" android:textColor="#000000" android:textSize="14sp" />
+            <EditText android:id="@+id/editNome" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp" android:background="@drawable/bg_caixa_texto" android:hint="Ex: João" android:textColorHint="#9E9E9E" android:inputType="textPersonName" android:padding="16dp" />
+
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="4dp" android:layout_marginBottom="4dp" android:text="Sobrenome" android:textColor="#000000" android:textSize="14sp" />
+            <EditText android:id="@+id/editSobrenome" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp" android:background="@drawable/bg_caixa_texto" android:hint="Ex: Silva" android:textColorHint="#9E9E9E" android:inputType="textPersonName" android:padding="16dp" />
+
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="4dp" android:layout_marginBottom="4dp" android:text="CPF" android:textColor="#000000" android:textSize="14sp" />
+            <EditText android:id="@+id/editCpf" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp" android:background="@drawable/bg_caixa_texto" android:hint="000.000.000-00" android:textColorHint="#9E9E9E" android:inputType="number" android:padding="16dp" />
+
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="4dp" android:layout_marginBottom="4dp" android:text="Email" android:textColor="#000000" android:textSize="14sp" />
+            <EditText android:id="@+id/editEmail" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp" android:background="@drawable/bg_caixa_texto" android:hint="exemplo@email.com" android:textColorHint="#9E9E9E" android:inputType="textEmailAddress" android:padding="16dp" />
+
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="4dp" android:layout_marginBottom="4dp" android:text="Número de Telefone" android:textColor="#000000" android:textSize="14sp" />
+            <EditText android:id="@+id/editTelefone" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp" android:background="@drawable/bg_caixa_texto" android:hint="(00) 00000-0000" android:textColorHint="#9E9E9E" android:inputType="phone" android:padding="16dp" />
+
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="4dp" android:layout_marginBottom="4dp" android:text="Tipo Sanguíneo" android:textColor="#000000" android:textSize="14sp" />
+
+            <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:layout_marginBottom="4dp"
-                android:text="Nome"
-                android:textColor="#000000"
-                android:textSize="14sp" />
+                android:layout_marginBottom="32dp">
 
-            <EditText
-                android:id="@+id/editNome"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:background="@drawable/bg_caixa_texto"
-                android:hint="Ex: João"
-                android:textColorHint="#9E9E9E"
-                android:inputType="textPersonName"
-                android:padding="16dp" />
+                <Spinner
+                    android:id="@+id/spinnerTipoSanguineo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_caixa_texto"
+                    android:entries="@array/array_blood"
+                    android:padding="16dp" />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:layout_marginBottom="4dp"
-                android:text="Sobrenome"
-                android:textColor="#000000"
-                android:textSize="14sp" />
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginEnd="16dp"
+                    android:src="@drawable/ic_arrow_down"
+                    android:clickable="false"
+                    android:focusable="false" />
 
-            <EditText
-                android:id="@+id/editSobrenome"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:background="@drawable/bg_caixa_texto"
-                android:hint="Ex: Silva"
-                android:textColorHint="#9E9E9E"
-                android:inputType="textPersonName"
-                android:padding="16dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:layout_marginBottom="4dp"
-                android:text="CPF"
-                android:textColor="#000000"
-                android:textSize="14sp" />
-
-            <EditText
-                android:id="@+id/editCpf"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:background="@drawable/bg_caixa_texto"
-                android:hint="000.000.000-00"
-                android:textColorHint="#9E9E9E"
-                android:inputType="number"
-                android:padding="16dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:layout_marginBottom="4dp"
-                android:text="Email"
-                android:textColor="#000000"
-                android:textSize="14sp" />
-
-            <EditText
-                android:id="@+id/editEmail"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:background="@drawable/bg_caixa_texto"
-                android:hint="exemplo@email.com"
-                android:textColorHint="#9E9E9E"
-                android:inputType="textEmailAddress"
-                android:padding="16dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:layout_marginBottom="4dp"
-                android:text="Número de Telefone"
-                android:textColor="#000000"
-                android:textSize="14sp" />
-
-            <EditText
-                android:id="@+id/editTelefone"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:background="@drawable/bg_caixa_texto"
-                android:hint="(00) 00000-0000"
-                android:textColorHint="#9E9E9E"
-                android:inputType="phone"
-                android:padding="16dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:layout_marginBottom="4dp"
-                android:text="Tipo Sanguíneo"
-                android:textColor="#000000"
-                android:textSize="14sp" />
-
-            <Spinner
-                android:id="@+id/spinnerTipoSanguineo"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="32dp"
-                android:background="@drawable/bg_caixa_texto"
-                android:entries="@array/array_blood"
-                android:padding="16dp" />
-
+            </RelativeLayout>
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -184,25 +107,9 @@
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:layout_marginBottom="4dp"
-                android:text="Placa do Carro"
-                android:textColor="#000000"
-                android:textSize="14sp" />
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="4dp" android:layout_marginBottom="4dp" android:text="Placa do Carro" android:textColor="#000000" android:textSize="14sp" />
+            <EditText android:id="@+id/editPlaca" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="32dp" android:background="@drawable/bg_caixa_texto" android:hint="ABC-1234" android:textColorHint="#9E9E9E" android:inputType="textCapCharacters" android:padding="16dp" />
 
-            <EditText
-                android:id="@+id/editPlaca"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="32dp"
-                android:background="@drawable/bg_caixa_texto"
-                android:hint="ABC-1234"
-                android:textColorHint="#9E9E9E"
-                android:inputType="textCapCharacters"
-                android:padding="16dp" />
 
             <TextView
                 android:layout_width="match_parent"
@@ -229,7 +136,9 @@
                 android:layout_marginBottom="16dp"
                 android:background="@drawable/bg_caixa_texto"
                 android:inputType="textPassword"
-                android:padding="16dp" />
+                android:padding="16dp"
+                android:drawableEnd="@drawable/ic_visibility_off"
+                android:drawablePadding="8dp"/>
 
             <TextView
                 android:layout_width="match_parent"
@@ -247,7 +156,9 @@
                 android:layout_marginBottom="32dp"
                 android:background="@drawable/bg_caixa_texto"
                 android:inputType="textPassword"
-                android:padding="16dp" />
+                android:padding="16dp"
+                android:drawableEnd="@drawable/ic_visibility_off"
+                android:drawablePadding="8dp"/>
 
         </LinearLayout>
     </ScrollView>
