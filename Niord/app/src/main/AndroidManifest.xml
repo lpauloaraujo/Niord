@@ -33,6 +33,11 @@
         <activity android:name=".PosEmergenciaActivity" />
         <activity android:name=".PosPoliciaActivity" />
         <activity android:name=".CadastroActivity" />
+        <activity
+            android:name=".CadastroActivity"
+            android:windowSoftInputMode="adjustResize"
+            >
+        </activity>
     </application>
 
 </manifest>

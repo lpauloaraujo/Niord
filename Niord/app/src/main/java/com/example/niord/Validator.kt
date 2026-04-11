@@ -2,6 +2,27 @@ package com.example.niord
 
 import android.util.Patterns
 
+sealed class PasswordResult {
+    object Valid : PasswordResult()
+    data class Invalid(val errors: List<String>) : PasswordResult()
+}
+
+fun validatePassword(password: String): PasswordResult {
+    val errors = mutableListOf<String>()
+
+    if (password.length < 8) errors.add("Ao menos 8 caracteres")
+    if (password.none { it.isUpperCase() }) errors.add("Uma letra maiúscula")
+    if (password.none { it.isLowerCase() }) errors.add("Uma letra minúscula")
+    if (password.none { it.isDigit() }) errors.add("Um número")
+    if (password.none { !it.isLetterOrDigit() }) errors.add("Um caractere especial(#/%$@)")
+    println(errors.size)
+    if (errors.isEmpty()){
+        return PasswordResult.Valid
+    }else {
+        errors.add(0, "É necessário:")
+        return PasswordResult.Invalid(errors)
+    }
+}
 
 fun validatePone(phone: String): Boolean{
     return phone.isNotEmpty() && Patterns.PHONE.matcher(phone).matches()
