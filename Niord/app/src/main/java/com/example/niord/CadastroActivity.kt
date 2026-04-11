@@ -15,14 +15,22 @@ import android.util.Patterns
 import android.widget.TextView
 import androidx.core.text.isDigitsOnly
 import androidx.core.widget.addTextChangedListener
+import androidx.lifecycle.lifecycleScope
+import com.example.niord.api.ApiClient
+import com.example.niord.api.ApiService
+import com.example.niord.api.GreetString
+import kotlinx.coroutines.launch
 
 class CadastroActivity : ComponentActivity() {
 
     private lateinit var binding: CadastroBinding
+    private lateinit var apiService: ApiService
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        apiService = ApiService()
 
         // Substitua pelo nome exato do seu arquivo XML de cadastro (sem o .xml)
         val inflater = LayoutInflater.from(this)
@@ -37,6 +45,7 @@ class CadastroActivity : ComponentActivity() {
         configurarBotaoOlho(editConfirmarSenha)
         findViewById<Button>(R.id.btnCriarConta).setOnClickListener {
             if(verifyData()) sendData()
+            testRequest()
         }
 
         //Formatting bindings
@@ -78,15 +87,19 @@ class CadastroActivity : ComponentActivity() {
     }
 
     fun sendData(){
+    }
 
+    fun testRequest() {
+        lifecycleScope.launch {
+            println(apiService.greet())
+
+        }
     }
 
     fun passwordValidationStep(): Boolean{
         var valid = true
         val password = binding.editSenha.text.toString()
         val passwordConfirm = binding.editConfirmarSenha.text.toString()
-        println(password)
-        println(passwordConfirm)
         val isMatchingPassword = password == passwordConfirm
         if(!isMatchingPassword){
             println("Ué")
