@@ -30,6 +30,7 @@ import com.example.niord.FloatingLifecycleOwner
 import com.example.niord.Permission
 import com.example.niord.CallMonitor
 import java.util.zip.Inflater
+import com.example.niord.CadastroActivity
 
 @RequiresApi(Build.VERSION_CODES.O)
 class MainActivity : ComponentActivity() {
@@ -91,6 +92,8 @@ class MainActivity : ComponentActivity() {
 
         findViewById<SwitchCompat>(R.id.switchFixar).setOnCheckedChangeListener { button, bool ->
             buttonOverlay.isDraggable = !bool
+            val intent = Intent(this, CadastroActivity::class.java)
+            startActivity(intent)
         }
     }
 
