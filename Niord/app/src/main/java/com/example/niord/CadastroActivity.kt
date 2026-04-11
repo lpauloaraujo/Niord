@@ -2,6 +2,7 @@ package com.example.niord
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.text.Editable
 import android.text.InputType
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -11,7 +12,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import com.example.niord.databinding.CadastroBinding
 import android.util.Patterns
+import android.widget.TextView
 import androidx.core.text.isDigitsOnly
+import androidx.core.widget.addTextChangedListener
 
 class CadastroActivity : ComponentActivity() {
 
@@ -35,6 +38,15 @@ class CadastroActivity : ComponentActivity() {
         findViewById<Button>(R.id.btnCriarConta).setOnClickListener {
             if(verifyData()) sendData()
         }
+
+        //Formatting bindings
+        binding.editSenha.addTextChangedListener {
+            if(binding.editSenha.text.isNotEmpty()) passwordValidationStep()
+        }
+        binding.editConfirmarSenha.addTextChangedListener {
+            if(binding.editConfirmarSenha.text.isNotEmpty()) passwordValidationStep()
+        }
+
     }
 
     fun verifyData(): Boolean{
@@ -46,8 +58,8 @@ class CadastroActivity : ComponentActivity() {
         val isEmailValid: Boolean = validateEmail(email)
         if(!isEmailValid) {binding.editEmail.error = "Email inválido"; validData = false}
 
-        val cpf = binding.editCpf.text.toString()
-        val isValidCpf = validateCpf(cpf)
+        val cpf = binding.editCpf.text.toString() + "a"
+        val isValidCpf = validateCpf(cpf.filter {c -> c.isDigit()})
         if(!isValidCpf){binding.editCpf.error = "CPF inválido"; validData = false}
 
         val plate = binding.editPlaca.text.toString().uppercase()
@@ -58,6 +70,10 @@ class CadastroActivity : ComponentActivity() {
         val isValidPhone = validatePone(phone)
         if(!isValidPhone){binding.editTelefone.error = "Telefone Inválido"; validData = false}
 
+        val isValidPassword = passwordValidationStep()
+        if(!isValidPassword){validData = false}
+
+
         return validData
     }
 
@@ -65,7 +81,28 @@ class CadastroActivity : ComponentActivity() {
 
     }
 
-
+    fun passwordValidationStep(): Boolean{
+        var valid = true
+        val password = binding.editSenha.text.toString()
+        val passwordConfirm = binding.editConfirmarSenha.text.toString()
+        println(password)
+        println(passwordConfirm)
+        val isMatchingPassword = password == passwordConfirm
+        if(!isMatchingPassword){
+            println("Ué")
+            binding.editConfirmarSenha.error = "As senhas não são iguais "
+            valid = false
+        }else{
+            binding.editConfirmarSenha.error = null
+        }
+        val validationResult = validatePassword(password)
+        if(validationResult is PasswordResult.Invalid){
+            val errors = validationResult.errors.joinToString("\n")
+            binding.editSenha.error = errors
+            valid = false
+        }
+        return valid
+    }
 
     @SuppressLint("ClickableViewAccessibility")
     private fun configurarBotaoOlho(editText: EditText) {
