@@ -18,7 +18,13 @@ import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import com.example.niord.api.ApiClient
 import com.example.niord.api.ApiService
-import com.example.niord.api.GreetString
+import com.example.niord.api.ErrorResponse
+import com.example.niord.api.RegisterPost
+import com.example.niord.api.cpfPlainToFormatted
+import io.ktor.client.call.body
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.launch
 
 class CadastroActivity : ComponentActivity() {
@@ -87,6 +93,29 @@ class CadastroActivity : ComponentActivity() {
     }
 
     fun sendData(){
+        lifecycleScope.launch {
+
+            val requestBody = RegisterPost(
+                name = binding.editNome.text.toString() + " " + binding.editSobrenome.text.toString(),
+                email = binding.editEmail.text.toString(),
+                password = binding.editSenha.text.toString(),
+                //Remove the '-' for agreed formatting with the API
+                registrationPlate = binding.editPlaca.text.toString().filter {c -> c != '-'},
+                cpf = cpfPlainToFormatted(binding.editCpf.text.toString()),
+                telephone = binding.editTelefone.text.toString(),
+                bloodType = binding.spinnerTipoSanguineo.selectedItem.toString().ifEmpty{ null }
+            )
+            val response = apiService.sendRegisterData(requestBody)
+            if(response.status.value == 200) {
+                println(response.bodyAsText())
+            }else if(response.status.value == 401){
+                val errorMessage = response.body<ErrorResponse>()
+                println(errorMessage.detail.message)
+                println(errorMessage.detail.type)
+                println(errorMessage.detail.field)
+            }
+
+        }
     }
 
     fun testRequest() {
