@@ -54,8 +54,7 @@
         android:text="Entrar"
         android:textColor="#FFFFFF"
         android:textSize="16sp"
-        android:backgroundTint="#4A6CF7"
-        android:cornerRadius="8dp" />
+        android:background="@drawable/button_rounded_blue" />
 
     <!-- Botão Criar Conta -->
     <Button
@@ -66,7 +65,6 @@
         android:text="Criar Conta"
         android:textColor="#FFFFFF"
         android:textSize="16sp"
-        android:backgroundTint="#4A6CF7"
-        android:cornerRadius="8dp" />
+        android:background="@drawable/button_rounded_blue" />
 
 </LinearLayout>

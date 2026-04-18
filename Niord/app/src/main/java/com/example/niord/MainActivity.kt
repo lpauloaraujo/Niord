@@ -1,5 +1,7 @@
 package com.example.niord
 
+import android.app.AlertDialog
+import android.content.DialogInterface
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -7,6 +9,7 @@ import android.provider.Settings
 import android.view.LayoutInflater
 import android.widget.CheckBox
 import android.widget.LinearLayout
+import android.widget.RelativeLayout
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -82,6 +85,39 @@ class MainActivity : ComponentActivity() {
 
         findViewById<SwitchCompat>(R.id.switchFixar).setOnCheckedChangeListener { button, bool ->
             buttonOverlay.isDraggable = !bool
+        }
+
+        findViewById<RelativeLayout>(R.id.itemLogout).setOnClickListener {
+            // Mostrar dialog de confirmação de logout
+            val builder = AlertDialog.Builder(this)
+            builder.setTitle("Confirmar Logout")
+            builder.setMessage("Tem certeza que deseja fazer logout?")
+
+            // Botão Confirmar
+            builder.setPositiveButton("Confirmar") { dialog, which ->
+                // Implementar lógica de logout aqui
+                finish()
+            }
+
+            // Botão Cancelar
+            builder.setNegativeButton("Cancelar") { dialog, which ->
+                dialog.dismiss()
+            }
+
+            val dialog = builder.create()
+            dialog.show()
+
+            // Customizar os botões do dialog para seguir o padrão visual
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.apply {
+                setTextColor(android.graphics.Color.parseColor("#4A6CF7"))
+                textSize = 16f
+                setTypeface(typeface, android.graphics.Typeface.BOLD)
+            }
+
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.apply {
+                setTextColor(android.graphics.Color.parseColor("#666666"))
+                textSize = 16f
+            }
         }
     }
 }
