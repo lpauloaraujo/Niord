@@ -1,0 +1,25 @@
+services:
+  niord:
+    depends_on:
+      db:
+        condition: service_started
+      redis:
+        condition: service_started
+    build: ./server
+    image: niord
+    ports: ["80:80"]
+    env_file: ./server/.env
+    container_name: server
+
+  redis:
+    build: ./redis
+    image: redis 
+    env_file: ./redis/.env
+    container_name: redis_db 
+
+  db:
+    image: postgres
+    env_file: ./.env
+    container_name: database
+
+
