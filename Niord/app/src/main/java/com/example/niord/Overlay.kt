@@ -394,6 +394,14 @@ class MainOverlayButton(var context: Context,
         additionalOverlay.setVisibility(statePacket.addIsVisible)
     }
 
+    override fun setVisibility(state: Boolean) {
+        if (!state && additionalOverlay.isVisible) {
+            statePacket.addIsVisible = false
+            additionalOverlay.setVisibility(false)
+        }
+        super.setVisibility(state)
+    }
+
 
     @Composable
     fun IconBox(resource: Int, sizeDp: Float, enabled: Boolean = true, onClick: () -> Unit = {}){

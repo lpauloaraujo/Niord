@@ -3,32 +3,20 @@ package com.example.niord
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
-import android.view.LayoutInflater
-import android.widget.CheckBox
+import android.view.View
+import android.widget.Button
+import android.widget.ImageButton
 import android.widget.LinearLayout
+import android.widget.ScrollView
+import android.widget.TextView
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.appcompat.widget.SwitchCompat
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.core.net.toUri
-import com.example.niord.ui.theme.NiordTheme
-import com.example.niord.MainOverlayButton
-import com.example.niord.FloatingLifecycleOwner
-import com.example.niord.Permission
-import java.util.zip.Inflater
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.example.niord.CadastroActivity
+import com.example.niord.FloatingLifecycleOwner
+import com.example.niord.MainOverlayButton
+import com.example.niord.Permission
 
 @RequiresApi(Build.VERSION_CODES.O)
 class MainActivity : ComponentActivity() {
@@ -40,67 +28,54 @@ class MainActivity : ComponentActivity() {
     private lateinit var buttonOverlay: MainOverlayButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
+        UserFlowPreferences.ensureDefaults(this)
         enableEdgeToEdge()
         buttonOverlayInit()
-
-        val inflater = LayoutInflater.from(this)
-        val layout = LinearLayout(this)
-        val view = inflater.inflate(R.layout.configuracao, layout, false)
-        setContentView(view)
-
-        buttonListeners()
+        setContentView(R.layout.activity_main)
+        setupScreenFlow()
     }
 
     override fun onDestroy() {
-        buttonOverlay.onDestroy()
+        if (::buttonOverlay.isInitialized) {
+            buttonOverlay.onDestroy()
+        }
         lifecycleOwner.onDestroy()
         super.onDestroy()
+    }
+
+    private fun setupScreenFlow() {
+        val splashScreen = findViewById<LinearLayout>(R.id.screenSplash)
+        val loginScreen = findViewById<ScrollView>(R.id.screenLogin)
+
+        findViewById<Button>(R.id.btnStart).setOnClickListener {
+            if (UserFlowPreferences.shouldShowConfiguration(this)) {
+                startActivity(Intent(this, ConfiguracaoActivity::class.java))
+            } else {
+                splashScreen.visibility = View.GONE
+                loginScreen.visibility = View.VISIBLE
+            }
+        }
+
+        findViewById<ImageButton>(R.id.btnBackToSplash).setOnClickListener {
+            splashScreen.visibility = View.VISIBLE
+            loginScreen.visibility = View.GONE
+        }
+
+        findViewById<Button>(R.id.btnLogin).setOnClickListener {
+            UserFlowPreferences.setShowConfiguration(this, true)
+            startActivity(Intent(this, ConfiguracaoActivity::class.java))
+        }
+
+        findViewById<TextView>(R.id.btnCreateAccount).setOnClickListener {
+            startActivity(Intent(this, CadastroActivity::class.java))
+        }
     }
 
     fun buttonOverlayInit(){
         buttonOverlay = MainOverlayButton(this, lifecycleOwner)
         buttonOverlay.setVisibility(false)
         buttonOverlay.invoke()
-    }
-
-    fun buttonListeners(){
-        findViewById<CheckBox>(R.id.checkboxDesativar).setOnCheckedChangeListener { button, bool ->
-            //Permission checking
-            if (!Settings.canDrawOverlays(this)) {
-                permission.getOverlayPermissions{
-                    if (Settings.canDrawOverlays(this)) {
-                        buttonOverlay.setVisibility(bool)
-                        //Invoke may fail if permission is disabled on app startup
-                        buttonOverlay.invoke()
-                    }
-                }
-            }else{
-                buttonOverlay.invoke()
-                buttonOverlay.setVisibility(bool)
-            }
-        }
-
-        findViewById<SwitchCompat>(R.id.switchFixar).setOnCheckedChangeListener { button, bool ->
-            buttonOverlay.isDraggable = !bool
-            val intent = Intent(this, CadastroActivity::class.java)
-            startActivity(intent)
-        }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    NiordTheme {
-        Greeting("Android")
     }
 }

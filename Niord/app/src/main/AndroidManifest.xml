@@ -16,7 +16,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.Niord"
+            android:theme="@style/Theme.Niord.Splash"
             tools:targetApi="26">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -28,6 +28,10 @@
             android:name=".CadastroActivity"
             android:windowSoftInputMode="adjustResize"
             >
+        </activity>
+        <activity
+            android:name=".ConfiguracaoActivity"
+            android:windowSoftInputMode="adjustResize" >
         </activity>
     </application>
 

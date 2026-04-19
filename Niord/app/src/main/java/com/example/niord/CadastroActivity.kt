@@ -1,6 +1,7 @@
 package com.example.niord
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.InputType
@@ -12,6 +13,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import com.example.niord.databinding.CadastroBinding
 import android.util.Patterns
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.text.isDigitsOnly
 import androidx.core.widget.addTextChangedListener
@@ -50,43 +52,58 @@ class CadastroActivity : ComponentActivity() {
         configurarBotaoOlho(editSenha)
         configurarBotaoOlho(editConfirmarSenha)
         findViewById<Button>(R.id.btnCriarConta).setOnClickListener {
-            if(verifyData()) sendData()
-            testRequest()
+            if (verifyData()) {
+                openConfigurationFlow()
+            }
         }
 
         //Formatting bindings
+        setupLiveValidation()
+
+        findViewById<ImageView>(R.id.btnVoltar).setOnClickListener {
+            finish()
+        }
+    }
+
+    private fun setupLiveValidation() {
+        binding.editNome.addTextChangedListener {
+            validateFirstNameField()
+        }
+        binding.editSobrenome.addTextChangedListener {
+            validateLastNameField()
+        }
+        binding.editEmail.addTextChangedListener {
+            validateEmailField()
+        }
+        binding.editCpf.addTextChangedListener {
+            validateCpfField()
+        }
+        binding.editTelefone.addTextChangedListener {
+            validatePhoneField()
+        }
+        binding.editPlaca.addTextChangedListener {
+            validatePlateField()
+        }
         binding.editSenha.addTextChangedListener {
-            if(binding.editSenha.text.isNotEmpty()) passwordValidationStep()
+            validatePasswordField()
         }
         binding.editConfirmarSenha.addTextChangedListener {
-            if(binding.editConfirmarSenha.text.isNotEmpty()) passwordValidationStep()
+            validatePasswordField()
         }
-
     }
 
     fun verifyData(): Boolean{
         var validData = true
 
-        //val name = binding.editNome.text.toString() + " " + binding.editSobrenome.text.toString()
-        val email = binding.editEmail.text.toString()
+        if (!validateFirstNameField(showRequiredError = true)) validData = false
 
-        val isEmailValid: Boolean = validateEmail(email)
-        if(!isEmailValid) {binding.editEmail.error = "Email inválido"; validData = false}
+        if (!validateLastNameField(showRequiredError = true)) validData = false
 
-        val cpf = binding.editCpf.text.toString() + "a"
-        val isValidCpf = validateCpf(cpf.filter {c -> c.isDigit()})
-        if(!isValidCpf){binding.editCpf.error = "CPF inválido"; validData = false}
-
-        val plate = binding.editPlaca.text.toString().uppercase()
-        val isValidPlate = validatePlate(plate)
-        if(!isValidPlate){binding.editPlaca.error = "Placa inválida"; validData = false}
-
-        val phone = binding.editTelefone.text.toString()
-        val isValidPhone = validatePone(phone)
-        if(!isValidPhone){binding.editTelefone.error = "Telefone Inválido"; validData = false}
-
-        val isValidPassword = passwordValidationStep()
-        if(!isValidPassword){validData = false}
+        if (!validateEmailField(showRequiredError = true)) validData = false
+        if (!validateCpfField(showRequiredError = true)) validData = false
+        if (!validatePlateField(showRequiredError = true)) validData = false
+        if (!validatePhoneField(showRequiredError = true)) validData = false
+        if (!validatePasswordField(showRequiredError = true)) validData = false
 
 
         return validData
@@ -94,15 +111,14 @@ class CadastroActivity : ComponentActivity() {
 
     fun sendData(){
         lifecycleScope.launch {
-
             val requestBody = RegisterPost(
-                name = binding.editNome.text.toString() + " " + binding.editSobrenome.text.toString(),
-                email = binding.editEmail.text.toString(),
+                name = binding.editNome.text.toString().trim() + " " + binding.editSobrenome.text.toString().trim(),
+                email = binding.editEmail.text.toString().trim(),
                 password = binding.editSenha.text.toString(),
                 //Remove the '-' for agreed formatting with the API
-                registrationPlate = binding.editPlaca.text.toString().filter {c -> c != '-'},
-                cpf = cpfPlainToFormatted(binding.editCpf.text.toString()),
-                telephone = binding.editTelefone.text.toString(),
+                registrationPlate = binding.editPlaca.text.toString().trim().filter {c -> c != '-'},
+                cpf = cpfPlainToFormatted(binding.editCpf.text.toString().filter { c -> c.isDigit() }),
+                telephone = binding.editTelefone.text.toString().trim(),
                 bloodType = binding.spinnerTipoSanguineo.selectedItem.toString().ifEmpty{ null }
             )
             val response = apiService.sendRegisterData(requestBody)
@@ -121,7 +137,131 @@ class CadastroActivity : ComponentActivity() {
     fun testRequest() {
         lifecycleScope.launch {
             println(apiService.greet())
+        }
+    }
 
+    private fun openConfigurationFlow() {
+        UserFlowPreferences.setShowConfiguration(this, true)
+        UserFlowPreferences.setOverlayEnabled(this, false)
+        UserFlowPreferences.setOverlayLocked(this, false)
+        val intent = Intent(this, ConfiguracaoActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        }
+        startActivity(intent)
+        finish()
+    }
+
+    private fun validateFirstNameField(showRequiredError: Boolean = false): Boolean {
+        val firstName = binding.editNome.text.toString().trim()
+        if (firstName.isEmpty()) {
+            binding.editNome.error = if (showRequiredError) "Nome obrigatório" else null
+            return false
+        }
+
+        return when (val result = validatePersonNameDetailed(firstName, "Nome")) {
+            is FieldValidationResult.Valid -> {
+                binding.editNome.error = null
+                true
+            }
+            is FieldValidationResult.Invalid -> {
+                binding.editNome.error = result.message
+                false
+            }
+        }
+    }
+
+    private fun validateLastNameField(showRequiredError: Boolean = false): Boolean {
+        val lastName = binding.editSobrenome.text.toString().trim()
+        if (lastName.isEmpty()) {
+            binding.editSobrenome.error = if (showRequiredError) "Sobrenome obrigatório" else null
+            return false
+        }
+
+        return when (val result = validatePersonNameDetailed(lastName, "Sobrenome")) {
+            is FieldValidationResult.Valid -> {
+                binding.editSobrenome.error = null
+                true
+            }
+            is FieldValidationResult.Invalid -> {
+                binding.editSobrenome.error = result.message
+                false
+            }
+        }
+    }
+
+    private fun validateEmailField(showRequiredError: Boolean = false): Boolean {
+        val email = binding.editEmail.text.toString().trim()
+        if (email.isEmpty()) {
+            binding.editEmail.error = if (showRequiredError) "Email obrigatório" else null
+            return false
+        }
+
+        return when (val result = validateEmailDetailed(email)) {
+            is FieldValidationResult.Valid -> {
+                binding.editEmail.error = null
+                true
+            }
+            is FieldValidationResult.Invalid -> {
+                binding.editEmail.error = result.message
+                false
+            }
+        }
+    }
+
+    private fun validateCpfField(showRequiredError: Boolean = false): Boolean {
+        val cpf = binding.editCpf.text.toString().filter { c -> c.isDigit() }
+        if (cpf.isEmpty()) {
+            binding.editCpf.error = if (showRequiredError) "CPF obrigatório" else null
+            return false
+        }
+
+        return when (val result = validateCpfDetailed(cpf)) {
+            is FieldValidationResult.Valid -> {
+                binding.editCpf.error = null
+                true
+            }
+            is FieldValidationResult.Invalid -> {
+                binding.editCpf.error = result.message
+                false
+            }
+        }
+    }
+
+    private fun validatePhoneField(showRequiredError: Boolean = false): Boolean {
+        val phone = binding.editTelefone.text.toString().trim()
+        if (phone.isEmpty()) {
+            binding.editTelefone.error = if (showRequiredError) "Telefone obrigatório" else null
+            return false
+        }
+
+        return when (val result = validatePhoneDetailed(phone)) {
+            is FieldValidationResult.Valid -> {
+                binding.editTelefone.error = null
+                true
+            }
+            is FieldValidationResult.Invalid -> {
+                binding.editTelefone.error = result.message
+                false
+            }
+        }
+    }
+
+    private fun validatePlateField(showRequiredError: Boolean = false): Boolean {
+        val plate = binding.editPlaca.text.toString().trim().uppercase()
+        if (plate.isEmpty()) {
+            binding.editPlaca.error = if (showRequiredError) "Placa obrigatória" else null
+            return false
+        }
+
+        return when (val result = validatePlateDetailed(plate)) {
+            is FieldValidationResult.Valid -> {
+                binding.editPlaca.error = null
+                true
+            }
+            is FieldValidationResult.Invalid -> {
+                binding.editPlaca.error = result.message
+                false
+            }
         }
     }
 
@@ -144,6 +284,16 @@ class CadastroActivity : ComponentActivity() {
             valid = false
         }
         return valid
+    }
+
+    private fun validatePasswordField(showRequiredError: Boolean = false): Boolean {
+        if (binding.editSenha.text.isNullOrEmpty() && binding.editConfirmarSenha.text.isNullOrEmpty()) {
+            binding.editSenha.error = if (showRequiredError) "Senha obrigatória" else null
+            binding.editConfirmarSenha.error = if (showRequiredError) "Confirmação obrigatória" else null
+            return false
+        }
+
+        return passwordValidationStep()
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -173,4 +323,3 @@ class CadastroActivity : ComponentActivity() {
         }
     }
 }
-
