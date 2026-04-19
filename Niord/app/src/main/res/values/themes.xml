@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Niord" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="android:statusBarColor">@android:color/transparent</item>
+    <style name="Theme.Niord" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowBackground">#316DF6</item>
     </style>
+
+    <style name="Theme.Niord.Splash" parent="Theme.Niord" />
 </resources>

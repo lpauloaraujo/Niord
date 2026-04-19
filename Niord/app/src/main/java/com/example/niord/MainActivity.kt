@@ -3,14 +3,14 @@ package com.example.niord
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
-import android.view.LayoutInflater
-import android.widget.CheckBox
+import android.view.View
+import android.widget.Button
+import android.widget.ImageButton
 import android.widget.LinearLayout
+import android.widget.ScrollView
+import android.widget.TextView
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.SwitchCompat
@@ -30,7 +30,11 @@ import com.example.niord.FloatingLifecycleOwner
 import com.example.niord.Permission
 import com.example.niord.CallMonitor
 import java.util.zip.Inflater
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.example.niord.CadastroActivity
+import com.example.niord.FloatingLifecycleOwner
+import com.example.niord.MainOverlayButton
+import com.example.niord.Permission
 
 @RequiresApi(Build.VERSION_CODES.O)
 class MainActivity : ComponentActivity() {
@@ -44,27 +48,49 @@ class MainActivity : ComponentActivity() {
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+        UserFlowPreferences.ensureDefaults(this)
         enableEdgeToEdge()
         buttonOverlayInit()
-
-        buttonOverlay.onCallClick = { number ->
-            showCallDialog(number)
-        }
-
-        val inflater = LayoutInflater.from(this)
-        val layout = LinearLayout(this)
-        val view = inflater.inflate(R.layout.configuracao, layout, false)
-        setContentView(view)
-
-        buttonListeners()
+        setContentView(R.layout.activity_main)
+        setupScreenFlow()
     }
 
     override fun onDestroy() {
-        buttonOverlay.onDestroy()
+        if (::buttonOverlay.isInitialized) {
+            buttonOverlay.onDestroy()
+        }
         lifecycleOwner.onDestroy()
         super.onDestroy()
+    }
+
+    private fun setupScreenFlow() {
+        val splashScreen = findViewById<LinearLayout>(R.id.screenSplash)
+        val loginScreen = findViewById<ScrollView>(R.id.screenLogin)
+
+        findViewById<Button>(R.id.btnStart).setOnClickListener {
+            if (UserFlowPreferences.shouldShowConfiguration(this)) {
+                startActivity(Intent(this, ConfiguracaoActivity::class.java))
+            } else {
+                splashScreen.visibility = View.GONE
+                loginScreen.visibility = View.VISIBLE
+            }
+        }
+
+        findViewById<ImageButton>(R.id.btnBackToSplash).setOnClickListener {
+            splashScreen.visibility = View.VISIBLE
+            loginScreen.visibility = View.GONE
+        }
+
+        findViewById<Button>(R.id.btnLogin).setOnClickListener {
+            UserFlowPreferences.setShowConfiguration(this, true)
+            startActivity(Intent(this, ConfiguracaoActivity::class.java))
+        }
+
+        findViewById<TextView>(R.id.btnCreateAccount).setOnClickListener {
+            startActivity(Intent(this, CadastroActivity::class.java))
+        }
     }
 
     fun buttonOverlayInit(){
@@ -72,7 +98,7 @@ class MainActivity : ComponentActivity() {
         buttonOverlay.setVisibility(false)
         buttonOverlay.invoke()
     }
-
+/*
     fun buttonListeners(){
         findViewById<CheckBox>(R.id.checkboxDesativar).setOnCheckedChangeListener { button, bool ->
             //Permission checking
@@ -179,20 +205,5 @@ class MainActivity : ComponentActivity() {
 
         dialog.show()
     }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    NiordTheme {
-        Greeting("Android")
-    }
+*/
 }

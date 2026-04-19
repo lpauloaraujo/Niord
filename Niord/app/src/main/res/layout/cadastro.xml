@@ -60,10 +60,10 @@
                 android:textStyle="bold" />
 
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="4dp" android:layout_marginBottom="4dp" android:text="Nome" android:textColor="#000000" android:textSize="14sp" />
-            <EditText android:id="@+id/editNome" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp" android:background="@drawable/bg_caixa_texto" android:hint="Ex: João" android:textColorHint="#9E9E9E" android:inputType="textPersonName" android:padding="16dp" />
+            <EditText android:id="@+id/editNome" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp" android:background="@drawable/bg_caixa_texto" android:hint="Ex: João" android:textColorHint="#9E9E9E" android:inputType="textCapWords" android:padding="16dp" />
 
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="4dp" android:layout_marginBottom="4dp" android:text="Sobrenome" android:textColor="#000000" android:textSize="14sp" />
-            <EditText android:id="@+id/editSobrenome" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp" android:background="@drawable/bg_caixa_texto" android:hint="Ex: Silva" android:textColorHint="#9E9E9E" android:inputType="textPersonName" android:padding="16dp" />
+            <EditText android:id="@+id/editSobrenome" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp" android:background="@drawable/bg_caixa_texto" android:hint="Ex: Silva" android:textColorHint="#9E9E9E" android:inputType="textCapWords" android:padding="16dp" />
 
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="4dp" android:layout_marginBottom="4dp" android:text="CPF" android:textColor="#000000" android:textSize="14sp" />
             <EditText android:id="@+id/editCpf" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp" android:background="@drawable/bg_caixa_texto" android:hint="Sem . ou -" android:textColorHint="#9E9E9E" android:inputType="number" android:padding="16dp" />

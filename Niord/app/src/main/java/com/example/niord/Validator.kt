@@ -7,6 +7,11 @@ sealed class PasswordResult {
     data class Invalid(val errors: List<String>) : PasswordResult()
 }
 
+sealed class FieldValidationResult {
+    object Valid : FieldValidationResult()
+    data class Invalid(val message: String) : FieldValidationResult()
+}
+
 fun validatePassword(password: String): PasswordResult {
     val errors = mutableListOf<String>()
 
@@ -25,10 +30,104 @@ fun validatePassword(password: String): PasswordResult {
 }
 
 fun validatePone(phone: String): Boolean{
-    return phone.isNotEmpty() && Patterns.PHONE.matcher(phone).matches()
+    val digits = phone.filter { it.isDigit() }
+    return digits.length in 10..11 && Patterns.PHONE.matcher(phone).matches()
 }
 fun validateEmail(email: String): Boolean {
     return email.isNotEmpty() && Patterns.EMAIL_ADDRESS.matcher(email).matches()
+}
+
+fun validatePersonName(name: String): Boolean {
+    val trimmedName = name.trim()
+    if (trimmedName.length < 2) return false
+
+    return trimmedName.all { char ->
+        char.isLetter() || char == ' ' || char == '\'' || char == '-'
+    } && trimmedName.any { it.isLetter() }
+}
+
+fun validatePersonNameDetailed(name: String, fieldLabel: String): FieldValidationResult {
+    val trimmedName = name.trim()
+
+    if (trimmedName.isEmpty()) {
+        return FieldValidationResult.Invalid("$fieldLabel obrigatório")
+    }
+    if (trimmedName.length < 2) {
+        return FieldValidationResult.Invalid("$fieldLabel deve ter ao menos 2 letras")
+    }
+    if (trimmedName.any { it.isDigit() }) {
+        return FieldValidationResult.Invalid("$fieldLabel não pode conter números")
+    }
+    if (trimmedName.any { !it.isLetter() && it != ' ' && it != '\'' && it != '-' }) {
+        return FieldValidationResult.Invalid("$fieldLabel contém caracteres inválidos")
+    }
+    if (!trimmedName.any { it.isLetter() }) {
+        return FieldValidationResult.Invalid("$fieldLabel deve conter letras")
+    }
+
+    return FieldValidationResult.Valid
+}
+
+fun validateEmailDetailed(email: String): FieldValidationResult {
+    val trimmedEmail = email.trim()
+
+    if (trimmedEmail.isEmpty()) {
+        return FieldValidationResult.Invalid("Email obrigatório")
+    }
+    if (!trimmedEmail.contains("@")) {
+        return FieldValidationResult.Invalid("Email deve conter @")
+    }
+    if (!Patterns.EMAIL_ADDRESS.matcher(trimmedEmail).matches()) {
+        return FieldValidationResult.Invalid("Formato de email inválido")
+    }
+
+    return FieldValidationResult.Valid
+}
+
+fun validateCpfDetailed(cpf: String): FieldValidationResult {
+    val digits = cpf.filter { it.isDigit() }
+
+    if (digits.isEmpty()) {
+        return FieldValidationResult.Invalid("CPF obrigatório")
+    }
+    if (digits.length != 11) {
+        return FieldValidationResult.Invalid("CPF deve ter 11 dígitos")
+    }
+    if (!validateCpf(digits)) {
+        return FieldValidationResult.Invalid("CPF inválido")
+    }
+
+    return FieldValidationResult.Valid
+}
+
+fun validatePhoneDetailed(phone: String): FieldValidationResult {
+    val trimmedPhone = phone.trim()
+    val digits = trimmedPhone.filter { it.isDigit() }
+
+    if (trimmedPhone.isEmpty()) {
+        return FieldValidationResult.Invalid("Telefone obrigatório")
+    }
+    if (digits.length !in 10..11) {
+        return FieldValidationResult.Invalid("Telefone deve ter 10 ou 11 dígitos")
+    }
+    if (!validatePone(trimmedPhone)) {
+        return FieldValidationResult.Invalid("Formato de telefone inválido")
+    }
+
+    return FieldValidationResult.Valid
+}
+
+fun validatePlateDetailed(plate: String): FieldValidationResult {
+    val trimmedPlate = plate.trim().uppercase()
+
+    if (trimmedPlate.isEmpty()) {
+        return FieldValidationResult.Invalid("Placa obrigatória")
+    }
+    if (verifyPlate(trimmedPlate) || verifyOldPlate(trimmedPlate)) {
+        return FieldValidationResult.Valid
+    }
+
+    return FieldValidationResult.Invalid("Use o formato ABC-1234 ou ABC1D23")
 }
 
 fun validatePlate(plate: String): Boolean{
@@ -121,4 +220,3 @@ fun validateCpf(cpf: String): Boolean{
 
     return true
 }
-
