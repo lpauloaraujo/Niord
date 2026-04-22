@@ -30,6 +30,10 @@
             >
         </activity>
         <activity
+            android:name=".OtpActivity"
+            android:windowSoftInputMode="adjustResize" >
+        </activity>
+        <activity
             android:name=".ConfiguracaoActivity"
             android:windowSoftInputMode="adjustResize" >
         </activity>

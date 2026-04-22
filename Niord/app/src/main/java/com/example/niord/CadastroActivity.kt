@@ -53,7 +53,7 @@ class CadastroActivity : ComponentActivity() {
         configurarBotaoOlho(editConfirmarSenha)
         findViewById<Button>(R.id.btnCriarConta).setOnClickListener {
             if (verifyData()) {
-                openConfigurationFlow()
+                openOtpFlow()
             }
         }
 
@@ -140,15 +140,11 @@ class CadastroActivity : ComponentActivity() {
         }
     }
 
-    private fun openConfigurationFlow() {
-        UserFlowPreferences.setShowConfiguration(this, true)
-        UserFlowPreferences.setOverlayEnabled(this, false)
-        UserFlowPreferences.setOverlayLocked(this, false)
-        val intent = Intent(this, ConfiguracaoActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+    private fun openOtpFlow() {
+        val intent = Intent(this, OtpActivity::class.java).apply {
+            putExtra(OtpActivity.EXTRA_EMAIL, binding.editEmail.text.toString().trim())
         }
         startActivity(intent)
-        finish()
     }
 
     private fun validateFirstNameField(showRequiredError: Boolean = false): Boolean {
