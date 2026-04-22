@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp">
+
+        <ImageView
+            android:id="@+id/btnVoltarOtp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:contentDescription="Voltar"
+            android:focusable="true"
+            android:src="@drawable/ic_arrow_back" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Confirmacao por Codigo"
+            android:textColor="#333333"
+            android:textSize="20sp" />
+
+        <View
+            android:layout_width="24dp"
+            android:layout_height="24dp" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingHorizontal="36dp"
+            android:paddingTop="34dp"
+            android:paddingBottom="24dp">
+
+            <ImageView
+                android:id="@+id/imgOtpPessoa"
+                android:layout_width="220dp"
+                android:layout_height="220dp"
+                android:adjustViewBounds="true"
+                android:contentDescription="Ilustracao de confirmacao"
+                android:scaleType="fitCenter"
+                android:src="@drawable/figura_otp" />
+
+            <TextView
+                android:id="@+id/txtOtpInstructions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="28dp"
+                android:gravity="start"
+                android:lineSpacingExtra="2dp"
+                android:textColor="#316DF6"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="46dp"
+                android:gravity="center"
+                android:text="Codigo de confirmacao"
+                android:textColor="#222222"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/editCodigoConfirmacao"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_caixa_texto"
+                android:digits="0123456789"
+                android:gravity="center"
+                android:hint="123456"
+                android:imeOptions="actionDone"
+                android:inputType="number"
+                android:maxLength="6"
+                android:paddingHorizontal="16dp"
+                android:textColor="#222222"
+                android:textColorHint="#9E9E9E"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/btnConfirmar"
+                android:layout_width="128dp"
+                android:layout_height="48dp"
+                android:layout_marginTop="54dp"
+                android:alpha="0.55"
+                android:backgroundTint="#316DF6"
+                android:enabled="false"
+                android:text="Confirmar"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/txtOtpTimer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="26dp"
+                android:gravity="center"
+                android:textColor="#666666"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/btnReenviarCodigo"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:gravity="center"
+                android:text="Reenviar codigo"
+                android:textColor="#316DF6"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
