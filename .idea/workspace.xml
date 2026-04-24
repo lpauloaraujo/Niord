@@ -27,22 +27,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d80bde80-113f-440f-b7e8-d7f18b659293" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/Niord.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/markdown.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/migrations.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Niord/app/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/Niord/app/build.gradle.kts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Niord/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/Niord/app/src/main/AndroidManifest.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Niord/app/src/main/java/com/example/niord/Call.kt" beforeDir="false" afterPath="$PROJECT_DIR$/Niord/app/src/main/java/com/example/niord/CallManager.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Niord/app/src/main/java/com/example/niord/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/Niord/app/src/main/java/com/example/niord/MainActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Niord/app/src/main/java/com/example/niord/Permission.kt" beforeDir="false" afterPath="$PROJECT_DIR$/Niord/app/src/main/java/com/example/niord/Permission.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Niord/app/src/main/res/values/colors.xml" beforeDir="false" afterPath="$PROJECT_DIR$/Niord/app/src/main/res/values/colors.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Niord/gradle/libs.versions.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Niord/gradle/libs.versions.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Niord/app/src/main/java/com/example/niord/PosEmergenciaActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/Niord/app/src/main/java/com/example/niord/PosEmergenciaActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Niord/app/src/main/res/layout/acompanhamento_medico.xml" beforeDir="false" afterPath="$PROJECT_DIR$/Niord/app/src/main/res/layout/acompanhamento_medico.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -52,7 +39,7 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[PhysicalDevice::serial=R9QX103DVKM]" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[LocalEmulator::path=/home/lucas/.android/avd/Medium_Phone.avd]" />
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$/Niord">
       <ProjectState />

@@ -50,6 +50,7 @@
                 app:cardBackgroundColor="#FDF7FF">
 
                 <TextView
+                    android:id="@+id/txtHoras"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center"
@@ -83,10 +84,11 @@
                 app:cardBackgroundColor="#FDF7FF">
 
                 <TextView
+                    android:id="@+id/txtMinutos"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center"
-                    android:text="05"
+                    android:text="00"
                     android:textSize="18sp"
                     android:textStyle="bold"/>
             </com.google.android.material.card.MaterialCardView>
@@ -116,10 +118,11 @@
                 app:cardBackgroundColor="#FDF7FF">
 
                 <TextView
+                    android:id="@+id/txtSegundos"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center"
-                    android:text="44"
+                    android:text="00"
                     android:textSize="18sp"
                     android:textStyle="bold"/>
             </com.google.android.material.card.MaterialCardView>
