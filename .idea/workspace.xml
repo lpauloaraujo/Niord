@@ -28,6 +28,12 @@
   <component name="ChangeListManager">
     <list default="true" id="d80bde80-113f-440f-b7e8-d7f18b659293" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Niord/app/src/main/java/com/example/niord/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/Niord/app/src/main/java/com/example/niord/MainActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Niord/app/src/main/java/com/example/niord/PosEmergenciaActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/Niord/app/src/main/java/com/example/niord/PosEmergenciaActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Niord/app/src/main/res/layout/acompanhamento_medico.xml" beforeDir="false" afterPath="$PROJECT_DIR$/Niord/app/src/main/res/layout/acompanhamento_medico.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Niord/app/src/main/res/values/colors.xml" beforeDir="false" afterPath="$PROJECT_DIR$/Niord/app/src/main/res/values/colors.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Niord/app/src/main/res/values/popup.xml" beforeDir="false" afterPath="$PROJECT_DIR$/Niord/app/src/main/res/values/popup.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Niord/app/src/main/res/values/popup_styles.xml" beforeDir="false" afterPath="$PROJECT_DIR$/Niord/app/src/main/res/values/popup_styles.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

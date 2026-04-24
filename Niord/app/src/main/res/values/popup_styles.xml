@@ -17,4 +17,9 @@
         <item name="backgroundTint">@color/negative_dialog_blue</item>
     </style>
 
+    <style name="EmergencyConfirmNegativeDialogButton">
+        <item name="android:textColor">@android:color/white</item>
+        <item name="backgroundTint">@color/negative_dialog_red</item>
+    </style>
+
 </resources>

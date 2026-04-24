@@ -269,6 +269,7 @@
     </com.google.android.material.card.MaterialCardView>
 
     <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnEquipeChegou"
         android:layout_width="304dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="35dp"

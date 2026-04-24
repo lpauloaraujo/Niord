@@ -9,4 +9,5 @@
     <color name="white">#FFFFFFFF</color>
     <color name="positive_dialog_blue">#3F7EF6</color>
     <color name="negative_dialog_blue">#5FB0E4</color>
+    <color name="negative_dialog_red">#B3261E</color>
 </resources>

@@ -134,13 +134,13 @@ class MainActivity : ComponentActivity() {
                             context = this,
                             onCallStarted = {
                                 runOnUiThread {
-                                    println("Ligação iniciada")
-                                    // opcional: mostrar UI "em andamento"
                                 }
                             },
                             onCallEnded = {
                                 runOnUiThread {
-                                    println("Ligação finalizada")
+
+                                    callMonitor?.stop()
+                                    callMonitor = null
 
                                     runOnUiThread {
                                         val intent = Intent(this, PosEmergenciaActivity::class.java)
