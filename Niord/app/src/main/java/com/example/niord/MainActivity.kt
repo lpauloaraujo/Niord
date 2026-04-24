@@ -12,6 +12,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.SwitchCompat
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,6 +28,7 @@ import com.example.niord.ui.theme.NiordTheme
 import com.example.niord.MainOverlayButton
 import com.example.niord.FloatingLifecycleOwner
 import com.example.niord.Permission
+import com.example.niord.CallMonitor
 import java.util.zip.Inflater
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -36,11 +38,13 @@ class MainActivity : ComponentActivity() {
         onCreate()
         onResume()
     }
+    private var callMonitor: CallMonitor? = null
     private lateinit var buttonOverlay: MainOverlayButton
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         enableEdgeToEdge()
         buttonOverlayInit()
 
@@ -122,12 +126,36 @@ class MainActivity : ComponentActivity() {
             .setMessage(message)
             .setPositiveButton(positiveText) { _, _ ->
 
-                permission.requestCallPermission { granted ->
+                permission.requestCallAndPhoneStatePermission { granted ->
                     if (granted) {
+
+                        // 🔹 cria o monitor
+                        callMonitor = CallMonitor(
+                            context = this,
+                            onCallStarted = {
+                                runOnUiThread {
+                                    println("Ligação iniciada")
+                                    // opcional: mostrar UI "em andamento"
+                                }
+                            },
+                            onCallEnded = {
+                                runOnUiThread {
+                                    println("Ligação finalizada")
+
+                                    runOnUiThread {
+                                        val intent = Intent(this, PosEmergenciaActivity::class.java)
+                                        startActivity(intent)
+                                    }
+                                }
+                            }
+                        )
+
+                        callMonitor?.start()
+
                         CallManager().toCall(this, number)
+
                     }
                 }
-
             }
             .setNegativeButton(negativeText, null)
             .create()

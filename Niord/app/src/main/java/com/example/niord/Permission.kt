@@ -41,5 +41,25 @@ class Permission(var context: Context){
         permissionCallback = callback
         permissionLauncher.launch(Manifest.permission.CALL_PHONE)
     }
+
+    val multiPermissionLauncher = caller.registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+
+        val granted = permissions.values.all { it }
+        permissionCallback?.invoke(granted)
+    }
+
+    fun requestCallAndPhoneStatePermission(callback: (Boolean) -> Unit) {
+        permissionCallback = callback
+
+        multiPermissionLauncher.launch(
+            arrayOf(
+                Manifest.permission.CALL_PHONE,
+                Manifest.permission.READ_PHONE_STATE
+            )
+        )
+    }
+
 }
 

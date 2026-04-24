@@ -55,6 +55,7 @@ dependencies {
     implementation(libs.appcompat)
     implementation(libs.androidx.compose.ui.unit)
     implementation(libs.material)
+    implementation(libs.androidx.cardview)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
