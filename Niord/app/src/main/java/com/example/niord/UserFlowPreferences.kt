@@ -6,6 +6,8 @@ object UserFlowPreferences {
     private const val PREFS_NAME = "niord_user_flow"
     private const val KEY_DEFAULTS_INITIALIZED = "defaults_initialized"
     private const val KEY_SHOW_CONFIGURATION = "show_configuration"
+    private const val KEY_ONBOARDING_AVAILABLE = "onboarding_available"
+    private const val KEY_ONBOARDING_COMPLETED = "onboarding_completed"
     private const val KEY_OVERLAY_ENABLED = "overlay_enabled"
     private const val KEY_OVERLAY_LOCKED = "overlay_locked"
 
@@ -18,6 +20,8 @@ object UserFlowPreferences {
         prefs.edit()
             .putBoolean(KEY_DEFAULTS_INITIALIZED, true)
             .putBoolean(KEY_SHOW_CONFIGURATION, false)
+            .putBoolean(KEY_ONBOARDING_AVAILABLE, false)
+            .putBoolean(KEY_ONBOARDING_COMPLETED, false)
             .putBoolean(KEY_OVERLAY_ENABLED, false)
             .putBoolean(KEY_OVERLAY_LOCKED, false)
             .apply()
@@ -34,6 +38,28 @@ object UserFlowPreferences {
             .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
             .putBoolean(KEY_SHOW_CONFIGURATION, shouldShow)
+            .apply()
+    }
+
+    fun shouldShowOnboarding(context: Context): Boolean {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getBoolean(KEY_ONBOARDING_AVAILABLE, false) &&
+            !prefs.getBoolean(KEY_ONBOARDING_COMPLETED, false)
+    }
+
+    fun setOnboardingAvailable(context: Context, available: Boolean) {
+        context
+            .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(KEY_ONBOARDING_AVAILABLE, available)
+            .apply()
+    }
+
+    fun setOnboardingCompleted(context: Context, completed: Boolean) {
+        context
+            .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(KEY_ONBOARDING_COMPLETED, completed)
             .apply()
     }
 

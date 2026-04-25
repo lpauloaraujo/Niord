@@ -54,6 +54,7 @@ class ConfiguracaoActivity : ComponentActivity() {
         val itemDesativar = findViewById<RelativeLayout>(R.id.itemDesativarBotao)
         val itemFixar = findViewById<RelativeLayout>(R.id.itemFixarBotao)
         val itemLogout = findViewById<RelativeLayout>(R.id.itemLogout)
+        val itemExcluirConta = findViewById<RelativeLayout>(R.id.itemExcluirConta)
 
         checkboxDesativar.isChecked = UserFlowPreferences.isOverlayEnabled(this)
         switchFixar.isChecked = UserFlowPreferences.isOverlayLocked(this)
@@ -81,6 +82,10 @@ class ConfiguracaoActivity : ComponentActivity() {
 
         itemLogout.setOnClickListener {
             showLogoutDialog()
+        }
+
+        itemExcluirConta.setOnClickListener {
+            showDeleteAccountDialog()
         }
     }
 
@@ -153,6 +158,40 @@ class ConfiguracaoActivity : ComponentActivity() {
             .setMessage("Tem certeza que deseja fazer logout?")
             .setPositiveButton("Confirmar") { _, _ ->
                 UserFlowPreferences.setShowConfiguration(this, false)
+                val intent = Intent(this, MainActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                }
+                startActivity(intent)
+                finish()
+            }
+            .setNegativeButton("Cancelar") { dialogInterface, _ ->
+                dialogInterface.dismiss()
+            }
+            .create()
+
+        dialog.show()
+
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.apply {
+            setTextColor(android.graphics.Color.parseColor("#4A6CF7"))
+            textSize = 16f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+        }
+
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.apply {
+            setTextColor(android.graphics.Color.parseColor("#666666"))
+            textSize = 16f
+        }
+    }
+
+    private fun showDeleteAccountDialog() {
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Excluir Conta")
+            .setMessage("Tem certeza que deseja excluir sua conta?")
+            .setPositiveButton("Confirmar") { _, _ ->
+                UserFlowPreferences.setShowConfiguration(this, false)
+                UserFlowPreferences.setOnboardingCompleted(this, false)
+                UserFlowPreferences.setOverlayEnabled(this, false)
+                UserFlowPreferences.setOverlayLocked(this, false)
                 val intent = Intent(this, MainActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                 }
