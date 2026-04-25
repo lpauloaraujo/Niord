@@ -34,6 +34,10 @@
             android:windowSoftInputMode="adjustResize" >
         </activity>
         <activity
+            android:name=".OnboardingActivity"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
             android:name=".ConfiguracaoActivity"
             android:windowSoftInputMode="adjustResize" >
         </activity>

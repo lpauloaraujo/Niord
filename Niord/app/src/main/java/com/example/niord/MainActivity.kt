@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity() {
 
         findViewById<Button>(R.id.btnStart).setOnClickListener {
             if (UserFlowPreferences.shouldShowConfiguration(this)) {
-                startActivity(Intent(this, ConfiguracaoActivity::class.java))
+                openPostAuthFlow()
             } else {
                 splashScreen.visibility = View.GONE
                 loginScreen.visibility = View.VISIBLE
@@ -65,7 +65,7 @@ class MainActivity : ComponentActivity() {
 
         findViewById<Button>(R.id.btnLogin).setOnClickListener {
             UserFlowPreferences.setShowConfiguration(this, true)
-            startActivity(Intent(this, ConfiguracaoActivity::class.java))
+            openPostAuthFlow()
         }
 
         findViewById<TextView>(R.id.btnCreateAccount).setOnClickListener {
@@ -77,5 +77,14 @@ class MainActivity : ComponentActivity() {
         buttonOverlay = MainOverlayButton(this, lifecycleOwner)
         buttonOverlay.setVisibility(false)
         buttonOverlay.invoke()
+    }
+
+    private fun openPostAuthFlow() {
+        val nextActivity = if (UserFlowPreferences.shouldShowOnboarding(this)) {
+            OnboardingActivity::class.java
+        } else {
+            ConfiguracaoActivity::class.java
+        }
+        startActivity(Intent(this, nextActivity))
     }
 }

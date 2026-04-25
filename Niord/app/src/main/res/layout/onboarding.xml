@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/onboardingRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF">
+
+    <ImageView
+        android:id="@+id/imgOnboardingPage"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:adjustViewBounds="true"
+        android:background="#FFFFFF"
+        android:contentDescription="@string/app_name"
+        android:scaleType="centerCrop" />
+
+    <View
+        android:id="@+id/btnSkipOnboarding"
+        android:layout_width="132dp"
+        android:layout_height="104dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="112dp"
+        android:layout_marginEnd="22dp"
+        android:background="@android:color/transparent" />
+</FrameLayout>
