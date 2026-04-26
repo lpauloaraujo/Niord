@@ -55,6 +55,7 @@ class ConfiguracaoActivity : ComponentActivity() {
         val itemFixar = findViewById<RelativeLayout>(R.id.itemFixarBotao)
         val itemLogout = findViewById<RelativeLayout>(R.id.itemLogout)
         val itemExcluirConta = findViewById<RelativeLayout>(R.id.itemExcluirConta)
+        val itemAlterarDados = findViewById<RelativeLayout>(R.id.itemAlterarDados)
 
         checkboxDesativar.isChecked = UserFlowPreferences.isOverlayEnabled(this)
         switchFixar.isChecked = UserFlowPreferences.isOverlayLocked(this)
@@ -87,6 +88,14 @@ class ConfiguracaoActivity : ComponentActivity() {
         itemExcluirConta.setOnClickListener {
             showDeleteAccountDialog()
         }
+
+        itemAlterarDados.setOnClickListener {
+            openAccountSecurityFlow()
+        }
+    }
+
+    private fun openAccountSecurityFlow() {
+        startActivity(Intent(this, AccountSecurityActivity::class.java))
     }
 
     private fun applyOverlayEnabledState(

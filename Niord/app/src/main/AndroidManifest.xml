@@ -41,6 +41,14 @@
             android:name=".ConfiguracaoActivity"
             android:windowSoftInputMode="adjustResize" >
         </activity>
+        <activity
+            android:name=".AccountSecurityActivity"
+            android:windowSoftInputMode="adjustResize" >
+        </activity>
+        <activity
+            android:name=".AccountDataActivity"
+            android:windowSoftInputMode="adjustResize" >
+        </activity>
     </application>
 
 </manifest>

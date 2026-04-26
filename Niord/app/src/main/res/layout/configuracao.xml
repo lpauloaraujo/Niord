@@ -370,9 +370,9 @@
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"/>
 
-        <!-- Item 7: Informações da Conta -->
+        <!-- Item 7: Alterar Dados -->
         <RelativeLayout
-            android:id="@+id/itemInfoConta"
+            android:id="@+id/itemAlterarDados"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/selector_item_bg"
@@ -384,14 +384,14 @@
             android:paddingBottom="16dp">
 
             <ImageView
-                android:id="@+id/iconInfoConta"
+                android:id="@+id/iconAlterarDados"
                 android:layout_width="28dp"
                 android:layout_height="28dp"
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
                 android:src="@drawable/ic_account_circle"
                 app:tint="#333333"
-                android:contentDescription="Ícone conta" />
+                android:contentDescription="Ícone informações da conta" />
 
             <TextView
                 android:layout_width="wrap_content"

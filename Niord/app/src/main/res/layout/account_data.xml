@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp">
+
+        <ImageView
+            android:id="@+id/btnVoltar"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:src="@drawable/ic_arrow_back" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Editar Perfil"
+            android:textColor="#222222"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <View
+            android:layout_width="24dp"
+            android:layout_height="24dp" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="28dp"
+            android:paddingTop="24dp"
+            android:paddingBottom="24dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="14dp"
+                android:text="Dados Pessoais"
+                android:textColor="#316DF6"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView style="@style/AccountFieldLabel" android:text="Nome" />
+            <LinearLayout style="@style/AccountEditRow">
+                <EditText android:id="@+id/editNome" style="@style/AccountEditText" android:hint="Ex: José" android:inputType="textCapWords" android:maxLength="60" />
+                <ImageButton android:id="@+id/btnEditNome" style="@style/AccountEditButton" android:src="@drawable/ic_edit" />
+            </LinearLayout>
+
+            <TextView style="@style/AccountFieldLabel" android:text="Sobrenome" />
+            <LinearLayout style="@style/AccountEditRow">
+                <EditText android:id="@+id/editSobrenome" style="@style/AccountEditText" android:hint="Ex: Almeida" android:inputType="textCapWords" android:maxLength="60" />
+                <ImageButton android:id="@+id/btnEditSobrenome" style="@style/AccountEditButton" android:src="@drawable/ic_edit" />
+            </LinearLayout>
+
+            <TextView style="@style/AccountFieldLabel" android:text="CPF" />
+            <LinearLayout style="@style/AccountEditRow">
+                <EditText android:id="@+id/editCpf" style="@style/AccountEditText" android:enabled="false" android:text="123.456.789-09" android:textColor="#777777" />
+                <ImageButton android:id="@+id/btnEditCpf" style="@style/AccountEditButton" android:src="@drawable/ic_edit" />
+            </LinearLayout>
+
+            <TextView style="@style/AccountFieldLabel" android:text="Email" />
+            <LinearLayout style="@style/AccountEditRow">
+                <EditText android:id="@+id/editEmail" style="@style/AccountEditText" android:hint="exemplo@email.com" android:inputType="textEmailAddress" android:maxLength="60" />
+                <ImageButton android:id="@+id/btnEditEmail" style="@style/AccountEditButton" android:src="@drawable/ic_edit" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/panelOtpEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="14dp"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Digite o código enviado para o novo email"
+                    android:textColor="#444444"
+                    android:textSize="13sp" />
+
+                <EditText
+                    android:id="@+id/editOtpEmail"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_caixa_texto"
+                    android:gravity="center"
+                    android:hint="000000"
+                    android:inputType="number"
+                    android:maxLength="6"
+                    android:paddingHorizontal="16dp"
+                    android:singleLine="true" />
+
+                <Button
+                    android:id="@+id/btnConfirmarOtp"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="8dp"
+                    android:backgroundTint="#316DF6"
+                    android:text="Confirmar código"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF" />
+
+                <TextView
+                    android:id="@+id/textStatusEmail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Código confirmado. Você pode salvar as alterações."
+                    android:textColor="#2E7D32"
+                    android:textSize="13sp"
+                    android:visibility="gone" />
+
+                <Button
+                    android:id="@+id/btnReenviarOtp"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="6dp"
+                    android:backgroundTint="#00FFFFFF"
+                    android:stateListAnimator="@null"
+                    android:text="Reenviar código em 60s"
+                    android:textAllCaps="false"
+                    android:textColor="#316DF6" />
+            </LinearLayout>
+
+            <TextView style="@style/AccountFieldLabel" android:text="Tipo Sanguíneo" />
+            <LinearLayout style="@style/AccountEditRow">
+                <Spinner android:id="@+id/spinnerTipoSanguineo" android:layout_width="0dp" android:layout_height="44dp" android:layout_weight="1" android:background="@drawable/bg_caixa_texto" android:entries="@array/array_blood" android:paddingHorizontal="12dp" />
+                <ImageButton android:id="@+id/btnEditTipoSanguineo" style="@style/AccountEditButton" android:src="@drawable/ic_edit" />
+            </LinearLayout>
+
+            <TextView style="@style/AccountFieldLabel" android:text="Número de Telefone" />
+            <LinearLayout style="@style/AccountEditRow">
+                <EditText android:id="@+id/editTelefone" style="@style/AccountEditText" android:hint="(81) 98888-8888" android:inputType="phone" android:maxLength="60" />
+                <ImageButton android:id="@+id/btnEditTelefone" style="@style/AccountEditButton" android:src="@drawable/ic_edit" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/panelSenhaTelefone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="14dp"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Confirme sua senha atual para alterar o telefone"
+                    android:textColor="#444444"
+                    android:textSize="13sp" />
+
+                <EditText
+                    android:id="@+id/editSenhaTelefone"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_caixa_texto"
+                    android:inputType="textPassword"
+                    android:maxLength="60"
+                    android:paddingHorizontal="16dp"
+                    android:singleLine="true" />
+
+                <Button
+                    android:id="@+id/btnConfirmarTelefone"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="8dp"
+                    android:backgroundTint="#316DF6"
+                    android:text="Confirmar senha"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF" />
+
+                <TextView
+                    android:id="@+id/textStatusTelefone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Senha confirmada. Você pode salvar as alterações."
+                    android:textColor="#2E7D32"
+                    android:textSize="13sp"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="14dp"
+                android:text="Dados do Veículo"
+                android:textColor="#316DF6"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView style="@style/AccountFieldLabel" android:text="Placa de Veículo" />
+            <LinearLayout style="@style/AccountEditRow">
+                <EditText android:id="@+id/editPlaca" style="@style/AccountEditText" android:hint="MWR-1160" android:inputType="textCapCharacters" android:maxLength="60" />
+                <ImageButton android:id="@+id/btnEditPlaca" style="@style/AccountEditButton" android:src="@drawable/ic_edit" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="14dp"
+                android:text="Segurança"
+                android:textColor="#316DF6"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView style="@style/AccountFieldLabel" android:text="Senha" />
+            <LinearLayout style="@style/AccountEditRow">
+                <EditText android:id="@+id/editNovaSenha" style="@style/AccountEditText" android:enabled="false" android:hint="Deixe em branco para não alterar" android:inputType="textPassword" android:maxLength="60" />
+                <ImageButton android:id="@+id/btnEditSenha" style="@style/AccountEditButton" android:src="@drawable/ic_edit" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/panelSenhaAtual"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Digite sua senha atual antes de criar uma nova senha"
+                    android:textColor="#444444"
+                    android:textSize="13sp" />
+
+                <EditText
+                    android:id="@+id/editSenhaAtualNova"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_caixa_texto"
+                    android:inputType="textPassword"
+                    android:maxLength="60"
+                    android:paddingHorizontal="16dp"
+                    android:singleLine="true" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/textErroFormulario"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="14dp"
+                android:text="Dados inválidos: verifique os caracteres"
+                android:textColor="#D32F2F"
+                android:textSize="13sp"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/btnSalvar"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:backgroundTint="#316DF6"
+                android:text="Salvar Alterações"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp" />
+
+            <Button
+                android:id="@+id/btnCancelar"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_marginTop="4dp"
+                android:backgroundTint="#00FFFFFF"
+                android:stateListAnimator="@null"
+                android:text="Cancelar"
+                android:textAllCaps="false"
+                android:textColor="#316DF6"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
