@@ -29,6 +29,7 @@ class OtpActivity : ComponentActivity() {
 
         binding = ActivityOtpBinding.inflate(LayoutInflater.from(this))
         setContentView(binding.root)
+        binding.otpRoot.applyStatusBarPadding()
 
         setupOtpCopy()
         setupCodeField()

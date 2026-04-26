@@ -27,6 +27,7 @@ class ConfiguracaoActivity : ComponentActivity() {
         enableEdgeToEdge()
         buttonOverlayInit()
         setContentView(R.layout.configuracao)
+        findViewById<android.view.View>(R.id.main).applyStatusBarPadding()
         setupControls()
 
         findViewById<ImageButton>(R.id.btnVoltar).setOnClickListener {

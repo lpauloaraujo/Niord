@@ -2,6 +2,10 @@ package com.example.niord
 
 import android.content.Context
 import android.util.TypedValue
+import android.view.View
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import kotlin.math.max
 import kotlin.math.min
 
@@ -24,4 +28,14 @@ fun intervalLimit(a: Int, value: Int, b: Int): Int {
     //val >= b -> return b
     //val <= a -> return a
     return max(a, min(value, b))
+}
+
+fun View.applyStatusBarPadding() {
+    val initialPaddingTop = paddingTop
+    ViewCompat.setOnApplyWindowInsetsListener(this) { view, insets ->
+        val statusBarTop = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
+        view.updatePadding(top = initialPaddingTop + statusBarTop)
+        insets
+    }
+    ViewCompat.requestApplyInsets(this)
 }

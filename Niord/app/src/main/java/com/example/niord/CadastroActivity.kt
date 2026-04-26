@@ -11,6 +11,8 @@ import android.widget.Button
 import android.widget.EditText
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.example.niord.databinding.CadastroBinding
 import android.util.Patterns
 import android.widget.ImageView
@@ -44,6 +46,7 @@ class CadastroActivity : ComponentActivity() {
         val inflater = LayoutInflater.from(this)
         binding = CadastroBinding.inflate(inflater)
         setContentView(binding.root)
+        setupSystemInsets()
 
         val editSenha = findViewById<EditText>(R.id.editSenha)
         val editConfirmarSenha = findViewById<EditText>(R.id.editConfirmarSenha)
@@ -63,6 +66,21 @@ class CadastroActivity : ComponentActivity() {
         findViewById<ImageView>(R.id.btnVoltar).setOnClickListener {
             finish()
         }
+    }
+
+    private fun setupSystemInsets() {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.cadastroRoot) { view, windowInsets ->
+            val statusBars = windowInsets.getInsets(WindowInsetsCompat.Type.statusBars())
+            val ime = windowInsets.getInsets(WindowInsetsCompat.Type.ime())
+            view.setPadding(
+                statusBars.left,
+                statusBars.top,
+                statusBars.right,
+                ime.bottom
+            )
+            windowInsets
+        }
+        ViewCompat.requestApplyInsets(binding.cadastroRoot)
     }
 
     private fun setupLiveValidation() {
