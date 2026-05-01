@@ -30,6 +30,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".PosEmergenciaActivity" />
+        <activity android:name=".PosPoliciaActivity" />
     </application>
 
 </manifest>

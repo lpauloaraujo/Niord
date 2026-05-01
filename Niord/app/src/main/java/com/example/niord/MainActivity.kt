@@ -110,6 +110,13 @@ class MainActivity : ComponentActivity() {
                 negativeText = "Cancelar"
             }
 
+            "1052" -> {
+                title = "Ligar para a Polícia?"
+                message = "Você será direcionado para a chamada telefônica. Confirme para discar imediatamente."
+                positiveText = "Ligar Agora"
+                negativeText = "Cancelar"
+            }
+
             else -> {
                 title = "Chamada"
                 message = "Deseja realmente ligar para $number?"
@@ -142,9 +149,16 @@ class MainActivity : ComponentActivity() {
                                     callMonitor?.stop()
                                     callMonitor = null
 
+                                    if (number == "144") {
                                     runOnUiThread {
                                         val intent = Intent(this, PosEmergenciaActivity::class.java)
                                         startActivity(intent)
+                                    }
+                                    } else if (number == "1052") {
+                                        runOnUiThread {
+                                            val intent = Intent(this, PosPoliciaActivity::class.java)
+                                            startActivity(intent)
+                                        }
                                     }
                                 }
                             }

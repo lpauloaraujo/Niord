@@ -7,10 +7,11 @@
     android:orientation="vertical"
     android:padding="16dp"
     android:clipToPadding="false"
-    android:clipChildren="false">
+    android:clipChildren="false"
+    android:gravity="center_horizontal">
 
     <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/toolbar"
+        android:id="@+id/toolbarPol"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#FFFFFF"
@@ -22,7 +23,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_marginBottom="12dp"
-        android:text="Aguardando viatura há:"
+        android:text="Aguardando socorro há:"
         android:textSize="16sp" />
 
     <LinearLayout
@@ -49,6 +50,7 @@
                 app:cardBackgroundColor="#FDF7FF">
 
                 <TextView
+                    android:id="@+id/txtHorasPol"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center"
@@ -82,10 +84,11 @@
                 app:cardBackgroundColor="#FDF7FF">
 
                 <TextView
+                    android:id="@+id/txtMinutosPol"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center"
-                    android:text="05"
+                    android:text="00"
                     android:textSize="18sp"
                     android:textStyle="bold"/>
             </com.google.android.material.card.MaterialCardView>
@@ -115,10 +118,11 @@
                 app:cardBackgroundColor="#FDF7FF">
 
                 <TextView
+                    android:id="@+id/txtSegundosPol"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center"
-                    android:text="44"
+                    android:text="00"
                     android:textSize="18sp"
                     android:textStyle="bold"/>
             </com.google.android.material.card.MaterialCardView>
@@ -135,7 +139,7 @@
 
     <!-- MATERIAL CARD (corrigido) -->
     <com.google.android.material.card.MaterialCardView
-        android:layout_width="346dp"
+        android:layout_width="304dp"
         android:layout_height="wrap_content"
         android:layout_margin="12dp"
         app:cardBackgroundColor="#FDF7FF"
@@ -154,38 +158,42 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
                 android:text="BUSQUE UM LOCAL SEGURO"
+                android:textSize="11sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="• Afaste-se do perigo ou da confusão." />
+                android:text="• Afaste-se do perigo e da confusão."
+                android:textSize="11sp"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="• Procure áreas iluminadas e com pessoas." />
+                android:text="• Procure áreas iluminadas e com pessoas."
+                android:textSize="11sp"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="• Se estiver escondido, permaneça em silêncio." />
+                android:text="• Se estiver escondido, permaneça em silêncio."
+                android:textSize="11sp"/>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
     <!-- CARDVIEW (sem alteração estrutural) -->
-    <androidx.cardview.widget.CardView
-        android:layout_width="match_parent"
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="304dp"
         android:layout_height="wrap_content"
         android:layout_margin="12dp"
         app:cardBackgroundColor="#FDF7FF"
         app:cardCornerRadius="16dp"
         app:cardElevation="8dp"
-        app:cardUseCompatPadding="true">
+        app:strokeWidth="0dp">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="16dp">
 
@@ -194,26 +202,73 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
                 android:text="AO AVISTAR A VIATURA"
+                android:textSize="11sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="• Não corra em direção aos policiais." />
+                android:text="• Não corra em direção aos policiais."
+                android:textSize="11sp"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="• Sinalize discretamente se possível." />
+                android:text="• Sinalize discretamente se possível."
+                android:textSize="11sp"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="• Siga estritamente as ordens dadas." />
+                android:text="• Siga estritamente as ordens dadas."
+                android:textSize="11sp"/>
         </LinearLayout>
-    </androidx.cardview.widget.CardView>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="304dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="12dp"
+        app:cardBackgroundColor="#FFFFFF"
+        app:strokeWidth="0dp"
+        app:cardElevation="0dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text=""
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textSize="11sp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textSize="11sp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textSize="11sp"/>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
     <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnPoliciaChegou"
         android:layout_width="304dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="35dp"

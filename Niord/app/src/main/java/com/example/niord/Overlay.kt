@@ -440,7 +440,7 @@ class MainOverlayButton(var context: Context,
 
     var additionalButtons: List<@Composable ()->Unit> = listOf(
         {IconBox(R.drawable.health, secondaryButtonSize, onClick = {onCallClick?.invoke("144")})},
-        {IconBox(R.drawable.cops, secondaryButtonSize)},
+        {IconBox(R.drawable.cops, secondaryButtonSize, onClick = {onCallClick?.invoke("1052")})},
         {IconBox(R.drawable.alert, secondaryButtonSize)},
         {IconBox(R.drawable.plt_vigia, secondaryButtonSize)},
         {IconBox(R.drawable.contacts, secondaryButtonSize)},

@@ -1,14 +1,12 @@
 package com.example.niord
 
-import android.content.Intent
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Handler
 import android.os.Looper
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 
-class PosEmergenciaActivity : AppCompatActivity() {
-
+class PosPoliciaActivity : AppCompatActivity() {
     private lateinit var txtHoras: TextView
     private lateinit var txtMinutos: TextView
     private lateinit var txtSegundos: TextView
@@ -44,12 +42,12 @@ class PosEmergenciaActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.acompanhamento_medico)
+        setContentView(R.layout.acompanhamento_policial)
 
-        val toolbar = findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.toolbarMed)
+        val toolbar = findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.toolbarPol)
         setSupportActionBar(toolbar)
 
-        findViewById<com.google.android.material.button.MaterialButton>(R.id.btnEquipeChegou)
+        findViewById<com.google.android.material.button.MaterialButton>(R.id.btnPoliciaChegou)
             .setOnClickListener {
                 onBackPressedDispatcher.onBackPressed()
             }
@@ -57,9 +55,9 @@ class PosEmergenciaActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.setDisplayShowHomeEnabled(true)
 
-        txtHoras = findViewById(R.id.txtHorasMed)
-        txtMinutos = findViewById(R.id.txtMinutosMed)
-        txtSegundos = findViewById(R.id.txtSegundosMed)
+        txtHoras = findViewById(R.id.txtHorasPol)
+        txtMinutos = findViewById(R.id.txtMinutosPol)
+        txtSegundos = findViewById(R.id.txtSegundosPol)
 
         handler.post(runnable)
     }
@@ -77,8 +75,8 @@ class PosEmergenciaActivity : AppCompatActivity() {
     private fun showConfirmationDialog() {
         val builder = com.google.android.material.dialog.MaterialAlertDialogBuilder(this, R.style.EmergencyConfirmAlertDialog)
 
-        builder.setTitle("A ajuda já chegou?")
-            .setMessage("O tempo de espera excedeu 15 minutos. Caso a ambulância não tenha chegado, recomendamos ligar novamente para reforçar a urgência.")
+        builder.setTitle("A polícia já chegou?")
+            .setMessage("O tempo de espera excedeu 15 minutos. Caso a viatura não tenha chegado, recomendamos ligar novamente para reforçar o pedido.")
             .setPositiveButton("Sim") { dialog, _ ->
                 dialog.dismiss()
                 dialogAberto = false
@@ -94,5 +92,4 @@ class PosEmergenciaActivity : AppCompatActivity() {
 
         builder.show()
     }
-
 }
