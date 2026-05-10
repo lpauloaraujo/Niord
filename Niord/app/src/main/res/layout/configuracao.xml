@@ -401,7 +401,6 @@
                 android:layout_marginStart="48dp"
                 android:text="Informações da Conta"
                 android:textColor="#FF000000"
-<<<<<<< HEAD
                 android:textSize="15sp" />
 
             <ImageView
@@ -451,8 +450,6 @@
                 android:layout_marginStart="48dp"
                 android:text="Logout"
                 android:textColor="#000000"
-=======
->>>>>>> 6a248e2a8400996632c46f1a47b1c82dbf6e8782
                 android:textSize="15sp" />
 
             <ImageView
