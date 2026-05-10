@@ -1422,7 +1422,6 @@ dependencies = [
     { name = "pwdlib", extra = ["argon2"] },
     { name = "pyjwt" },
     { name = "pwdlib", extra = ["argon2"] },
-    { name = "pyjwt" },
     { name = "redis", extra = ["hiredis"] },
     { name = "sqlalchemy" },
 ]

@@ -26,7 +26,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.net.toUri
 import com.example.niord.ui.theme.NiordTheme
 import com.example.niord.MainOverlayButton
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.example.niord.CadastroActivity
 import com.example.niord.FloatingLifecycleOwner
+import com.example.niord.MainOverlayButton
 import com.example.niord.Permission
 import com.example.niord.CallMonitor
 import java.util.zip.Inflater
@@ -34,7 +37,6 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.example.niord.CadastroActivity
 import com.example.niord.FloatingLifecycleOwner
 import com.example.niord.MainOverlayButton
-import com.example.niord.Permission
 
 @RequiresApi(Build.VERSION_CODES.O)
 class MainActivity : ComponentActivity() {
@@ -99,6 +101,7 @@ class MainActivity : ComponentActivity() {
         buttonOverlay.setVisibility(false)
         buttonOverlay.invoke()
     }
+<<<<<<< HEAD
 /*
     fun buttonListeners(){
         findViewById<CheckBox>(R.id.checkboxDesativar).setOnCheckedChangeListener { button, bool ->
@@ -121,8 +124,18 @@ class MainActivity : ComponentActivity() {
             buttonOverlay.isDraggable = !bool
             val intent = Intent(this, CadastroActivity::class.java)
             startActivity(intent)
+=======
+
+    private fun openPostAuthFlow() {
+        val nextActivity = if (UserFlowPreferences.shouldShowOnboarding(this)) {
+            OnboardingActivity::class.java
+        } else {
+            ConfiguracaoActivity::class.java
+>>>>>>> ca10f76554f84e225061dc4cafd1c209e1e46be9
         }
+        startActivity(Intent(this, nextActivity))
     }
+<<<<<<< HEAD
 
     private fun showCallDialog(number: String) {
 
