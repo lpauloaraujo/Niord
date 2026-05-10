@@ -12,31 +12,11 @@ import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.appcompat.widget.SwitchCompat
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.core.net.toUri
-import com.example.niord.ui.theme.NiordTheme
-import com.example.niord.MainOverlayButton
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.example.niord.CadastroActivity
 import com.example.niord.FloatingLifecycleOwner
 import com.example.niord.MainOverlayButton
 import com.example.niord.Permission
-import com.example.niord.CallMonitor
-import java.util.zip.Inflater
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import com.example.niord.CadastroActivity
-import com.example.niord.FloatingLifecycleOwner
-import com.example.niord.MainOverlayButton
 
 @RequiresApi(Build.VERSION_CODES.O)
 class MainActivity : ComponentActivity() {
@@ -45,9 +25,7 @@ class MainActivity : ComponentActivity() {
         onCreate()
         onResume()
     }
-    private var callMonitor: CallMonitor? = null
     private lateinit var buttonOverlay: MainOverlayButton
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -101,125 +79,6 @@ class MainActivity : ComponentActivity() {
         buttonOverlay.setVisibility(false)
         buttonOverlay.invoke()
     }
-<<<<<<< HEAD
-/*
-    fun buttonListeners(){
-        findViewById<CheckBox>(R.id.checkboxDesativar).setOnCheckedChangeListener { button, bool ->
-            //Permission checking
-            if (!Settings.canDrawOverlays(this)) {
-                permission.getOverlayPermissions{
-                    if (Settings.canDrawOverlays(this)) {
-                        buttonOverlay.setVisibility(bool)
-                        //Invoke may fail if permission is disabled on app startup
-                        buttonOverlay.invoke()
-                    }
-                }
-            }else{
-                buttonOverlay.invoke()
-                buttonOverlay.setVisibility(bool)
-            }
-        }
-
-        findViewById<SwitchCompat>(R.id.switchFixar).setOnCheckedChangeListener { button, bool ->
-            buttonOverlay.isDraggable = !bool
-            val intent = Intent(this, CadastroActivity::class.java)
-            startActivity(intent)
-=======
-
-    private fun openPostAuthFlow() {
-        val nextActivity = if (UserFlowPreferences.shouldShowOnboarding(this)) {
-            OnboardingActivity::class.java
-        } else {
-            ConfiguracaoActivity::class.java
->>>>>>> ca10f76554f84e225061dc4cafd1c209e1e46be9
-        }
-        startActivity(Intent(this, nextActivity))
-    }
-<<<<<<< HEAD
-
-    private fun showCallDialog(number: String) {
-
-        val title: String
-        val message: String
-        val positiveText: String
-        val negativeText: String
-
-        when (number) {
-
-            "144" -> {
-                title = "Ligar para Emergência?"
-                message = "Você será direcionado para a chamada telefônica. Confirme para discar imediatamente."
-                positiveText = "Ligar Agora"
-                negativeText = "Cancelar"
-            }
-
-            "1052" -> {
-                title = "Ligar para a Polícia?"
-                message = "Você será direcionado para a chamada telefônica. Confirme para discar imediatamente."
-                positiveText = "Ligar Agora"
-                negativeText = "Cancelar"
-            }
-
-            else -> {
-                title = "Chamada"
-                message = "Deseja realmente ligar para $number?"
-                positiveText = "Confirmar"
-                negativeText = "Cancelar"
-            }
-        }
-
-        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
-            this,
-            R.style.CustomAlertDialog
-        )
-            .setTitle(title)
-            .setMessage(message)
-            .setPositiveButton(positiveText) { _, _ ->
-
-                permission.requestCallAndPhoneStatePermission { granted ->
-                    if (granted) {
-
-                        // 🔹 cria o monitor
-                        callMonitor = CallMonitor(
-                            context = this,
-                            onCallStarted = {
-                                runOnUiThread {
-                                }
-                            },
-                            onCallEnded = {
-                                runOnUiThread {
-
-                                    callMonitor?.stop()
-                                    callMonitor = null
-
-                                    if (number == "144") {
-                                    runOnUiThread {
-                                        val intent = Intent(this, PosEmergenciaActivity::class.java)
-                                        startActivity(intent)
-                                    }
-                                    } else if (number == "1052") {
-                                        runOnUiThread {
-                                            val intent = Intent(this, PosPoliciaActivity::class.java)
-                                            startActivity(intent)
-                                        }
-                                    }
-                                }
-                            }
-                        )
-
-                        callMonitor?.start()
-
-                        CallManager().toCall(this, number)
-
-                    }
-                }
-            }
-            .setNegativeButton(negativeText, null)
-            .create()
-
-        dialog.show()
-    }
-*/
 
     private fun openPostAuthFlow() {
         val nextActivity = if (UserFlowPreferences.shouldShowOnboarding(this)) {

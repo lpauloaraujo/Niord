@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Niord" parent="Theme.AppCompat.Light.NoActionBar">
+    <style name="Theme.Niord" parent="Theme.Material3.Light.NoActionBar">
         <item name="android:windowBackground">#316DF6</item>
     </style>
 

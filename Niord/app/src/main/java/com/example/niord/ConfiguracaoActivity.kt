@@ -16,6 +16,7 @@ import androidx.appcompat.widget.SwitchCompat
 @RequiresApi(Build.VERSION_CODES.O)
 class ConfiguracaoActivity : ComponentActivity() {
     private var permission = Permission(this)
+    private var callMonitor: CallMonitor? = null
     private var lifecycleOwner = FloatingLifecycleOwner().apply {
         onCreate()
         onResume()
@@ -27,6 +28,9 @@ class ConfiguracaoActivity : ComponentActivity() {
         enableEdgeToEdge()
         buttonOverlayInit()
         setContentView(R.layout.configuracao)
+        buttonOverlay.onCallClick = { number ->
+            showCallDialog(number)
+        }
         findViewById<android.view.View>(R.id.main).applyStatusBarPadding()
         setupControls()
 
@@ -217,4 +221,88 @@ class ConfiguracaoActivity : ComponentActivity() {
             textSize = 16f
         }
     }
+
+    private fun showCallDialog(number: String) {
+
+        val title: String
+        val message: String
+        val positiveText: String
+        val negativeText: String
+
+        when (number) {
+
+            "144" -> {
+                title = "Ligar para Emergência?"
+                message = "Você será direcionado para a chamada telefônica. Confirme para discar imediatamente."
+                positiveText = "Ligar Agora"
+                negativeText = "Cancelar"
+            }
+
+            "1052" -> {
+                title = "Ligar para a Polícia?"
+                message = "Você será direcionado para a chamada telefônica. Confirme para discar imediatamente."
+                positiveText = "Ligar Agora"
+                negativeText = "Cancelar"
+            }
+
+            else -> {
+                title = "Chamada"
+                message = "Deseja realmente ligar para $number?"
+                positiveText = "Confirmar"
+                negativeText = "Cancelar"
+            }
+        }
+
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
+            this,
+            R.style.CustomAlertDialog
+        )
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton(positiveText) { _, _ ->
+
+                permission.requestCallAndPhoneStatePermission { granted ->
+                    if (granted) {
+
+                        // 🔹 cria o monitor
+                        callMonitor = CallMonitor(
+                            context = this,
+                            onCallStarted = {
+                                runOnUiThread {
+                                }
+                            },
+                            onCallEnded = {
+                                runOnUiThread {
+
+                                    callMonitor?.stop()
+                                    callMonitor = null
+
+                                    if (number == "144") {
+                                        runOnUiThread {
+                                            val intent = Intent(this, PosEmergenciaActivity::class.java)
+                                            startActivity(intent)
+                                        }
+                                    } else if (number == "1052") {
+                                        runOnUiThread {
+                                            val intent = Intent(this, PosPoliciaActivity::class.java)
+                                            startActivity(intent)
+                                        }
+                                    }
+                                }
+                            }
+                        )
+
+                        callMonitor?.start()
+
+                        CallManager().toCall(this, number)
+
+                    }
+                }
+            }
+            .setNegativeButton(negativeText, null)
+            .create()
+
+        dialog.show()
+    }
+
 }
