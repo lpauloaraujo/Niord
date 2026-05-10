@@ -6,6 +6,7 @@ from src.models.token import TokenDecoded
 from src.middle.auth import decode_token
 from fastapi import HTTPException
 
+
 router = APIRouter(prefix='/user')
 
 

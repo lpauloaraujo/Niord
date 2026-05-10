@@ -1421,7 +1421,6 @@ dependencies = [
     { name = "psycopg", extra = ["binary", "pool"] },
     { name = "pwdlib", extra = ["argon2"] },
     { name = "pyjwt" },
-    { name = "pwdlib", extra = ["argon2"] },
     { name = "redis", extra = ["hiredis"] },
     { name = "sqlalchemy" },
 ]
@@ -1437,8 +1436,6 @@ requires-dist = [
     { name = "fastapi", extras = ["standard"], specifier = ">=0.135.1" },
     { name = "fastapi-mail", specifier = ">=1.6.2" },
     { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.3.3" },
-    { name = "pwdlib", extras = ["argon2"], specifier = ">=0.3.0" },
-    { name = "pyjwt", specifier = ">=2.12.1" },
     { name = "pwdlib", extras = ["argon2"], specifier = ">=0.3.0" },
     { name = "pyjwt", specifier = ">=2.12.1" },
     { name = "redis", extras = ["hiredis"], specifier = ">=7.4.0" },
