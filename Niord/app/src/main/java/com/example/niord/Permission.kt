@@ -2,10 +2,12 @@ package com.example.niord
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.provider.Settings
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultCaller
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 
 
@@ -52,13 +54,24 @@ class Permission(var context: Context){
 
     fun requestCallAndPhoneStatePermission(callback: (Boolean) -> Unit) {
         permissionCallback = callback
-
         multiPermissionLauncher.launch(
             arrayOf(
                 Manifest.permission.CALL_PHONE,
                 Manifest.permission.READ_PHONE_STATE
             )
         )
+    }
+
+    fun isCallPermitted(context: Context): Boolean {
+        return ((ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.READ_PHONE_STATE
+        ) == PackageManager.PERMISSION_GRANTED)
+        and
+        (ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.CALL_PHONE
+        ) == PackageManager.PERMISSION_GRANTED))
     }
 
 }

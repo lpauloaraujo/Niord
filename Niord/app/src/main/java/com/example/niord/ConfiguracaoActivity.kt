@@ -1,10 +1,13 @@
 package com.example.niord
 
+import android.Manifest
 import android.app.AlertDialog
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.view.WindowManager
 import android.widget.CheckBox
 import android.widget.ImageButton
 import android.widget.RelativeLayout
@@ -12,6 +15,8 @@ import androidx.annotation.RequiresApi
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.widget.SwitchCompat
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 
 @RequiresApi(Build.VERSION_CODES.O)
 class ConfiguracaoActivity : ComponentActivity() {
@@ -36,6 +41,12 @@ class ConfiguracaoActivity : ComponentActivity() {
 
         findViewById<ImageButton>(R.id.btnVoltar).setOnClickListener {
             finish()
+        }
+
+        if (!permission.isCallPermitted(this)){
+            permission.requestCallAndPhoneStatePermission {  }
+            ActivityCompat.shouldShowRequestPermissionRationale(
+                this, Manifest.permission.CALL_PHONE)
         }
     }
 
@@ -261,9 +272,6 @@ class ConfiguracaoActivity : ComponentActivity() {
             .setMessage(message)
             .setPositiveButton(positiveText) { _, _ ->
 
-                permission.requestCallAndPhoneStatePermission { granted ->
-                    if (granted) {
-
                         // 🔹 cria o monitor
                         callMonitor = CallMonitor(
                             context = this,
@@ -293,15 +301,12 @@ class ConfiguracaoActivity : ComponentActivity() {
                         )
 
                         callMonitor?.start()
-
                         CallManager().toCall(this, number)
 
-                    }
-                }
             }
             .setNegativeButton(negativeText, null)
             .create()
-
+        dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
         dialog.show()
     }
 
