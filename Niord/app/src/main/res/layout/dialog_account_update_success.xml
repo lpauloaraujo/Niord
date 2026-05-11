@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="36dp"
+    android:background="@drawable/bg_dialog_otp_success"
+    android:elevation="8dp"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:paddingHorizontal="24dp"
+    android:paddingTop="26dp"
+    android:paddingBottom="34dp">
+
+    <ImageView
+        android:layout_width="122dp"
+        android:layout_height="122dp"
+        android:adjustViewBounds="true"
+        android:contentDescription="Confirmacao"
+        android:scaleType="fitCenter"
+        android:src="@drawable/imagem_confirmacao" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:gravity="center"
+        android:text="Alterações feitas com sucesso!"
+        android:textColor="#316DF6"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:gravity="center"
+        android:text="Aguarde..."
+        android:textColor="#777777"
+        android:textSize="12sp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:text="Você será redirecionado para a página inicial em breve."
+        android:textColor="#555555"
+        android:textSize="12sp" />
+
+    <ProgressBar
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="18dp"
+        android:indeterminate="true"
+        android:indeterminateTint="#316DF6" />
+</LinearLayout>
