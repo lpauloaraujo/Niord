@@ -34,7 +34,9 @@ class ConfiguracaoActivity : ComponentActivity() {
         buttonOverlayInit()
         setContentView(R.layout.configuracao)
         buttonOverlay.onCallClick = { number ->
-            showCallDialog(number)
+            if(permission.isCallPermitted(this)) {
+                showCallDialog(number)
+            }
         }
         findViewById<android.view.View>(R.id.main).applyStatusBarPadding()
         setupControls()
