@@ -60,6 +60,10 @@
             android:name=".AccountDataActivity"
             android:windowSoftInputMode="adjustResize" >
         </activity>
+        <activity
+            android:name=".FloatingButtonCustomizationActivity"
+            android:windowSoftInputMode="adjustResize" >
+        </activity>
     </application>
 
 </manifest>

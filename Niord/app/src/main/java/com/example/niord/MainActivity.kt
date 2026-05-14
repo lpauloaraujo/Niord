@@ -13,10 +13,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import com.example.niord.CadastroActivity
-import com.example.niord.FloatingLifecycleOwner
-import com.example.niord.MainOverlayButton
-import com.example.niord.Permission
 
 @RequiresApi(Build.VERSION_CODES.O)
 class MainActivity : ComponentActivity() {

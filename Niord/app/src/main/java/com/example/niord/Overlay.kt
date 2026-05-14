@@ -30,6 +30,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
@@ -255,8 +256,13 @@ open class OverlayManager(private val context: Context, var lifecycleOwner: Floa
     open fun onDestroy(){
         if(isInvoked){
             if(floatingView?.isAttachedToWindow == true){
-                winManager?.removeViewImmediate(floatingView)
+                try {
+                    winManager?.removeViewImmediate(floatingView)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
+            isInvoked = false
         }
         floatingView?.disposeComposition()
         //lifecycleOwner.onDestroy()
@@ -305,7 +311,11 @@ class MainOverlayButton(var context: Context,
     var minForHorizontal: Float = 0.50f
 
     init{
-        statePacket = StatePacket()
+        statePacket = StatePacket().apply {
+            iconSizeDp = UserFlowPreferences.getOverlaySize(context)
+            transparency = UserFlowPreferences.getOverlayTransparency(context)
+            colorIndex = UserFlowPreferences.getOverlayColorIndex(context)
+        }
         composable = {MainIcon()}
         floatingView?.layoutDirection = View.LAYOUT_DIRECTION_LTR
 
@@ -346,6 +356,8 @@ class MainOverlayButton(var context: Context,
         var isVertical by mutableStateOf(true)
         var isLtr by mutableStateOf(true)
         var iconSizeDp by mutableFloatStateOf(64f)
+        var transparency by mutableFloatStateOf(1.0f)
+        var colorIndex by mutableStateOf(0)
         var subIconScale by mutableFloatStateOf(0.75f)
         var iconSpacingDp by mutableFloatStateOf(8f)
     }
@@ -418,63 +430,74 @@ class MainOverlayButton(var context: Context,
         super.setVisibility(state)
     }
 
+    private val buttonDrawables = intArrayOf(
+        R.drawable.main_button,
+        R.drawable.main_button, // Trocar pelo PNG da cor 2
+        R.drawable.main_button, // Trocar pelo PNG da cor 3
+        R.drawable.main_button  // Trocar pelo PNG da cor 4
+    )
+
+    var onCallClick: ((String) -> Unit)? = null
 
     @Composable
-    fun IconBox(resource: Int, sizeDp: Float, enabled: Boolean = true, onClick: () -> Unit = {}){
+    fun MainIcon(){
+        IconBox(R.drawable.main_button, statePacket.iconSizeDp, enabled = false, isMainIcon = true)
+    }
+
+    @Composable
+    fun IconBox(resource: Int, sizeDp: Float, enabled: Boolean = true, useTint: Boolean = true, isMainIcon: Boolean = false, onClick: () -> Unit = {}){
+        
+        val actualResource = if (isMainIcon) {
+            buttonDrawables.getOrElse(statePacket.colorIndex) { R.drawable.main_button }
+        } else {
+            resource
+        }
+
         if(enabled) {
-            Box (modifier = Modifier.requiredSize(sizeDp.dp), propagateMinConstraints = true){
+            Box (modifier = Modifier.requiredSize(sizeDp.dp).alpha(statePacket.transparency), propagateMinConstraints = true){
                 IconButton(onClick = onClick) {
                     Image(
                         modifier = Modifier.size(sizeDp.dp),
-                        painter = painterResource(resource),
-                        contentDescription = "Icon",
+                        painter = painterResource(actualResource),
+                        contentDescription = "Icon"
                     )
                 }
             }
         } else{
             Image(
-                painter = painterResource(resource),
+                painter = painterResource(actualResource),
                 contentDescription = "Icon",
-                modifier = Modifier.size(sizeDp.dp)
+                modifier = Modifier.size(sizeDp.dp).alpha(statePacket.transparency)
             )
         }
 
     }
 
-    var secondaryButtonSize = statePacket.iconSizeDp * statePacket.subIconScale
-
-    var onCallClick: ((String) -> Unit)? = null
-
-    var additionalButtons: List<@Composable ()->Unit> = listOf(
-        {IconBox(R.drawable.health, secondaryButtonSize, onClick = {onCallClick?.invoke("144")})},
-        {IconBox(R.drawable.cops, secondaryButtonSize, onClick = {onCallClick?.invoke("1052")})},
-        {IconBox(R.drawable.alert, secondaryButtonSize)},
-        {IconBox(R.drawable.plt_vigia, secondaryButtonSize)},
-        {IconBox(R.drawable.contacts, secondaryButtonSize)},
-        {IconBox(R.drawable.insurance, secondaryButtonSize)}
-    )
-
-    @Composable
-    fun MainIcon(){
-        IconBox(R.drawable.main_button, statePacket.iconSizeDp, false)
-    }
-
     @Composable
     fun ComposableUnit(statePacket: StatePacket){
+        val secondarySize = statePacket.iconSizeDp * statePacket.subIconScale
+        
+        val buttons: List<@Composable () -> Unit> = listOf(
+            {IconBox(R.drawable.health, secondarySize, onClick = {onCallClick?.invoke("144")})},
+            {IconBox(R.drawable.cops, secondarySize, onClick = {onCallClick?.invoke("1052")})},
+            {IconBox(R.drawable.alert, secondarySize)},
+            {IconBox(R.drawable.plt_vigia, secondarySize)},
+            {IconBox(R.drawable.contacts, secondarySize)},
+            {IconBox(R.drawable.insurance, secondarySize)}
+        )
+
         if (statePacket.isVertical) Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(statePacket.iconSpacingDp.dp)
         ){
-            additionalButtons.forEach { it() }
-        }
-        if (!statePacket.isVertical)
+            buttons.forEach { it() }
+        } else {
             Row( verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(statePacket.iconSpacingDp.dp)){
-                if(statePacket.isLtr) additionalButtons.forEach { it() }
-                else additionalButtons.reversed().forEach { it() }
-                //additionalButtons.forEach { it() }
+                if(statePacket.isLtr) buttons.forEach { it() }
+                else buttons.reversed().forEach { it() }
             }
-
+        }
     }
 
 }

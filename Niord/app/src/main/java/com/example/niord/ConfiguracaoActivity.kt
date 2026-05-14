@@ -2,7 +2,10 @@ package com.example.niord
 
 import android.Manifest
 import android.app.AlertDialog
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -28,16 +31,27 @@ class ConfiguracaoActivity : ComponentActivity() {
     }
     private lateinit var buttonOverlay: MainOverlayButton
 
+    private val overlayReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (::buttonOverlay.isInitialized) {
+                val isEnabled = UserFlowPreferences.isOverlayEnabled(this@ConfiguracaoActivity)
+                applyOverlayEnabledState(isEnabled, false)
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        buttonOverlayInit()
         setContentView(R.layout.configuracao)
-        buttonOverlay.onCallClick = { number ->
-            if(permission.isCallPermitted(this)) {
-                showCallDialog(number)
-            }
+
+        val filter = IntentFilter("com.example.niord.UPDATE_OVERLAY")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(overlayReceiver, filter, Context.RECEIVER_EXPORTED)
+        } else {
+            registerReceiver(overlayReceiver, filter)
         }
+
         findViewById<android.view.View>(R.id.main).applyStatusBarPadding()
         setupControls()
 
@@ -52,7 +66,26 @@ class ConfiguracaoActivity : ComponentActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (::buttonOverlay.isInitialized) {
+            buttonOverlay.onDestroy()
+        }
+        buttonOverlayInit()
+        
+        // Sincroniza sem disparar listeners
+        syncControlsWithPreferences()
+        
+        val isEnabled = UserFlowPreferences.isOverlayEnabled(this)
+        applyOverlayEnabledState(isEnabled, requestPermissionIfNeeded = false)
+    }
+
     override fun onDestroy() {
+        try {
+            unregisterReceiver(overlayReceiver)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
         if (::buttonOverlay.isInitialized) {
             buttonOverlay.onDestroy()
         }
@@ -64,6 +97,12 @@ class ConfiguracaoActivity : ComponentActivity() {
         buttonOverlay = MainOverlayButton(this, lifecycleOwner)
         buttonOverlay.isDraggable = !UserFlowPreferences.isOverlayLocked(this)
         buttonOverlay.setVisibility(false)
+
+        buttonOverlay.onCallClick = { number ->
+            if(permission.isCallPermitted(this)) {
+                showCallDialog(number)
+            }
+        }
     }
 
     private fun setupControls() {
@@ -74,29 +113,33 @@ class ConfiguracaoActivity : ComponentActivity() {
         val itemLogout = findViewById<RelativeLayout>(R.id.itemLogout)
         val itemExcluirConta = findViewById<RelativeLayout>(R.id.itemExcluirConta)
         val itemAlterarDados = findViewById<RelativeLayout>(R.id.itemAlterarDados)
+        val itemPersonalizar = findViewById<RelativeLayout>(R.id.itemPersonalizarBotao)
 
-        checkboxDesativar.isChecked = UserFlowPreferences.isOverlayEnabled(this)
-        switchFixar.isChecked = UserFlowPreferences.isOverlayLocked(this)
-
-        applyOverlayEnabledState(checkboxDesativar.isChecked, requestPermissionIfNeeded = false)
-        applyOverlayLockedState(switchFixar.isChecked)
-
-        checkboxDesativar.setOnCheckedChangeListener { _, isChecked ->
+        // Listeners apenas para interações do usuário
+        checkboxDesativar.setOnClickListener {
+            val isChecked = (it as CheckBox).isChecked
             applyOverlayEnabledState(isChecked, requestPermissionIfNeeded = true)
         }
 
-        switchFixar.setOnCheckedChangeListener { _, isChecked ->
+        switchFixar.setOnClickListener {
+            val isChecked = (it as SwitchCompat).isChecked
             applyOverlayLockedState(isChecked)
         }
 
         itemDesativar.setOnClickListener {
             checkboxDesativar.isChecked = !checkboxDesativar.isChecked
+            applyOverlayEnabledState(checkboxDesativar.isChecked, requestPermissionIfNeeded = true)
         }
 
         itemFixar.setOnClickListener {
             if (switchFixar.isEnabled) {
                 switchFixar.isChecked = !switchFixar.isChecked
+                applyOverlayLockedState(switchFixar.isChecked)
             }
+        }
+
+        itemPersonalizar.setOnClickListener {
+            startActivity(Intent(this, FloatingButtonCustomizationActivity::class.java))
         }
 
         itemLogout.setOnClickListener {
@@ -124,6 +167,7 @@ class ConfiguracaoActivity : ComponentActivity() {
             UserFlowPreferences.setOverlayEnabled(this, false)
             if (::buttonOverlay.isInitialized) {
                 buttonOverlay.setVisibility(false)
+                buttonOverlay.dismiss()
             }
             updateFixControlState(false)
             return
@@ -134,11 +178,7 @@ class ConfiguracaoActivity : ComponentActivity() {
                 permission.getOverlayPermissions {
                     val granted = Settings.canDrawOverlays(this)
                     UserFlowPreferences.setOverlayEnabled(this, granted)
-                    if (granted) {
-                        buttonOverlay.invoke()
-                        buttonOverlay.setVisibility(true)
-                    }
-                    updateFixControlState(granted)
+                    // No UI call here, onResume will handle it
                     syncControlsWithPreferences()
                 }
             } else {
@@ -162,11 +202,12 @@ class ConfiguracaoActivity : ComponentActivity() {
     }
 
     private fun syncControlsWithPreferences() {
-        findViewById<CheckBox>(R.id.checkboxDesativar).isChecked =
-            UserFlowPreferences.isOverlayEnabled(this)
-        findViewById<SwitchCompat>(R.id.switchFixar).isChecked =
-            UserFlowPreferences.isOverlayLocked(this)
-        updateFixControlState(UserFlowPreferences.isOverlayEnabled(this))
+        val isEnabled = UserFlowPreferences.isOverlayEnabled(this)
+        val isLocked = UserFlowPreferences.isOverlayLocked(this)
+        
+        findViewById<CheckBox>(R.id.checkboxDesativar).isChecked = isEnabled
+        findViewById<SwitchCompat>(R.id.switchFixar).isChecked = isLocked
+        updateFixControlState(isEnabled)
     }
 
     private fun updateFixControlState(isOverlayEnabled: Boolean) {
