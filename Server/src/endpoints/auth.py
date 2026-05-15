@@ -8,7 +8,7 @@ from src.middle.auth import send_mail_code, add_user_db
 from src.middle.auth import create_refresh_token, create_access_token, refresh_access_token, decode_token, delete_refresh_by_id, is_refresh_update_age, get_user_by_id, verify_refresh
 import sqlalchemy.exc as db_exception
 from typing import Annotated
-from fastapi import HTTPException, Response, Depends
+from fastapi import HTTPException, Response, Depends, Cookie
 from fastapi.security import OAuth2PasswordBearer 
 from pydantic import SecretStr
 from src.models.error import ErrorMessage, create_detail, ErrorType
@@ -80,7 +80,7 @@ def verify_account(session: SessionDep, email: str, code:int):
 
 
 @router.post("/login", status_code=200, responses={401:{"model": ErrorMessage}})
-def login(session: SessionDep, user_form: Annotated[UserLogin, Depends()]) -> TokenLoginSchema:
+def login(session: SessionDep, response: Response, user_form: Annotated[UserLogin, Depends()]) -> TokenLoginSchema:
     credential_exception = HTTPException(401, create_detail(message="Dados incorretos"))
     user = get_user_by_email(session, user_form.email)
     if not user:
@@ -95,54 +95,22 @@ def login(session: SessionDep, user_form: Annotated[UserLogin, Depends()]) -> To
 
     session.commit()
     session.refresh(refresh_token)
+    response.set_cookie("refresh_token", refresh_token.token)
+    response.set_cookie("access_token", access_token)
     
-    return TokenLoginSchema(**{"refresh": refresh_token.token, "access": access_token})
+    return TokenLoginSchema(**{"refresh_token": refresh_token.token, "access_token": access_token})
 
 @router.delete("/login", status_code=200, responses={401:{"model": ErrorMessage}})
-def logout(session: SessionDep, refresh_token: str):
+def logout(session: SessionDep, refresh_token: Annotated[str, Cookie()], response: Response):
     decoded = decode_token(refresh_token)
     if decoded and verify_refresh(session, decoded, refresh_token):
         delete_refresh_by_id(session, decoded.id)
         session.commit()
+        response.delete_cookie("refresh_token")
+        response.delete_cookie("access_token")
         return {"detail":"Refresh token apagado com sucesso"}
     raise HTTPException(401, create_detail("Token inválido"))
     
-
-@router.post("/refresh", status_code=200, responses={401:{"model": ErrorMessage}})
-def refresh(session: SessionDep, refresh_token: str, 
-            user_form: Annotated[UserLogin, Depends()] | None = None) -> RefreshSchema:
-    is_fresh = False
-    if user_form is not None:
-        user = get_user_by_email(session, user_form.email)
-        if user and check_hash(user_form.password, user.password):
-            is_fresh=True
-            #DEBUG
-            print("Creating fresh access token")
-        else:
-            raise HTTPException(401, create_detail("Credenciais incorretas", field="body"))
-
-
-    access_token = refresh_access_token(session, refresh_token, is_fresh)
-    refresh_should_update = is_refresh_update_age(refresh_token)
-    if access_token:
-        data = dict()
-        data["access"] = access_token
-        
-        if refresh_should_update:
-            #Returns new refresh token if it's near expiring
-            decoded = decode_token(refresh_token)
-            if decoded:
-                user = get_user_by_id(session, decoded.id)
-                if user:
-                    new_refresh = create_refresh_token(session, user)
-                    session.commit()
-                    session.refresh(new_refresh)
-                    data["refresh"] = new_refresh.token
-
-        return RefreshSchema(**data)
-    raise HTTPException(401, create_detail("Token inválido"))
-
-
 
 
 
