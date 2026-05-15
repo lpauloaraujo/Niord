@@ -432,9 +432,9 @@ class MainOverlayButton(var context: Context,
 
     private val buttonDrawables = intArrayOf(
         R.drawable.main_button,
-        R.drawable.main_button, // Trocar pelo PNG da cor 2
-        R.drawable.main_button, // Trocar pelo PNG da cor 3
-        R.drawable.main_button  // Trocar pelo PNG da cor 4
+        R.drawable.main_button_red,
+        R.drawable.main_button_purple,
+        R.drawable.main_button_green
     )
 
     var onCallClick: ((String) -> Unit)? = null
