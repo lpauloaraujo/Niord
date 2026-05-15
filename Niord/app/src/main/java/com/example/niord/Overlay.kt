@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.PixelFormat
 import android.os.Build
 import android.util.DisplayMetrics
+import android.util.Log
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -17,9 +18,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -250,7 +253,12 @@ open class OverlayManager(private val context: Context, var lifecycleOwner: Floa
 
     @RequiresApi(Build.VERSION_CODES.O)
     open fun onDestroy(){
-        dismiss()
+        if(isInvoked){
+            if(floatingView?.isAttachedToWindow == true){
+                winManager?.removeViewImmediate(floatingView)
+            }
+        }
+        floatingView?.disposeComposition()
         //lifecycleOwner.onDestroy()
         //lifecycleOwner = null
     }
@@ -330,7 +338,7 @@ class MainOverlayButton(var context: Context,
         )
     }
     override fun onDestroy(){
-        additionalOverlay.dismiss()
+        additionalOverlay.onDestroy()
         super.onDestroy()
     }
     class StatePacket{
@@ -384,8 +392,17 @@ class MainOverlayButton(var context: Context,
         }
 
 
-        additionalOverlay.winManager?.
-        updateViewLayout(additionalOverlay.floatingView, additionalOverlay.layoutParams)
+        additionalOverlay.invoke()
+        if (additionalOverlay.floatingView?.isAttachedToWindow == true) {
+            try {
+                additionalOverlay.winManager?.
+                updateViewLayout(additionalOverlay.floatingView, additionalOverlay.layoutParams)
+            } catch (e: IllegalArgumentException) {
+                // Log it or handle the fact that the view was detached mid-execution
+                Log.e("Overlay", "View detached during update: ${e.message}")
+            }
+        }
+
 
     }
 
@@ -425,9 +442,12 @@ class MainOverlayButton(var context: Context,
     }
 
     var secondaryButtonSize = statePacket.iconSizeDp * statePacket.subIconScale
+
+    var onCallClick: ((String) -> Unit)? = null
+
     var additionalButtons: List<@Composable ()->Unit> = listOf(
-        {IconBox(R.drawable.health, secondaryButtonSize)},
-        {IconBox(R.drawable.cops, secondaryButtonSize)},
+        {IconBox(R.drawable.health, secondaryButtonSize, onClick = {onCallClick?.invoke("144")})},
+        {IconBox(R.drawable.cops, secondaryButtonSize, onClick = {onCallClick?.invoke("1052")})},
         {IconBox(R.drawable.alert, secondaryButtonSize)},
         {IconBox(R.drawable.plt_vigia, secondaryButtonSize)},
         {IconBox(R.drawable.contacts, secondaryButtonSize)},
@@ -454,10 +474,10 @@ class MainOverlayButton(var context: Context,
                 else additionalButtons.reversed().forEach { it() }
                 //additionalButtons.forEach { it() }
             }
+
     }
 
 }
-
 
 //Use this class as an example of use case
 class ExampleCustomOverlay(context: Context, lifecycleOwner: FloatingLifecycleOwner) : OverlayManager(context, lifecycleOwner){
