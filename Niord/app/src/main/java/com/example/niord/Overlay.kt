@@ -444,13 +444,32 @@ class MainOverlayButton(var context: Context,
     var secondaryButtonSize = statePacket.iconSizeDp * statePacket.subIconScale
 
     var onCallClick: ((String) -> Unit)? = null
+    val locationManager = LocationManager(context)
+
+    fun printUserLocation() {
+
+        locationManager.getUserLocation { location ->
+
+            if (location != null) {
+
+                Log.d(
+                    "LOCATION",
+                    "Lat: ${location.latitude}, Lng: ${location.longitude}"
+                )
+
+            } else {
+
+                Log.d("LOCATION", "Sem localização")
+            }
+        }
+    }
 
     var additionalButtons: List<@Composable ()->Unit> = listOf(
         {IconBox(R.drawable.health, secondaryButtonSize, onClick = {onCallClick?.invoke("144")})},
         {IconBox(R.drawable.cops, secondaryButtonSize, onClick = {onCallClick?.invoke("1052")})},
         {IconBox(R.drawable.alert, secondaryButtonSize)},
         {IconBox(R.drawable.plt_vigia, secondaryButtonSize)},
-        {IconBox(R.drawable.contacts, secondaryButtonSize)},
+        {IconBox(R.drawable.contacts, secondaryButtonSize, onClick = {printUserLocation()})},
         {IconBox(R.drawable.insurance, secondaryButtonSize)}
     )
 

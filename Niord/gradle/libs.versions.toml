@@ -24,6 +24,7 @@ retrofit = "3.0.0"
 rules = "1.7.0"
 uiUnit = "1.10.5"
 cardview = "1.0.0"
+playServicesLocation = "21.2.0"
 
 [libraries]
 androidx-appcompat = { module = "androidx.appcompat:appcompat" }
@@ -63,6 +64,7 @@ ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "kto
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktorVersion" }
 logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "loggingInterceptor" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
+google-play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

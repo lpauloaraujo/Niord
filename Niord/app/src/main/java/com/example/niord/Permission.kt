@@ -74,5 +74,22 @@ class Permission(var context: Context){
         ) == PackageManager.PERMISSION_GRANTED))
     }
 
+    fun requestLocationPermission(callback: (Boolean) -> Unit) {
+
+        permissionCallback = callback
+
+        permissionLauncher.launch(
+            Manifest.permission.ACCESS_FINE_LOCATION
+        )
+    }
+
+    fun isLocationPermitted(context: Context): Boolean {
+
+        return ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
 }
 
