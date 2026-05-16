@@ -35,6 +35,12 @@ data class RegisterPost(
 )
 
 @Serializable
+data class LoginPost(
+    val email: String,
+    val password: String
+)
+
+@Serializable
 data class OtpResend(
     val email: String
 )

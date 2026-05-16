@@ -23,6 +23,15 @@ class ApiService(context: Context){
             setBody(registerPost)
         }
     }
+
+    suspend fun sendLoginData(loginPost: LoginPost): HttpResponse{
+        return apiClient.post("auth/login"){
+            url{
+                parameters.append("email", loginPost.email)
+                parameters.append("password", loginPost.password)
+            }
+        }
+    }
     suspend fun verifyOtp(verifyPayload: OtpVerify): HttpResponse{
         return apiClient.post("auth/verify"){
             url{

@@ -13,10 +13,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.lifecycleScope
 import com.example.niord.CadastroActivity
 import com.example.niord.FloatingLifecycleOwner
 import com.example.niord.MainOverlayButton
 import com.example.niord.Permission
+import com.example.niord.api.ApiService
+import com.example.niord.api.LoginPost
+import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.O)
 class MainActivity : ComponentActivity() {
@@ -26,6 +30,7 @@ class MainActivity : ComponentActivity() {
         onResume()
     }
     private lateinit var buttonOverlay: MainOverlayButton
+    private lateinit var apiService: ApiService
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -37,6 +42,8 @@ class MainActivity : ComponentActivity() {
         setContentView(R.layout.activity_main)
         findViewById<ScrollView>(R.id.screenLogin).applyStatusBarPadding()
         setupScreenFlow()
+
+        apiService = ApiService(this)
     }
 
     override fun onDestroy() {
@@ -45,6 +52,25 @@ class MainActivity : ComponentActivity() {
         }
         lifecycleOwner.onDestroy()
         super.onDestroy()
+    }
+
+    suspend fun sendLogin(): Boolean{
+        val loginData = LoginPost(
+            email=findViewById<TextView>(R.id.editEmailCpf).text.toString(),
+            password = findViewById<TextView>(R.id.editSenhaLogin).text.toString()
+        )
+        try {
+            val response = apiService.sendLoginData(loginData)
+            if(response.status.value == 200) {
+                return true
+            }else{
+                val credentialsMessage = "Credenciais Inválidas"
+                findViewById<TextView>(R.id.editSenhaLogin).error = credentialsMessage
+                findViewById<TextView>(R.id.editEmailCpf).error = credentialsMessage
+            }
+        }catch(e: Exception){}
+
+        return false
     }
 
     private fun setupScreenFlow() {
@@ -66,8 +92,15 @@ class MainActivity : ComponentActivity() {
         }
 
         findViewById<Button>(R.id.btnLogin).setOnClickListener {
-            UserFlowPreferences.setShowConfiguration(this, true)
-            openPostAuthFlow()
+            if(!DebugPreferences.isDebug(this)) {
+                lifecycleScope.launch {
+                    if(sendLogin()) {
+                        openPostAuthFlow()
+                    }
+                }
+            }else{
+                openPostAuthFlow()
+            }
         }
 
         findViewById<TextView>(R.id.btnCreateAccount).setOnClickListener {

@@ -17,6 +17,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.example.niord.api.ApiService
 
 @RequiresApi(Build.VERSION_CODES.O)
 class ConfiguracaoActivity : ComponentActivity() {
@@ -26,6 +27,8 @@ class ConfiguracaoActivity : ComponentActivity() {
         onCreate()
         onResume()
     }
+
+    private lateinit var apiService: ApiService
     private lateinit var buttonOverlay: MainOverlayButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,6 +47,10 @@ class ConfiguracaoActivity : ComponentActivity() {
         findViewById<ImageButton>(R.id.btnVoltar).setOnClickListener {
             finish()
         }
+
+        UserFlowPreferences.setShowConfiguration(this, true)
+
+        apiService = ApiService(this)
 
         if (!permission.isCallPermitted(this)){
             permission.requestCallAndPhoneStatePermission {  }
