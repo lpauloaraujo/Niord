@@ -73,13 +73,31 @@ class MainActivity : ComponentActivity() {
         return false
     }
 
+    suspend fun isLoggedIn(): Boolean{
+        try{
+            //Verifies response from auth protected endpoint
+            val response = apiService.isAuth()
+            if(response.status.value == 200) return true
+        }catch (e: Exception){}
+        return false
+    }
+
     private fun setupScreenFlow() {
         val splashScreen = findViewById<LinearLayout>(R.id.screenSplash)
         val loginScreen = findViewById<ScrollView>(R.id.screenLogin)
 
+
         findViewById<Button>(R.id.btnStart).setOnClickListener {
             if (UserFlowPreferences.shouldShowConfiguration(this)) {
-                openPostAuthFlow()
+                lifecycleScope.launch {
+                    if (isLoggedIn()) {
+                        openPostAuthFlow()
+                    } else {
+                        splashScreen.visibility = View.GONE
+                        loginScreen.visibility = View.VISIBLE
+                    }
+                }
+
             } else {
                 splashScreen.visibility = View.GONE
                 loginScreen.visibility = View.VISIBLE

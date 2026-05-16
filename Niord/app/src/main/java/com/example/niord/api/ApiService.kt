@@ -9,12 +9,22 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import com.example.niord.api.ApiClient
+import io.ktor.client.request.delete
+import io.ktor.http.cookies
 
 
 class ApiService(context: Context){
     var apiClient = ApiClient.createHttpClient(context)
     suspend fun greet(): String {
         return apiClient.get("greet").body<HttpResponse>().body<String>()
+    }
+
+    suspend fun getUser(): HttpResponse{
+        return apiClient.get("/user")
+    }
+
+    suspend fun isAuth(): HttpResponse{
+        return apiClient.get("auth/isauth")
     }
 
     suspend fun sendRegisterData(registerPost: RegisterPost): HttpResponse{
@@ -30,6 +40,11 @@ class ApiService(context: Context){
                 parameters.append("email", loginPost.email)
                 parameters.append("password", loginPost.password)
             }
+        }
+    }
+
+    suspend fun logout(): HttpResponse{
+        return apiClient.delete("auth/login"){
         }
     }
     suspend fun verifyOtp(verifyPayload: OtpVerify): HttpResponse{
