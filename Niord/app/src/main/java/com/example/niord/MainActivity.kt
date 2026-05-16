@@ -31,6 +31,7 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         UserFlowPreferences.ensureDefaults(this)
+        DebugPreferences.ensureDefaults(this)
         enableEdgeToEdge()
         buttonOverlayInit()
         setContentView(R.layout.activity_main)

@@ -33,3 +33,20 @@ data class RegisterPost(
     @SerialName("blood_type")
     val bloodType: String?
 )
+
+@Serializable
+data class OtpResend(
+    val email: String
+)
+
+@Serializable
+data class OtpVerify(
+    val email: String,
+    val code: Int
+)
+
+
+
+
+
+
