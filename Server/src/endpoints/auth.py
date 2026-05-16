@@ -47,9 +47,9 @@ def unregister(session: SessionDep):
     pass
 
 @router.post("/resend", status_code=200, responses={401: {"model": ErrorMessage}})
-def resend_otp(session: SessionDep, background: BackgroundTasks, email: str, password: Annotated[str, SecretStr]):
+def resend_otp(session: SessionDep, background: BackgroundTasks, email: str):
     user: UserCredentials|None = redis.get_to_verify_user(email)
-    if user and check_hash(password, user.password):
+    if user:
         otp_code = redis.create_otp(email)
         #Avoid response delay from sending the email
         #background.add_task(send_mail_code, email, otp_code)
