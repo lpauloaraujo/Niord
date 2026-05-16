@@ -109,6 +109,7 @@ def decode_token(token: str) -> TokenDecoded | None:
 
 def verify_refresh(session: SessionDep, decoded_refresh: TokenDecoded, encoded: str) -> bool:
     db_token = session.get(RefreshToken,  decoded_refresh.id)
+
     if db_token and db_token.token == encoded:
         return True
     return False

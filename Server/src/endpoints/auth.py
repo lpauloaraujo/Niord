@@ -12,10 +12,13 @@ from fastapi import HTTPException, Response, Depends, Cookie
 from fastapi.security import OAuth2PasswordBearer 
 from pydantic import SecretStr
 from src.models.error import ErrorMessage, create_detail, ErrorType
+from src.models.token import TokenDecoded
+from src.middle.auth import TokenGuard
 
 router = APIRouter(prefix="/auth")
 
 oauth2_bearer = OAuth2PasswordBearer("auth/login", "auth/refresh")
+allow_authenticated = TokenGuard()
 
 @router.post("/register", status_code=200, 
              responses={401: {"model": ErrorMessage, "detail":"Wrong info"}})
@@ -113,5 +116,11 @@ def logout(session: SessionDep, refresh_token: Annotated[str, Cookie()], respons
     
 
 
+@router.get("/isauth")
+def is_authenticated(session: SessionDep, refresh_token: Annotated[str, Cookie()]):
+    decoded_refresh = decode_token(refresh_token)
+    if decoded_refresh and verify_refresh(session, decoded_refresh, refresh_token):
+        return {"status": "authenticated"}
+    raise HTTPException(401, create_detail("Not authenticated"))
 
 
