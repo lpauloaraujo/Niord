@@ -31,4 +31,12 @@ class ApiService(context: Context){
             }
         }
     }
+
+    suspend fun resendOtp(resendPayload: OtpResend): HttpResponse{
+        return apiClient.post("auth/resend"){
+            url{
+                parameters.append("email", resendPayload.email)
+            }
+        }
+    }
 }

@@ -17,6 +17,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.niord.api.ApiService
+import com.example.niord.api.OtpResend
 import com.example.niord.api.OtpVerify
 import com.example.niord.databinding.ActivityOtpBinding
 import com.example.niord.databinding.DialogOtpSuccessBinding
@@ -112,8 +113,19 @@ class OtpActivity : ComponentActivity() {
         }
 
         binding.btnReenviarCodigo.setOnClickListener {
-            Toast.makeText(this, "Codigo reenviado por e-mail", Toast.LENGTH_SHORT).show()
-            startResendTimer()
+            var succeed = false
+            lifecycleScope.launch {
+                try {
+                    val response = apiService.resendOtp(OtpResend(email = intent.getStringExtra(EXTRA_EMAIL)!!))
+                    succeed = response.status.value == 200
+                } catch (e: Exception) {
+
+                }
+            }
+            if(succeed) {
+                Toast.makeText(this, "Codigo reenviado por e-mail", Toast.LENGTH_SHORT).show()
+                startResendTimer()
+            }
         }
     }
 

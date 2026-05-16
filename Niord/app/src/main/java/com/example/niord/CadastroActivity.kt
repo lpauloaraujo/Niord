@@ -152,6 +152,7 @@ class CadastroActivity : ComponentActivity() {
             val response = apiService.sendRegisterData(requestBody)
             if (response.status.value == 200) {
                 println(response.bodyAsText())
+                return true
             } else if (response.status.value == 401) {
                 val errorMessage = response.body<ErrorResponse>()
                 println(errorMessage.detail.message)
@@ -159,12 +160,11 @@ class CadastroActivity : ComponentActivity() {
                 println(errorMessage.detail.field)
                 //TO-DO Dialog Box
             }
-            return true
         }catch (e: Exception){
             println("Something went wrong")
             return false
         }
-
+        return false
     }
 
     fun testRequest() {
