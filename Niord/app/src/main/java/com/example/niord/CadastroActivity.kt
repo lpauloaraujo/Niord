@@ -40,7 +40,7 @@ class CadastroActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        apiService = ApiService()
+        apiService = ApiService(this)
 
         // Substitua pelo nome exato do seu arquivo XML de cadastro (sem o .xml)
         val inflater = LayoutInflater.from(this)
@@ -54,8 +54,18 @@ class CadastroActivity : ComponentActivity() {
         // Aplica a lógica de revelar senha nos dois campos
         configurarBotaoOlho(editSenha)
         configurarBotaoOlho(editConfirmarSenha)
-        findViewById<Button>(R.id.btnCriarConta).setOnClickListener {
-            if (verifyData()) {
+        binding.btnCriarConta.setOnClickListener {
+            if(!DebugPreferences.isDebug(this)) {
+                if (verifyData()) {
+                    lifecycleScope.launch {
+                        if (sendData()) {
+                            openOtpFlow()
+                        } else {
+                            //TO-DO dialog box
+                        }
+                    }
+                }
+            }else{
                 openOtpFlow()
             }
         }
@@ -127,34 +137,43 @@ class CadastroActivity : ComponentActivity() {
         return validData
     }
 
-    fun sendData(){
-        lifecycleScope.launch {
-            val requestBody = RegisterPost(
-                name = binding.editNome.text.toString().trim() + " " + binding.editSobrenome.text.toString().trim(),
-                email = binding.editEmail.text.toString().trim(),
-                password = binding.editSenha.text.toString(),
-                //Remove the '-' for agreed formatting with the API
-                registrationPlate = binding.editPlaca.text.toString().trim().filter {c -> c != '-'},
-                cpf = cpfPlainToFormatted(binding.editCpf.text.toString().filter { c -> c.isDigit() }),
-                telephone = binding.editTelefone.text.toString().trim(),
-                bloodType = binding.spinnerTipoSanguineo.selectedItem.toString().ifEmpty{ null }
-            )
+    suspend fun sendData(): Boolean{
+        val requestBody = RegisterPost(
+            name = binding.editNome.text.toString().trim() + " " + binding.editSobrenome.text.toString().trim(),
+            email = binding.editEmail.text.toString().trim(),
+            password = binding.editSenha.text.toString(),
+            //Remove the '-' for agreed formatting with the API
+            registrationPlate = binding.editPlaca.text.toString().trim().filter {c -> c != '-'},
+            cpf = cpfPlainToFormatted(binding.editCpf.text.toString().filter { c -> c.isDigit() }),
+            telephone = binding.editTelefone.text.toString().trim(),
+            bloodType = binding.spinnerTipoSanguineo.selectedItem.toString().ifEmpty{ null }
+        )
+        try {
             val response = apiService.sendRegisterData(requestBody)
-            if(response.status.value == 200) {
+            if (response.status.value == 200) {
                 println(response.bodyAsText())
-            }else if(response.status.value == 401){
+                return true
+            } else if (response.status.value == 401) {
                 val errorMessage = response.body<ErrorResponse>()
                 println(errorMessage.detail.message)
                 println(errorMessage.detail.type)
                 println(errorMessage.detail.field)
+                //TO-DO Dialog Box
             }
-
+        }catch (e: Exception){
+            println("Something went wrong")
+            return false
         }
+        return false
     }
 
     fun testRequest() {
         lifecycleScope.launch {
-            println(apiService.greet())
+            try {
+                println(apiService.greet())
+            }catch (e: Exception){
+                println("Something went wrong")
+            }
         }
     }
 
@@ -163,6 +182,7 @@ class CadastroActivity : ComponentActivity() {
             putExtra(OtpActivity.EXTRA_EMAIL, binding.editEmail.text.toString().trim())
         }
         startActivity(intent)
+        finish()
     }
 
     private fun validateFirstNameField(showRequiredError: Boolean = false): Boolean {

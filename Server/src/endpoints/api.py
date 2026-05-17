@@ -7,6 +7,11 @@ api_router = APIRouter(prefix='')
 api_router.include_router(user_router)
 api_router.include_router(auth_router)
 
+
+
 @api_router.get('/greet')
 def greet():
     return "Hello, API world!"
+
+
+

@@ -15,13 +15,21 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import com.example.niord.api.ApiService
+import com.example.niord.api.OtpResend
+import com.example.niord.api.OtpVerify
 import com.example.niord.databinding.ActivityOtpBinding
 import com.example.niord.databinding.DialogOtpSuccessBinding
+import kotlinx.coroutines.launch
 
 class OtpActivity : ComponentActivity() {
 
     private lateinit var binding: ActivityOtpBinding
     private var resendTimer: CountDownTimer? = null
+
+    private lateinit var apiService: ApiService
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,6 +38,8 @@ class OtpActivity : ComponentActivity() {
         binding = ActivityOtpBinding.inflate(LayoutInflater.from(this))
         setContentView(binding.root)
         binding.otpRoot.applyStatusBarPadding()
+
+        apiService = ApiService(this)
 
         setupOtpCopy()
         setupCodeField()
@@ -58,12 +68,11 @@ class OtpActivity : ComponentActivity() {
 
             override fun afterTextChanged(s: Editable?) {
                 val code = s?.toString().orEmpty()
-                binding.btnConfirmar.isEnabled = code == REQUIRED_CODE
-                binding.btnConfirmar.alpha = if (code == REQUIRED_CODE) 1f else 0.55f
+                binding.btnConfirmar.isEnabled = code.length == REQUIRED_CODE.length
+                //binding.btnConfirmar.alpha = if (code == REQUIRED_CODE) 1f else 0.55f
 
                 binding.editCodigoConfirmacao.error = when {
-                    code.length < REQUIRED_CODE.length -> null
-                    code == REQUIRED_CODE -> null
+                    code.length == REQUIRED_CODE.length -> null
                     else -> "Codigo invalido"
                 }
             }
@@ -76,14 +85,47 @@ class OtpActivity : ComponentActivity() {
         }
 
         binding.btnConfirmar.setOnClickListener {
-            if (binding.editCodigoConfirmacao.text.toString() == REQUIRED_CODE) {
-                showSuccessDialog()
+            if(DebugPreferences.isDebug(this)) {
+                if (binding.editCodigoConfirmacao.text.toString() == REQUIRED_CODE) {
+                    showSuccessDialog()
+                }
+            }else{
+                lifecycleScope.launch {
+                    try {
+                        val userEmail: String = intent.getStringExtra(EXTRA_EMAIL)!!
+                        val response = apiService.verifyOtp(
+                            OtpVerify(
+                                email =  userEmail,
+                                code = binding.editCodigoConfirmacao.text.toString().toInt()
+                            )
+                        )
+                        if(response.status.value == 200){
+                            showSuccessDialog()
+                        }else{
+                            binding.editCodigoConfirmacao.error = "Código Inválido"
+                        }
+                    } catch (e: Exception) {
+                        println("Something went wrong")
+                        println(e.toString())
+                    }
+                }
             }
         }
 
         binding.btnReenviarCodigo.setOnClickListener {
-            Toast.makeText(this, "Codigo reenviado por e-mail", Toast.LENGTH_SHORT).show()
-            startResendTimer()
+            var succeed = false
+            lifecycleScope.launch {
+                try {
+                    val response = apiService.resendOtp(OtpResend(email = intent.getStringExtra(EXTRA_EMAIL)!!))
+                    succeed = response.status.value == 200
+                } catch (e: Exception) {
+
+                }
+            }
+            if(succeed) {
+                Toast.makeText(this, "Codigo reenviado por e-mail", Toast.LENGTH_SHORT).show()
+                startResendTimer()
+            }
         }
     }
 
@@ -121,7 +163,8 @@ class OtpActivity : ComponentActivity() {
 
         dialogBinding.root.postDelayed({
             dialog.dismiss()
-            openConfigurationFlow()
+            //openConfigurationFlow()
+            finish()
         }, SUCCESS_DELAY_MILLIS)
     }
 
