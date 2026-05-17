@@ -66,8 +66,7 @@ class ConfiguracaoActivity : ComponentActivity() {
     private fun buttonOverlayInit() {
         buttonOverlay = MainOverlayButton(this, lifecycleOwner)
         buttonOverlay.isDraggable = !UserFlowPreferences.isOverlayLocked(this)
-        buttonOverlay.statePacket.vigiaActive =
-            UserFlowPreferences.isVigiaActive(this) || VigiaService.isRunning
+        buttonOverlay.statePacket.vigiaActive = VigiaService.isRunning
         buttonOverlay.setVisibility(false)
     }
 
