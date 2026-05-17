@@ -10,6 +10,7 @@ object UserFlowPreferences {
     private const val KEY_ONBOARDING_COMPLETED = "onboarding_completed"
     private const val KEY_OVERLAY_ENABLED = "overlay_enabled"
     private const val KEY_OVERLAY_LOCKED = "overlay_locked"
+    private const val KEY_VIGIA_ACTIVE = "vigia_active"
 
     fun ensureDefaults(context: Context) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -74,6 +75,20 @@ object UserFlowPreferences {
             .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
             .putBoolean(KEY_OVERLAY_ENABLED, enabled)
+            .apply()
+    }
+
+    fun isVigiaActive(context: Context): Boolean {
+        return context
+            .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getBoolean(KEY_VIGIA_ACTIVE, false)
+    }
+
+    fun setVigiaActive(context: Context, active: Boolean) {
+        context
+            .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(KEY_VIGIA_ACTIVE, active)
             .apply()
     }
 
