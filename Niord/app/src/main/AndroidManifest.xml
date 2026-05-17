@@ -9,6 +9,7 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.CALL_PHONE"/>
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.READ_CONTACTS"/>
     <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:allowBackup="true"
@@ -58,6 +59,10 @@
         </activity>
         <activity
             android:name=".AccountDataActivity"
+            android:windowSoftInputMode="adjustResize" >
+        </activity>
+        <activity
+            android:name=".ContatosEmergenciaActivity"
             android:windowSoftInputMode="adjustResize" >
         </activity>
     </application>
