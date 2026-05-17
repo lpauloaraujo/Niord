@@ -71,12 +71,16 @@
                 android:gravity="center_vertical"
                 android:paddingHorizontal="12dp">
 
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
+                <ImageButton
+                    android:id="@+id/btnBuscarContatos"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Buscar"
+                    android:padding="10dp"
+                    android:scaleType="centerInside"
                     android:src="@drawable/ic_search"
-                    app:tint="#FF666666"
-                    android:contentDescription="Buscar" />
+                    app:tint="#FF666666" />
 
                 <EditText
                     android:id="@+id/searchContatos"
@@ -86,6 +90,7 @@
                     android:layout_weight="1"
                     android:background="@android:color/transparent"
                     android:hint="Buscar por nome ou número"
+                    android:imeOptions="actionSearch"
                     android:inputType="text"
                     android:maxLength="100"
                     android:singleLine="true"
@@ -107,7 +112,8 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
                 android:orientation="vertical"
                 android:paddingHorizontal="12dp"
                 android:paddingBottom="12dp">
@@ -121,14 +127,19 @@
                     android:textSize="14sp"
                     android:textStyle="bold" />
 
-                <LinearLayout
-                    android:id="@+id/contatosList"
+                <ScrollView
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:background="#FFFFFF"
-                    android:elevation="1dp" />
+                    android:layout_weight="1">
+
+                    <LinearLayout
+                        android:id="@+id/contatosList"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:background="#FFFFFF"
+                        android:elevation="1dp" />
+                </ScrollView>
 
                 <TextView
                     android:id="@+id/emptyStateContatos"
