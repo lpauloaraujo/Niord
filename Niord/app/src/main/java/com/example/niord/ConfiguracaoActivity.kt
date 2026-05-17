@@ -10,6 +10,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import android.view.WindowManager
 import android.widget.CheckBox
 import android.widget.ImageButton
@@ -32,6 +33,7 @@ import kotlinx.coroutines.launch
 class ConfiguracaoActivity : ComponentActivity() {
     private var permission = Permission(this)
     private var callMonitor: CallMonitor? = null
+
     private var lifecycleOwner = FloatingLifecycleOwner().apply {
         onCreate()
         onResume()
@@ -39,6 +41,7 @@ class ConfiguracaoActivity : ComponentActivity() {
 
     private lateinit var apiService: ApiService
     private lateinit var buttonOverlay: MainOverlayButton
+    private lateinit var locationManager: LocationManager
 
     private val overlayReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -62,6 +65,7 @@ class ConfiguracaoActivity : ComponentActivity() {
         }
 
 
+        locationManager = LocationManager(this)
 
         findViewById<android.view.View>(R.id.main).applyStatusBarPadding()
         setupControls()
@@ -124,6 +128,8 @@ class ConfiguracaoActivity : ComponentActivity() {
         buttonOverlay.onVigiaClick = { isActive ->
             showVigiaDialog(isActive)
         }
+
+        buttonOverlay.onLocationClick = {printUserLocation()}
     }
 
     private fun setupControls() {
@@ -173,6 +179,25 @@ class ConfiguracaoActivity : ComponentActivity() {
 
         itemAlterarDados.setOnClickListener {
             openAccountSecurityFlow()
+        }
+    }
+
+
+    fun printUserLocation() {
+
+        locationManager.getUserLocation { location ->
+
+            if (location != null) {
+
+                Log.d(
+                    "LOCATION",
+                    "Lat: ${location.latitude}, Lng: ${location.longitude}"
+                )
+
+            } else {
+
+                Log.d("LOCATION", "Sem localização")
+            }
         }
     }
 
