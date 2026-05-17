@@ -134,6 +134,7 @@ class ConfiguracaoActivity : ComponentActivity() {
         val itemLogout = findViewById<RelativeLayout>(R.id.itemLogout)
         val itemExcluirConta = findViewById<RelativeLayout>(R.id.itemExcluirConta)
         val itemAlterarDados = findViewById<RelativeLayout>(R.id.itemAlterarDados)
+        val itemContatosEmergencia = findViewById<RelativeLayout>(R.id.itemContatosEmergencia)
         val itemPersonalizar = findViewById<RelativeLayout>(R.id.itemPersonalizarBotao)
 
         // Listeners apenas para interações do usuário
@@ -174,10 +175,18 @@ class ConfiguracaoActivity : ComponentActivity() {
         itemAlterarDados.setOnClickListener {
             openAccountSecurityFlow()
         }
+
+        itemContatosEmergencia.setOnClickListener {
+            openContatosEmergenciaFlow()
+        }
     }
 
     private fun openAccountSecurityFlow() {
         startActivity(Intent(this, AccountSecurityActivity::class.java))
+    }
+
+    private fun openContatosEmergenciaFlow() {
+        startActivity(Intent(this, ContatosEmergenciaActivity::class.java))
     }
 
     private fun applyOverlayEnabledState(

@@ -95,5 +95,17 @@ class Permission(var context: Context){
         ) == PackageManager.PERMISSION_GRANTED))
     }
 
+    fun requestContactsPermission(callback: (Boolean)->Unit){
+        permissionCallback = callback
+        permissionLauncher.launch(Manifest.permission.READ_CONTACTS)
+    }
+
+    fun isContactsPermitted(context: Context): Boolean {
+        return ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.READ_CONTACTS
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
 }
 
