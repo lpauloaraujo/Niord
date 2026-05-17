@@ -484,7 +484,11 @@ class MainOverlayButton(var context: Context,
     }
 
     var onCallClick: ((String) -> Unit)? = null
+
+
+
     var onVigiaClick: ((Boolean) -> Unit)? = null
+    var onLocationClick: (() -> Unit)? = null
 
 
     @Composable
@@ -503,7 +507,7 @@ class MainOverlayButton(var context: Context,
                     onClick = { onVigiaClick?.invoke(statePacket.vigiaActive) }
                 )
             },
-            {IconBox(R.drawable.contacts, secondarySize)},
+            {IconBox(R.drawable.contacts, secondarySize, onClick = {onLocationClick?.invoke()})},
             {IconBox(R.drawable.insurance, secondarySize)}
         )
 
