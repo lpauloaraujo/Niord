@@ -47,6 +47,9 @@ class ConfiguracaoActivity : ComponentActivity() {
                 showCallDialog(number)
             }
         }
+        buttonOverlay.onVigiaClick = { isActive ->
+            showVigiaDialog(isActive)
+        }
         findViewById<android.view.View>(R.id.main).applyStatusBarPadding()
         setupControls()
 
@@ -76,6 +79,7 @@ class ConfiguracaoActivity : ComponentActivity() {
     private fun buttonOverlayInit() {
         buttonOverlay = MainOverlayButton(this, lifecycleOwner)
         buttonOverlay.isDraggable = !UserFlowPreferences.isOverlayLocked(this)
+        buttonOverlay.statePacket.vigiaActive = VigiaService.isRunning
         buttonOverlay.setVisibility(false)
     }
 
@@ -271,6 +275,81 @@ class ConfiguracaoActivity : ComponentActivity() {
             setTextColor(android.graphics.Color.parseColor("#666666"))
             textSize = 16f
         }
+    }
+
+    private fun showVigiaDialog(isActive: Boolean) {
+        if (isActive) {
+            showVigiaDeactivateDialog()
+        } else {
+            showVigiaActivateDialog()
+        }
+    }
+
+    private fun showVigiaActivateDialog() {
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
+            this,
+            R.style.CustomAlertDialog
+        )
+            .setTitle("Ativar Niord Vigia?")
+            .setMessage(
+                "O app vai monitorar o áudio do seu aparelho em segundo plano para identificar " +
+                    "ameaças, brigas ou comportamentos perigosos."
+            )
+            .setPositiveButton("Ativar Proteção") { _, _ -> startVigia() }
+            .setNegativeButton("Cancelar", null)
+            .create()
+        dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+        dialog.show()
+    }
+
+    private fun showVigiaDeactivateDialog() {
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
+            this,
+            R.style.CustomAlertDialog
+        )
+            .setTitle("Desativar Niord Vigia?")
+            .setMessage("O monitoramento de áudio em segundo plano será encerrado.")
+            .setPositiveButton("Desativar") { _, _ -> stopVigia() }
+            .setNegativeButton("Cancelar", null)
+            .create()
+        dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+        dialog.show()
+    }
+
+    private fun showVigiaActivatedDialog() {
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
+            this,
+            R.style.CustomAlertDialog
+        )
+            .setTitle("Niord Vigia Ativado")
+            .setMessage("O monitoramento de áudio está rodando em segundo plano.")
+            .setPositiveButton("Entendi", null)
+            .create()
+        dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+        dialog.show()
+    }
+
+    private fun startVigia() {
+        if (!permission.isVigiaPermitted(this)) {
+            permission.requestVigiaPermissions { granted ->
+                if (granted) startVigiaService()
+            }
+            return
+        }
+        startVigiaService()
+    }
+
+    private fun startVigiaService() {
+        VigiaService.start(this)
+        UserFlowPreferences.setVigiaActive(this, true)
+        buttonOverlay.statePacket.vigiaActive = true
+        showVigiaActivatedDialog()
+    }
+
+    private fun stopVigia() {
+        VigiaService.stop(this)
+        UserFlowPreferences.setVigiaActive(this, false)
+        buttonOverlay.statePacket.vigiaActive = false
     }
 
     private fun showCallDialog(number: String) {
