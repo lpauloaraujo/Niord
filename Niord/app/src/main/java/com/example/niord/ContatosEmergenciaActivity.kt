@@ -191,6 +191,16 @@ class ContatosEmergenciaActivity : ComponentActivity() {
         )
     }
 
+    fun getNumerosContatosSelecionados(): List<Pair<String, String>> {
+        if (selecionadosContatos.isEmpty() && selecionados.isNotEmpty()) {
+            populateSelecionadosContatos()
+        }
+
+        return selecionadosContatos
+            .filter { selecionados.contains(it.id) }
+            .map { contato -> contato.telefone to contato.nome }
+    }
+
     private fun queryDeviceContacts(): List<ContatoEmergencia> {
         val result = mutableListOf<ContatoEmergencia>()
         val seenNumbers = mutableSetOf<String>()
