@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.provider.ContactsContract
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.inputmethod.EditorInfo
 import android.view.GestureDetector
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -25,6 +26,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
+import java.text.Normalizer
 import kotlin.math.abs
 import android.util.Log
 
@@ -37,6 +39,7 @@ class ContatosEmergenciaActivity : ComponentActivity() {
     private lateinit var emptyStateContatos: TextView
     private lateinit var emptyStateSelecionados: TextView
     private lateinit var permissionDialogOverlay: FrameLayout
+    private lateinit var btnBuscarContatos: ImageButton
     private lateinit var btnLimparBusca: ImageButton
     private lateinit var btnAction: ImageButton
     private lateinit var headerTitle: TextView
@@ -61,6 +64,7 @@ class ContatosEmergenciaActivity : ComponentActivity() {
         emptyStateContatos = findViewById(R.id.emptyStateContatos)
         emptyStateSelecionados = findViewById(R.id.emptyStateSelecionados)
         permissionDialogOverlay = findViewById(R.id.permissionDialogOverlay)
+        btnBuscarContatos = findViewById(R.id.btnBuscarContatos)
         btnLimparBusca = findViewById(R.id.btnLimparBusca)
         btnAction = findViewById(R.id.btnAction)
         headerTitle = findViewById(R.id.headerTitle)
@@ -107,9 +111,27 @@ class ContatosEmergenciaActivity : ComponentActivity() {
             }
         })
 
+        searchContatos.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                executeSearch()
+                true
+            } else {
+                false
+            }
+        }
+
+        btnBuscarContatos.setOnClickListener {
+            executeSearch()
+        }
+
         btnLimparBusca.setOnClickListener {
             searchContatos.text.clear()
         }
+    }
+
+    private fun executeSearch() {
+        filterContatos(searchContatos.text.toString())
+        searchContatos.clearFocus()
     }
 
     private fun setupPermissionDialog() {
@@ -118,10 +140,12 @@ class ContatosEmergenciaActivity : ComponentActivity() {
                 permissionDialogOverlay.visibility = View.GONE
                 if (granted) {
                     loadContatos()
-                    if (selecionados.isEmpty()) enterSelectionMode() else {
-            populateSelecionadosContatos()
-            enterSelectedMode()
-        }
+                    if (selecionados.isEmpty()) {
+                        enterSelectionMode()
+                    } else {
+                        populateSelecionadosContatos()
+                        enterSelectedMode()
+                    }
                 } else {
                     showPermissionDeniedMessage()
                 }
@@ -150,6 +174,10 @@ class ContatosEmergenciaActivity : ComponentActivity() {
     private fun loadContatos() {
         allContatos.clear()
         allContatos.addAll(queryDeviceContacts())
+        Log.d("ContatosEmergencia", "loadContatos: loaded ${allContatos.size} contacts")
+        allContatos.forEachIndexed { i, c -> 
+            Log.d("ContatosEmergencia", "  [$i] id=${c.id}, nome=${c.nome}, tel=${c.telefone}") 
+        }
 
         filterContatos("")
         updateViews()
@@ -217,14 +245,31 @@ class ContatosEmergenciaActivity : ComponentActivity() {
 
     private fun filterContatos(query: String) {
         filteredContatos.clear()
+        val normalizedQuery = normalizeSearchText(query)
+        val numericQuery = query.replace(Regex("[^0-9]"), "")
+        Log.d("ContatosEmergencia", "filterContatos CALLED: query='$normalizedQuery', allContatos.size=${allContatos.size}")
+
         filteredContatos.addAll(
             allContatos.filter { contato ->
-                contato.nome.lowercase().contains(query) ||
-                contato.telefone.replace(Regex("[^0-9]"), "")
-                    .contains(query.replace(Regex("[^0-9]"), ""))
+                val nomeMatch = normalizeSearchText(contato.nome).contains(normalizedQuery)
+                val phoneMatch = numericQuery.isNotEmpty() &&
+                    contato.telefone.replace(Regex("[^0-9]"), "").contains(numericQuery)
+                val matches = nomeMatch || phoneMatch
+                Log.d("ContatosEmergencia", "  contato: nome='${contato.nome}', nomeMatch=$nomeMatch, phoneMatch=$phoneMatch, final=$matches")
+                matches
             }
         )
+
+        Log.d("ContatosEmergencia", "filterContatos DONE: filtered=${filteredContatos.size} contatos")
+        filteredContatos.forEachIndexed { i, c ->
+            Log.d("ContatosEmergencia", "    [$i] ${c.nome}")
+        }
         updateContatosListView()
+    }
+
+    private fun normalizeSearchText(text: String): String {
+        return Normalizer.normalize(text.trim().lowercase(), Normalizer.Form.NFD)
+            .replace(Regex("\\p{Mn}+"), "")
     }
 
     private fun updateViews() {
@@ -322,9 +367,9 @@ class ContatosEmergenciaActivity : ComponentActivity() {
         itemView.findViewById<CheckBox>(R.id.contatoCheckbox).visibility = View.INVISIBLE
         itemView.findViewById<ImageButton>(R.id.contatoRemoveBtn).visibility = View.GONE
 
-        itemView.setOnClickListener {
+        itemView.setOnTouchListener(createSwipeToDeleteTouchListener(contato) {
             dialContato(contato)
-        }
+        })
 
         return itemView
     }
@@ -378,10 +423,18 @@ class ContatosEmergenciaActivity : ComponentActivity() {
         return itemView
     }
 
-    private fun createSwipeToDeleteTouchListener(contato: ContatoEmergencia): View.OnTouchListener {
+    private fun createSwipeToDeleteTouchListener(
+        contato: ContatoEmergencia,
+        onTap: (() -> Unit)? = null
+    ): View.OnTouchListener {
         val gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
             override fun onDown(e: MotionEvent): Boolean {
                 return true
+            }
+
+            override fun onSingleTapUp(e: MotionEvent): Boolean {
+                onTap?.invoke()
+                return onTap != null
             }
 
             override fun onFling(
@@ -419,6 +472,7 @@ class ContatosEmergenciaActivity : ComponentActivity() {
 
     private fun removerContato(contato: ContatoEmergencia) {
         selecionados.remove(contato.id)
+        selecionadosContatos.removeAll { it.id == contato.id }
         ContatosEmergenciaPreferences.removerContato(this, contato.id)
         android.util.Log.d("ContatosEmergencia", "removerContato called for id=${contato.id}")
         android.util.Log.d("ContatosEmergencia", "selecionados after remove: $selecionados")
