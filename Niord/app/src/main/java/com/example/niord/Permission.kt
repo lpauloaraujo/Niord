@@ -95,7 +95,7 @@ class Permission(var context: Context){
         ) == PackageManager.PERMISSION_GRANTED))
     }
 
-    fun requestLocationPermission(callback: (Boolean) -> Unit) {
+   fun requestLocationPermission(callback: (Boolean) -> Unit) {
 
         permissionCallback = callback
 
@@ -109,6 +109,18 @@ class Permission(var context: Context){
         return ContextCompat.checkSelfPermission(
             context,
             Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    fun requestContactsPermission(callback: (Boolean)->Unit){
+        permissionCallback = callback
+        permissionLauncher.launch(Manifest.permission.READ_CONTACTS)
+    }
+
+    fun isContactsPermitted(context: Context): Boolean {
+        return ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.READ_CONTACTS
         ) == PackageManager.PERMISSION_GRANTED
     }
 
