@@ -61,15 +61,15 @@ class ConfiguracaoActivity : ComponentActivity() {
             registerReceiver(overlayReceiver, filter)
         }
 
-        buttonOverlay.onVigiaClick = { isActive ->
-            showVigiaDialog(isActive)
-        }
+
+
         findViewById<android.view.View>(R.id.main).applyStatusBarPadding()
         setupControls()
 
         findViewById<ImageButton>(R.id.btnVoltar).setOnClickListener {
             finish()
         }
+
 
         UserFlowPreferences.setShowConfiguration(this, true)
 
@@ -119,6 +119,10 @@ class ConfiguracaoActivity : ComponentActivity() {
             if(permission.isCallPermitted(this)) {
                 showCallDialog(number)
             }
+        }
+
+        buttonOverlay.onVigiaClick = { isActive ->
+            showVigiaDialog(isActive)
         }
     }
 
