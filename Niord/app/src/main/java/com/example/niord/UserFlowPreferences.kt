@@ -10,6 +10,10 @@ object UserFlowPreferences {
     private const val KEY_ONBOARDING_COMPLETED = "onboarding_completed"
     private const val KEY_OVERLAY_ENABLED = "overlay_enabled"
     private const val KEY_OVERLAY_LOCKED = "overlay_locked"
+    private const val KEY_OVERLAY_SIZE = "overlay_size"
+    private const val KEY_OVERLAY_TRANSPARENCY = "overlay_transparency"
+    private const val KEY_OVERLAY_COLOR_INDEX = "overlay_color_index"
+    private const val KEY_VIGIA_ACTIVE = "vigia_active"
 
     fun ensureDefaults(context: Context) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -24,7 +28,40 @@ object UserFlowPreferences {
             .putBoolean(KEY_ONBOARDING_COMPLETED, false)
             .putBoolean(KEY_OVERLAY_ENABLED, false)
             .putBoolean(KEY_OVERLAY_LOCKED, false)
+            .putFloat(KEY_OVERLAY_SIZE, 64f)
+            .putFloat(KEY_OVERLAY_TRANSPARENCY, 1.0f)
+            .putInt(KEY_OVERLAY_COLOR_INDEX, 0)
             .apply()
+    }
+
+    fun getOverlaySize(context: Context): Float {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getFloat(KEY_OVERLAY_SIZE, 64f)
+    }
+
+    fun setOverlaySize(context: Context, size: Float) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit().putFloat(KEY_OVERLAY_SIZE, size).apply()
+    }
+
+    fun getOverlayTransparency(context: Context): Float {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getFloat(KEY_OVERLAY_TRANSPARENCY, 1.0f)
+    }
+
+    fun setOverlayTransparency(context: Context, transparency: Float) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit().putFloat(KEY_OVERLAY_TRANSPARENCY, transparency).apply()
+    }
+
+    fun getOverlayColorIndex(context: Context): Int {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getInt(KEY_OVERLAY_COLOR_INDEX, 0)
+    }
+
+    fun setOverlayColorIndex(context: Context, index: Int) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit().putInt(KEY_OVERLAY_COLOR_INDEX, index).apply()
     }
 
     fun shouldShowConfiguration(context: Context): Boolean {
@@ -74,6 +111,20 @@ object UserFlowPreferences {
             .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
             .putBoolean(KEY_OVERLAY_ENABLED, enabled)
+            .apply()
+    }
+
+    fun isVigiaActive(context: Context): Boolean {
+        return context
+            .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getBoolean(KEY_VIGIA_ACTIVE, false)
+    }
+
+    fun setVigiaActive(context: Context, active: Boolean) {
+        context
+            .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(KEY_VIGIA_ACTIVE, active)
             .apply()
     }
 

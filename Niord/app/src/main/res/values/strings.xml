@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">Niord</string>
+    <string name="personalizacao">Personalização</string>
+    <string name="transparencia_do_botao">Transparência do Botão</string>
+    <string name="tamanho_do_botao">Tamanho do Botão</string>
+    <string name="cores_do_botao">Cores do Botão</string>
+    <string name="restaurar_padrao">Restaurar padrão</string>
+    <string name="voltar">Voltar</string>
+    <string name="preview_da_personalizacao">Preview da personalização</string>
 </resources>
