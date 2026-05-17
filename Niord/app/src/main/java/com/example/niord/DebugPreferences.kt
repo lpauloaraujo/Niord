@@ -8,7 +8,7 @@ object DebugPreferences {
     private const val PREFS_NAME = "debug_configurations"
     private const val IS_DEFAULT = "is_default_configurations"
     private const val IS_DEBUG = "is_debug"
-    private const val BUILD_DEBUG_VAL = false
+    private const val BUILD_DEBUG_VAL = true
 
 
     fun getPrefs(context: Context): SharedPreferences {
