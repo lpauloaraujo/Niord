@@ -17,6 +17,13 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import com.example.niord.api.ApiService
+import com.example.niord.api.ErrorResponse
+import com.example.niord.api.User
+import io.ktor.client.call.body
+import io.ktor.client.statement.bodyAsText
+import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.O)
 class ConfiguracaoActivity : ComponentActivity() {
@@ -26,6 +33,8 @@ class ConfiguracaoActivity : ComponentActivity() {
         onCreate()
         onResume()
     }
+
+    private lateinit var apiService: ApiService
     private lateinit var buttonOverlay: MainOverlayButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,6 +53,10 @@ class ConfiguracaoActivity : ComponentActivity() {
         findViewById<ImageButton>(R.id.btnVoltar).setOnClickListener {
             finish()
         }
+
+        UserFlowPreferences.setShowConfiguration(this, true)
+
+        apiService = ApiService(this)
 
         if (!permission.isCallPermitted(this)){
             permission.requestCallAndPhoneStatePermission {  }
@@ -179,17 +192,33 @@ class ConfiguracaoActivity : ComponentActivity() {
         itemFixar.alpha = if (isOverlayEnabled) 1f else 0.45f
     }
 
+    private suspend fun sendLogoutData(): Boolean{
+        try {
+            val response = apiService.logout()
+            if(response.status.value == 200) return true
+            if(response.status.value == 422) {
+                val errorMessage = response.bodyAsText()
+                println(errorMessage)
+            }
+        }catch(e: Exception){}
+        return false
+    }
+
     private fun showLogoutDialog() {
         val dialog = AlertDialog.Builder(this)
             .setTitle("Confirmar Logout")
             .setMessage("Tem certeza que deseja fazer logout?")
-            .setPositiveButton("Confirmar") { _, _ ->
+            .setPositiveButton("Confirmar") { dialogInterface, _ ->
                 UserFlowPreferences.setShowConfiguration(this, false)
                 val intent = Intent(this, MainActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                 }
-                startActivity(intent)
-                finish()
+                lifecycleScope.launch {
+                    sendLogoutData()
+                    startActivity(intent)
+                    finish()
+                }
+
             }
             .setNegativeButton("Cancelar") { dialogInterface, _ ->
                 dialogInterface.dismiss()

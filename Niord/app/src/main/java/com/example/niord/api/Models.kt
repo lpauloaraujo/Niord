@@ -9,6 +9,18 @@ data class Tokens(
     val refresh: String?
 )
 
+@Serializable
+data class User(
+    val id: Int,
+    val registration_plate: String,
+    val email: String,
+    val telephone: String,
+    val is_verified: Boolean,
+    val name: String,
+    val password: String,
+    val cpf: String,
+    val blood_type: String
+)
 
 @Serializable
 data class ErrorResponse(
@@ -33,3 +45,26 @@ data class RegisterPost(
     @SerialName("blood_type")
     val bloodType: String?
 )
+
+@Serializable
+data class LoginPost(
+    val email: String,
+    val password: String
+)
+
+@Serializable
+data class OtpResend(
+    val email: String
+)
+
+@Serializable
+data class OtpVerify(
+    val email: String,
+    val code: Int
+)
+
+
+
+
+
+
