@@ -20,6 +20,13 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import com.example.niord.api.ApiService
+import com.example.niord.api.ErrorResponse
+import com.example.niord.api.User
+import io.ktor.client.call.body
+import io.ktor.client.statement.bodyAsText
+import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.O)
 class ConfiguracaoActivity : ComponentActivity() {
@@ -29,6 +36,8 @@ class ConfiguracaoActivity : ComponentActivity() {
         onCreate()
         onResume()
     }
+
+    private lateinit var apiService: ApiService
     private lateinit var buttonOverlay: MainOverlayButton
 
     private val overlayReceiver = object : BroadcastReceiver() {
@@ -52,12 +61,19 @@ class ConfiguracaoActivity : ComponentActivity() {
             registerReceiver(overlayReceiver, filter)
         }
 
+        buttonOverlay.onVigiaClick = { isActive ->
+            showVigiaDialog(isActive)
+        }
         findViewById<android.view.View>(R.id.main).applyStatusBarPadding()
         setupControls()
 
         findViewById<ImageButton>(R.id.btnVoltar).setOnClickListener {
             finish()
         }
+
+        UserFlowPreferences.setShowConfiguration(this, true)
+
+        apiService = ApiService(this)
 
         if (!permission.isCallPermitted(this)){
             permission.requestCallAndPhoneStatePermission {  }
@@ -96,6 +112,7 @@ class ConfiguracaoActivity : ComponentActivity() {
     private fun buttonOverlayInit() {
         buttonOverlay = MainOverlayButton(this, lifecycleOwner)
         buttonOverlay.isDraggable = !UserFlowPreferences.isOverlayLocked(this)
+        buttonOverlay.statePacket.vigiaActive = VigiaService.isRunning
         buttonOverlay.setVisibility(false)
 
         buttonOverlay.onCallClick = { number ->
@@ -220,17 +237,33 @@ class ConfiguracaoActivity : ComponentActivity() {
         itemFixar.alpha = if (isOverlayEnabled) 1f else 0.45f
     }
 
+    private suspend fun sendLogoutData(): Boolean{
+        try {
+            val response = apiService.logout()
+            if(response.status.value == 200) return true
+            if(response.status.value == 422) {
+                val errorMessage = response.bodyAsText()
+                println(errorMessage)
+            }
+        }catch(e: Exception){}
+        return false
+    }
+
     private fun showLogoutDialog() {
         val dialog = AlertDialog.Builder(this)
             .setTitle("Confirmar Logout")
             .setMessage("Tem certeza que deseja fazer logout?")
-            .setPositiveButton("Confirmar") { _, _ ->
+            .setPositiveButton("Confirmar") { dialogInterface, _ ->
                 UserFlowPreferences.setShowConfiguration(this, false)
                 val intent = Intent(this, MainActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                 }
-                startActivity(intent)
-                finish()
+                lifecycleScope.launch {
+                    sendLogoutData()
+                    startActivity(intent)
+                    finish()
+                }
+
             }
             .setNegativeButton("Cancelar") { dialogInterface, _ ->
                 dialogInterface.dismiss()
@@ -283,6 +316,81 @@ class ConfiguracaoActivity : ComponentActivity() {
             setTextColor(android.graphics.Color.parseColor("#666666"))
             textSize = 16f
         }
+    }
+
+    private fun showVigiaDialog(isActive: Boolean) {
+        if (isActive) {
+            showVigiaDeactivateDialog()
+        } else {
+            showVigiaActivateDialog()
+        }
+    }
+
+    private fun showVigiaActivateDialog() {
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
+            this,
+            R.style.CustomAlertDialog
+        )
+            .setTitle("Ativar Niord Vigia?")
+            .setMessage(
+                "O app vai monitorar o áudio do seu aparelho em segundo plano para identificar " +
+                    "ameaças, brigas ou comportamentos perigosos."
+            )
+            .setPositiveButton("Ativar Proteção") { _, _ -> startVigia() }
+            .setNegativeButton("Cancelar", null)
+            .create()
+        dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+        dialog.show()
+    }
+
+    private fun showVigiaDeactivateDialog() {
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
+            this,
+            R.style.CustomAlertDialog
+        )
+            .setTitle("Desativar Niord Vigia?")
+            .setMessage("O monitoramento de áudio em segundo plano será encerrado.")
+            .setPositiveButton("Desativar") { _, _ -> stopVigia() }
+            .setNegativeButton("Cancelar", null)
+            .create()
+        dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+        dialog.show()
+    }
+
+    private fun showVigiaActivatedDialog() {
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
+            this,
+            R.style.CustomAlertDialog
+        )
+            .setTitle("Niord Vigia Ativado")
+            .setMessage("O monitoramento de áudio está rodando em segundo plano.")
+            .setPositiveButton("Entendi", null)
+            .create()
+        dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+        dialog.show()
+    }
+
+    private fun startVigia() {
+        if (!permission.isVigiaPermitted(this)) {
+            permission.requestVigiaPermissions { granted ->
+                if (granted) startVigiaService()
+            }
+            return
+        }
+        startVigiaService()
+    }
+
+    private fun startVigiaService() {
+        VigiaService.start(this)
+        UserFlowPreferences.setVigiaActive(this, true)
+        buttonOverlay.statePacket.vigiaActive = true
+        showVigiaActivatedDialog()
+    }
+
+    private fun stopVigia() {
+        VigiaService.stop(this)
+        UserFlowPreferences.setVigiaActive(this, false)
+        buttonOverlay.statePacket.vigiaActive = false
     }
 
     private fun showCallDialog(number: String) {
