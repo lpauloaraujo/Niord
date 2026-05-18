@@ -62,6 +62,27 @@ class Permission(var context: Context){
         )
     }
 
+    fun requestVigiaPermissions(callback: (Boolean) -> Unit) {
+        permissionCallback = callback
+        val perms = mutableListOf(Manifest.permission.RECORD_AUDIO)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            perms.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+        multiPermissionLauncher.launch(perms.toTypedArray())
+    }
+
+    fun isVigiaPermitted(context: Context): Boolean {
+        val mic = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.RECORD_AUDIO
+        ) == PackageManager.PERMISSION_GRANTED
+        val notif = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            ContextCompat.checkSelfPermission(
+                context, Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        } else true
+        return mic && notif
+    }
+
     fun isCallPermitted(context: Context): Boolean {
         return ((ContextCompat.checkSelfPermission(
             context,

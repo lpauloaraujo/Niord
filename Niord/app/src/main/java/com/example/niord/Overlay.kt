@@ -1,5 +1,6 @@
 package com.example.niord
 
+import android.R.attr.tint
 import android.content.Context
 import android.graphics.PixelFormat
 import android.os.Build
@@ -31,6 +32,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
@@ -360,6 +363,7 @@ class MainOverlayButton(var context: Context,
         var colorIndex by mutableStateOf(0)
         var subIconScale by mutableFloatStateOf(0.75f)
         var iconSpacingDp by mutableFloatStateOf(8f)
+        var vigiaActive by mutableStateOf(false)
     }
 
 
@@ -437,29 +441,34 @@ class MainOverlayButton(var context: Context,
         R.drawable.main_button_green
     )
 
-    var onCallClick: ((String) -> Unit)? = null
-
     @Composable
     fun MainIcon(){
         IconBox(R.drawable.main_button, statePacket.iconSizeDp, enabled = false, isMainIcon = true)
     }
 
     @Composable
-    fun IconBox(resource: Int, sizeDp: Float, enabled: Boolean = true, useTint: Boolean = true, isMainIcon: Boolean = false, onClick: () -> Unit = {}){
-        
+    fun IconBox(resource: Int,
+                sizeDp: Float,
+                enabled: Boolean = true,
+                useTint: Boolean = true,
+                isMainIcon: Boolean = false,
+                tint: Color? = null,
+                onClick: () -> Unit = {}){
+
         val actualResource = if (isMainIcon) {
             buttonDrawables.getOrElse(statePacket.colorIndex) { R.drawable.main_button }
         } else {
             resource
         }
-
+        val colorFilter = tint?.let { ColorFilter.tint(it) }
         if(enabled) {
             Box (modifier = Modifier.requiredSize(sizeDp.dp).alpha(statePacket.transparency), propagateMinConstraints = true){
                 IconButton(onClick = onClick) {
                     Image(
                         modifier = Modifier.size(sizeDp.dp),
                         painter = painterResource(actualResource),
-                        contentDescription = "Icon"
+                        contentDescription = "Icon",
+                        colorFilter = colorFilter,
                     )
                 }
             }
@@ -467,11 +476,16 @@ class MainOverlayButton(var context: Context,
             Image(
                 painter = painterResource(actualResource),
                 contentDescription = "Icon",
-                modifier = Modifier.size(sizeDp.dp).alpha(statePacket.transparency)
+                modifier = Modifier.size(sizeDp.dp).alpha(statePacket.transparency),
+                colorFilter = colorFilter,
             )
         }
 
     }
+
+    var onCallClick: ((String) -> Unit)? = null
+    var onVigiaClick: ((Boolean) -> Unit)? = null
+
 
     @Composable
     fun ComposableUnit(statePacket: StatePacket){
@@ -481,7 +495,14 @@ class MainOverlayButton(var context: Context,
             {IconBox(R.drawable.health, secondarySize, onClick = {onCallClick?.invoke("144")})},
             {IconBox(R.drawable.cops, secondarySize, onClick = {onCallClick?.invoke("1052")})},
             {IconBox(R.drawable.alert, secondarySize)},
-            {IconBox(R.drawable.plt_vigia, secondarySize)},
+            {
+                IconBox(
+                    R.drawable.plt_vigia,
+                    secondarySize,
+                    tint = if (statePacket.vigiaActive) Color(0xFFD32F2F) else null,
+                    onClick = { onVigiaClick?.invoke(statePacket.vigiaActive) }
+                )
+            },
             {IconBox(R.drawable.contacts, secondarySize)},
             {IconBox(R.drawable.insurance, secondarySize)}
         )
