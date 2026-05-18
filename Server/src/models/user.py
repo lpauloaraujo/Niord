@@ -3,7 +3,7 @@ from src.models.seguradora import Seguradora
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import mapped_column, Mapped
 from sqlalchemy.types import Boolean
-from pydantic import BaseModel, EmailStr, SecretStr
+from pydantic import BaseModel, ConfigDict, EmailStr, SecretStr
 from typing import Annotated
 
 
@@ -39,6 +39,28 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: Annotated[str, SecretStr]
 
+class UserPublic(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    email: EmailStr
+    registration_plate: str
+    cpf: str
+    telephone: str
+    blood_type: str | None = None
+    is_verified: bool
+
+class UserUpdate(BaseModel):
+    name: str | None = None
+    email: EmailStr | None = None
+    registration_plate: str | None = None
+    telephone: str | None = None
+    blood_type: str | None = None
+    new_password: str | None = None
+    current_password: str | None = None
+    email_otp_code: int | None = None
+
 
 class User_Seguradora(Base):
     __tablename__ = "user_seguradora"
@@ -47,4 +69,3 @@ class User_Seguradora(Base):
     id_seguradora: Mapped[int] = mapped_column(ForeignKey(f"{Seguradora.__tablename__}.id"), primary_key=True)
     n_apolice: Mapped[str] = mapped_column(nullable=False, unique=True)
     cpf_cnpj: Mapped[str] = mapped_column(nullable=False)
-

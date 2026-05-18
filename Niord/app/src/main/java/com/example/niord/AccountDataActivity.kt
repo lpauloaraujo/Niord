@@ -20,9 +20,17 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.lifecycleScope
+import com.example.niord.api.ApiService
+import com.example.niord.api.ErrorResponse
+import com.example.niord.api.User
+import com.example.niord.api.UserUpdatePatch
+import io.ktor.client.call.body
+import kotlinx.coroutines.launch
 
 class AccountDataActivity : ComponentActivity() {
     private var otpTimer: CountDownTimer? = null
+    private lateinit var apiService: ApiService
 
     private lateinit var editNome: EditText
     private lateinit var editSobrenome: EditText
@@ -53,9 +61,10 @@ class AccountDataActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.account_data)
 
+        apiService = ApiService(this)
         bindViews()
-        fillExampleData()
         setupActions()
+        loadUserData()
     }
 
     override fun onDestroy() {
@@ -84,13 +93,62 @@ class AccountDataActivity : ComponentActivity() {
         phoneStatusText = findViewById(R.id.textStatusTelefone)
     }
 
-    private fun fillExampleData() {
-        editNome.setText("José")
-        editSobrenome.setText("Almeida")
-        editEmail.setText(originalEmail)
-        editTelefone.setText(originalPhone)
-        editPlaca.setText("MWR-1160")
-        spinnerTipoSanguineo.setSelection(1)
+    private fun loadUserData() {
+        if (DebugPreferences.isDebug(this)) {
+            applyUserData(
+                User(
+                    id = 0,
+                    registration_plate = "MWR1160",
+                    email = originalEmail,
+                    telephone = originalPhone,
+                    is_verified = true,
+                    name = "José Almeida",
+                    cpf = "123.456.789-09",
+                    blood_type = "A+"
+                )
+            )
+            return
+        }
+
+        lifecycleScope.launch {
+            try {
+                val response = apiService.getUser()
+                if (response.status.value == 200) {
+                    applyUserData(response.body())
+                } else {
+                    showBackendError(response.body())
+                }
+            } catch (e: Exception) {
+                showGeneralError("Não foi possível carregar seus dados")
+            }
+        }
+    }
+
+    private fun applyUserData(user: User) {
+        val nameParts = user.name.trim().split(Regex("\\s+"), limit = 2)
+        editNome.setText(nameParts.getOrNull(0).orEmpty())
+        editSobrenome.setText(nameParts.getOrNull(1).orEmpty())
+        editCpf.setText(user.cpf)
+        editEmail.setText(user.email)
+        editTelefone.setText(user.telephone)
+        editPlaca.setText(user.registration_plate)
+        setBloodTypeSelection(user.blood_type)
+
+        originalEmail = user.email
+        originalPhone = user.telephone
+        emailConfirmed = false
+        phoneConfirmed = false
+    }
+
+    private fun setBloodTypeSelection(bloodType: String?) {
+        if (bloodType.isNullOrBlank()) return
+
+        for (index in 0 until spinnerTipoSanguineo.count) {
+            if (spinnerTipoSanguineo.getItemAtPosition(index).toString() == bloodType) {
+                spinnerTipoSanguineo.setSelection(index)
+                return
+            }
+        }
     }
 
     private fun setupActions() {
@@ -134,8 +192,7 @@ class AccountDataActivity : ComponentActivity() {
         findViewById<ImageButton>(R.id.btnEditEmail).setOnClickListener {
             editEmail.requestFocus()
             panelOtpEmail.visibility = View.VISIBLE
-            startOtpTimer()
-            Toast.makeText(this, "Código OTP enviado para o novo email", Toast.LENGTH_SHORT).show()
+            requestEmailOtp()
         }
 
         findViewById<ImageButton>(R.id.btnEditTelefone).setOnClickListener {
@@ -144,8 +201,7 @@ class AccountDataActivity : ComponentActivity() {
         }
 
         resendButton.setOnClickListener {
-            startOtpTimer()
-            Toast.makeText(this, "Código reenviado", Toast.LENGTH_SHORT).show()
+            requestEmailOtp()
         }
 
         setupFieldValidation()
@@ -187,6 +243,32 @@ class AccountDataActivity : ComponentActivity() {
         })
     }
 
+    private fun requestEmailOtp() {
+        val email = editEmail.text.toString().trim()
+        if (!validateEmailField(showRequiredError = true)) {
+            return
+        }
+
+        if (email == originalEmail) {
+            Toast.makeText(this, "Informe um novo email para enviar o código", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        lifecycleScope.launch {
+            try {
+                val response = apiService.requestAccountEmailOtp(email)
+                if (response.status.value == 200) {
+                    startOtpTimer()
+                    Toast.makeText(this@AccountDataActivity, "Código OTP enviado para o novo email", Toast.LENGTH_SHORT).show()
+                } else {
+                    showBackendError(response.body())
+                }
+            } catch (e: Exception) {
+                showGeneralError("Não foi possível enviar o código OTP")
+            }
+        }
+    }
+
     private fun saveChanges() {
         clearErrors()
 
@@ -207,9 +289,54 @@ class AccountDataActivity : ComponentActivity() {
             return
         }
 
-        originalEmail = editEmail.text.toString().trim()
-        originalPhone = editTelefone.text.toString().trim()
-        showSuccessDialog()
+        submitChanges()
+    }
+
+    private fun submitChanges() {
+        val currentPassword = currentPasswordForSensitiveChanges()
+        val emailOtpCode = if (emailChanged()) {
+            editOtpEmail.text.toString().toIntOrNull()
+        } else {
+            null
+        }
+
+        val payload = UserUpdatePatch(
+            name = "${editNome.text.toString().trim()} ${editSobrenome.text.toString().trim()}".trim(),
+            email = editEmail.text.toString().trim(),
+            telephone = editTelefone.text.toString().trim(),
+            registrationPlate = editPlaca.text.toString().trim().uppercase().replace("-", ""),
+            bloodType = spinnerTipoSanguineo.selectedItem?.toString()?.takeIf { it.isNotBlank() },
+            newPassword = editNovaSenha.text.toString().takeIf { it.isNotBlank() },
+            currentPassword = currentPassword,
+            emailOtpCode = emailOtpCode
+        )
+
+        lifecycleScope.launch {
+            try {
+                val response = apiService.updateUser(payload)
+                if (response.status.value == 200) {
+                    applyUserData(response.body())
+                    showSuccessDialog()
+                } else {
+                    showBackendError(response.body())
+                }
+            } catch (e: Exception) {
+                showGeneralError("Não foi possível salvar as alterações")
+            }
+        }
+    }
+
+    private fun currentPasswordForSensitiveChanges(): String? {
+        val passwordForNewPassword = editSenhaAtualNova.text.toString()
+        val passwordForPhone = editSenhaTelefone.text.toString()
+
+        return when {
+            passwordChanged() && passwordForNewPassword.isNotBlank() -> passwordForNewPassword
+            phoneChanged() && passwordForPhone.isNotBlank() -> passwordForPhone
+            passwordForNewPassword.isNotBlank() -> passwordForNewPassword
+            passwordForPhone.isNotBlank() -> passwordForPhone
+            else -> null
+        }
     }
 
     private fun validateBasicFields(showRequiredError: Boolean = false): Boolean {
@@ -247,7 +374,7 @@ class AccountDataActivity : ComponentActivity() {
         panelSenhaAtual.visibility = View.VISIBLE
         var valid = true
 
-        if (editSenhaAtualNova.text.toString() != AccountSecurityActivity.CURRENT_PASSWORD) {
+        if (editSenhaAtualNova.text.toString().isBlank()) {
             editSenhaAtualNova.error = "Senha atual obrigatória"
             valid = false
         }
@@ -280,6 +407,32 @@ class AccountDataActivity : ComponentActivity() {
 
     private fun showInvalidDataError() {
         errorText.text = "Dados inválidos: verifique os caracteres"
+        errorText.visibility = View.VISIBLE
+    }
+
+    private fun showBackendError(errorResponse: ErrorResponse) {
+        val message = errorResponse.detail.message
+        when (errorResponse.detail.field) {
+            "name" -> editNome.error = message
+            "email" -> editEmail.error = message
+            "email_otp_code" -> editOtpEmail.error = message
+            "telephone" -> editTelefone.error = message
+            "registration_plate" -> editPlaca.error = message
+            "new_password" -> editNovaSenha.error = message
+            "current_password" -> {
+                editSenhaTelefone.error = message
+                editSenhaAtualNova.error = message
+            }
+            else -> showGeneralError(message)
+        }
+
+        if (errorResponse.detail.field != null) {
+            showGeneralError(message)
+        }
+    }
+
+    private fun showGeneralError(message: String) {
+        errorText.text = message
         errorText.visibility = View.VISIBLE
     }
 
@@ -401,7 +554,8 @@ class AccountDataActivity : ComponentActivity() {
 
     private fun confirmEmailOtp() {
         editOtpEmail.error = null
-        if (editOtpEmail.text.toString() != OTP_CODE) {
+        val code = editOtpEmail.text.toString()
+        if (code.length != OTP_CODE_LENGTH || code.toIntOrNull() == null) {
             emailConfirmed = false
             emailStatusText.visibility = View.GONE
             editOtpEmail.error = "Código inválido"
@@ -409,24 +563,24 @@ class AccountDataActivity : ComponentActivity() {
         }
 
         emailConfirmed = true
-        emailStatusText.text = "Código confirmado. Você pode salvar as alterações."
+        emailStatusText.text = "Código informado. Salve para concluir a alteração."
         emailStatusText.visibility = View.VISIBLE
-        Toast.makeText(this, "Email confirmado", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Código informado", Toast.LENGTH_SHORT).show()
     }
 
     private fun confirmPhonePassword() {
         editSenhaTelefone.error = null
-        if (editSenhaTelefone.text.toString() != AccountSecurityActivity.CURRENT_PASSWORD) {
+        if (editSenhaTelefone.text.toString().isBlank()) {
             phoneConfirmed = false
             phoneStatusText.visibility = View.GONE
-            editSenhaTelefone.error = "Senha atual inválida"
+            editSenhaTelefone.error = "Senha atual obrigatória"
             return
         }
 
         phoneConfirmed = true
-        phoneStatusText.text = "Senha confirmada. Você pode salvar as alterações."
+        phoneStatusText.text = "Senha informada. Salve para concluir a alteração."
         phoneStatusText.visibility = View.VISIBLE
-        Toast.makeText(this, "Telefone confirmado", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Senha informada", Toast.LENGTH_SHORT).show()
     }
 
     private fun emailChanged(): Boolean = editEmail.text.toString().trim() != originalEmail
@@ -478,7 +632,7 @@ class AccountDataActivity : ComponentActivity() {
     }
 
     companion object {
-        private const val OTP_CODE = "123456"
+        private const val OTP_CODE_LENGTH = 6
         private const val SUCCESS_DIALOG_DURATION_MILLIS = 1800L
     }
 }

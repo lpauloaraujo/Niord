@@ -3,6 +3,7 @@ package com.example.niord.api
 import android.content.Context
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
@@ -20,7 +21,22 @@ class ApiService(context: Context){
     }
 
     suspend fun getUser(): HttpResponse{
-        return apiClient.get("/user")
+        return apiClient.get("user/")
+    }
+
+    suspend fun requestAccountEmailOtp(email: String): HttpResponse{
+        return apiClient.post("user/email-otp"){
+            url{
+                parameters.append("email", email)
+            }
+        }
+    }
+
+    suspend fun updateUser(userUpdate: UserUpdatePatch): HttpResponse{
+        return apiClient.patch("user/"){
+            contentType(ContentType.Application.Json)
+            setBody(userUpdate)
+        }
     }
 
     suspend fun isAuth(): HttpResponse{

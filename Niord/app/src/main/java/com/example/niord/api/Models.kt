@@ -17,9 +17,8 @@ data class User(
     val telephone: String,
     val is_verified: Boolean,
     val name: String,
-    val password: String,
     val cpf: String,
-    val blood_type: String
+    val blood_type: String? = null
 )
 
 @Serializable
@@ -63,6 +62,22 @@ data class OtpVerify(
     val code: Int
 )
 
+@Serializable
+data class UserUpdatePatch(
+    val name: String? = null,
+    val email: String? = null,
+    @SerialName("registration_plate")
+    val registrationPlate: String? = null,
+    val telephone: String? = null,
+    @SerialName("blood_type")
+    val bloodType: String? = null,
+    @SerialName("new_password")
+    val newPassword: String? = null,
+    @SerialName("current_password")
+    val currentPassword: String? = null,
+    @SerialName("email_otp_code")
+    val emailOtpCode: Int? = null
+)
 
 
 
