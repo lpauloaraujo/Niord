@@ -95,7 +95,7 @@ class Permission(var context: Context){
         ) == PackageManager.PERMISSION_GRANTED))
     }
 
-    fun requestLocationPermission(callback: (Boolean) -> Unit) {
+   fun requestLocationPermission(callback: (Boolean) -> Unit) {
 
         permissionCallback = callback
 
