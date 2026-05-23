@@ -37,8 +37,8 @@ async def register(session: SessionDep, background: BackgroundTasks, userData: U
         raise HTTPException(401, create_detail(message="CPF já em uso",type=ErrorType.conflict, field="cpf"))    
 
     userData.password = hash_password(userData.password)
-    redis.add_to_verify_user(userData)
-    otp_code = redis.create_otp(userData.email)
+    await redis.add_to_verify_user(userData)
+    otp_code = await redis.create_otp(userData.email)
     #Avoid response delay from sending the email
     #background.add_task(send_mail_code, userData.email, otp_code)
     print(otp_code)
@@ -50,10 +50,10 @@ def unregister(session: SessionDep):
     pass
 
 @router.post("/resend", status_code=200, responses={401: {"model": ErrorMessage}})
-def resend_otp(session: SessionDep, background: BackgroundTasks, email: str):
-    user: UserCredentials|None = redis.get_to_verify_user(email)
+async def resend_otp(session: SessionDep, background: BackgroundTasks, email: str):
+    user: UserCredentials|None = await redis.get_to_verify_user(email)
     if user:
-        otp_code = redis.create_otp(email)
+        otp_code = await redis.create_otp(email)
         #Avoid response delay from sending the email
         #background.add_task(send_mail_code, email, otp_code)
         print(otp_code)
@@ -63,10 +63,10 @@ def resend_otp(session: SessionDep, background: BackgroundTasks, email: str):
 
 
 @router.post("/verify", status_code=200, responses={401:{"model": ErrorMessage}, 404:{"model": ErrorMessage}})
-def verify_account(session: SessionDep, email: str, code:int):
-    otp_check = redis.check_otp(email, code)
+async def verify_account(session: SessionDep, email: str, code:int):
+    otp_check = await redis.check_otp(email, code)
     if otp_check:
-        user = redis.get_to_verify_user(email)
+        user = await redis.get_to_verify_user(email)
         if user:
             try:
                 add_user_db(session, user, True)
