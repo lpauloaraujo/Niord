@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -129,7 +130,9 @@ class ConfiguracaoActivity : ComponentActivity() {
             showVigiaDialog(isActive)
         }
 
-        buttonOverlay.onLocationClick = {printUserLocation()}
+        buttonOverlay.onLocationClick = {
+            showSendLocationThroughSMSDialog()
+        }
     }
 
     private fun setupControls() {
@@ -188,16 +191,73 @@ class ConfiguracaoActivity : ComponentActivity() {
     }
 
 
-    fun printUserLocation() {
+    fun sendUserLocationToContacts() {
+
+        if (!permission.isSmsPermitted(this)) {
+
+            permission.requestSmsPermission { granted ->
+
+                if (granted) {
+                    sendUserLocationToContacts()
+                } else {
+                    Log.d("SMS", "Permissão negada")
+                }
+            }
+
+            return
+        }
+
+        val contatos =
+            ContatosEmergenciaManager.getNumerosContatosSelecionados(this)
+
+        if (contatos.isEmpty()) {
+
+            Log.d("SMS", "Nenhum contato selecionado")
+            return
+        }
 
         locationManager.getUserLocation { location ->
 
             if (location != null) {
 
-                Log.d(
-                    "LOCATION",
-                    "Lat: ${location.latitude}, Lng: ${location.longitude}"
-                )
+                val mapsLink =
+                    "https://maps.google.com/?q=${location.latitude},${location.longitude}"
+
+                val smsManager =
+                    android.telephony.SmsManager.getDefault()
+
+                contatos.forEach { (telefone, nome) ->
+
+                    val numeroLimpo =
+                        telefone.replace(Regex("[^0-9+]"), "")
+
+                    val mensagem =
+                        "Olá $nome! Minha localização atual: $mapsLink"
+
+                    try {
+
+                        smsManager.sendTextMessage(
+                            numeroLimpo,
+                            null,
+                            mensagem,
+                            null,
+                            null
+                        )
+
+                        Log.d(
+                            "SMS",
+                            "Mensagem enviada para $numeroLimpo"
+                        )
+
+                    } catch (e: Exception) {
+
+                        Log.e(
+                            "SMS",
+                            "Erro ao enviar SMS para $numeroLimpo",
+                            e
+                        )
+                    }
+                }
 
             } else {
 
@@ -508,4 +568,28 @@ class ConfiguracaoActivity : ComponentActivity() {
         dialog.show()
     }
 
+    fun showSendLocationThroughSMSDialog() {
+
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
+            this,
+            R.style.CustomAlertDialog
+        )
+            .setTitle("Compartilhar Localização via SMS?")
+            .setMessage(
+                "Todos os seus contatos de emergência receberão um link " +
+                        "com sua localização atual."
+            )
+            .setPositiveButton("Compartilhar Agora") { _, _ ->
+
+                sendUserLocationToContacts()
+            }
+            .setNegativeButton("Cancelar", null)
+            .create()
+
+        dialog.window?.setType(
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+        )
+
+        dialog.show()
+    }
 }
