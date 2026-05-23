@@ -1,5 +1,6 @@
 from src.db.redis import redis
 from src.ws.manager import manager
+from src.models.geo import GeoModel
 import asyncio
 
 async def listen_to_redis():
@@ -10,7 +11,7 @@ async def listen_to_redis():
         
         async for message in redis.pubsub.listen():
             if message["type"] == "message":
-                data = message["data"]
+                data: GeoModel = GeoModel.model_validate_json(message["data"])
                 await manager.broadcast_locally(data)
     except asyncio.CancelledError:
         print("Redis listener task cancelled.")
