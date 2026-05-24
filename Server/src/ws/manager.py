@@ -31,8 +31,17 @@ class RedisConnectionManager:
                     conn = self.local_connections.get(int(u))
                     if conn:
                         await conn.send_text(location.model_dump_json())
-                    pass
                 except Exception:
                     pass
+
+    async def send_to_id(self, target_id: int, geo_data: GeoModel):
+        #type should be HelpType.NONE to identify as an acception
+        try:
+            await (
+                    self.local_connections[target_id].
+                    send_text(geo_data.model_dump_json())
+                   )
+        except Exception:
+            pass
 
 manager = RedisConnectionManager()

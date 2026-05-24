@@ -9,5 +9,10 @@ class GeoSchema(BaseModel):
 class GeoSchemaHelp(GeoSchema):
     type: HelpType
 
+
+class GeoSchemaAnswer(GeoSchema):
+    target_id: int
+    type: HelpType
+
 class GeoModel(GeoSchemaHelp):
     user_id: int
