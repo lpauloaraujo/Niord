@@ -2,6 +2,7 @@ from fastapi import WebSocket
 from typing import Tuple
 from src.db.redis import redis
 from src.models.geo import GeoModel
+from src.models.enums import HelpType
 
 class RedisConnectionManager:
     def __init__(self):
@@ -15,12 +16,13 @@ class RedisConnectionManager:
         self.local_connections.pop(user_id)
 
     async def broadcast_locally(self, location: GeoModel):
+        radius = 500 if location.type is HelpType.ACCIDENT else 3000
         #Radius limit
         nearby_users = await redis.client.geosearch(
                 name="user_locations",
                 latitude=location.latitude,
                 longitude=location.longitude,
-                radius=500,
+                radius=radius,
                 unit="m"
                 )
         for u in nearby_users:

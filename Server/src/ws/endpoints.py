@@ -4,6 +4,7 @@ from src.ws.manager import manager
 from src.db.redis import redis
 from src.middle.auth import TokenGuard
 from src.models.token import TokenDecoded
+from src.models.enums import HelpType
 from pydantic import ValidationError
 
 router = APIRouter(prefix="/ws")
@@ -24,7 +25,10 @@ async def websocket_endpoint(websocket: WebSocket,
             try:
                 data: GeoSchema = GeoSchema.model_validate_json(await websocket.receive_text())
                 #Adds user id
-                location: GeoModel = GeoModel(**data.model_dump(), user_id=user_id)
+                location: GeoModel = GeoModel(**data.model_dump(), 
+                                              user_id=user_id,
+                                              type=HelpType.NONE
+                                              )
             except ValidationError as e:
                 await websocket.send_text("Bad format")
                 raise WebSocketDisconnect
