@@ -118,9 +118,27 @@ class Permission(var context: Context){
     }
 
     fun isContactsPermitted(context: Context): Boolean {
+
         return ContextCompat.checkSelfPermission(
             context,
             Manifest.permission.READ_CONTACTS
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    fun requestSmsPermission(callback: (Boolean) -> Unit) {
+
+        permissionCallback = callback
+
+        permissionLauncher.launch(
+            Manifest.permission.SEND_SMS
+        )
+    }
+
+    fun isSmsPermitted(context: Context): Boolean {
+
+        return ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.SEND_SMS
         ) == PackageManager.PERMISSION_GRANTED
     }
 
