@@ -26,10 +26,10 @@ class FloatingButtonCustomizationActivity : ComponentActivity() {
 
     // Defina aqui os nomes reais dos seus novos arquivos PNG
     private val buttonDrawables = intArrayOf(
-        R.drawable.main_button,       // Padrão
-        R.drawable.main_button,       // Trocar pelo PNG da cor 2
-        R.drawable.main_button,       // Trocar pelo PNG da cor 3
-        R.drawable.main_button        // Trocar pelo PNG da cor 4
+        R.drawable.main_button,
+        R.drawable.main_button_red,
+        R.drawable.main_button_purple,
+        R.drawable.main_button_green
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
