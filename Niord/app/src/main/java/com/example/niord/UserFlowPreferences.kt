@@ -1,6 +1,7 @@
 package com.example.niord
 
 import android.content.Context
+import androidx.core.content.edit
 
 object UserFlowPreferences {
     private const val PREFS_NAME = "niord_user_flow"
@@ -13,6 +14,8 @@ object UserFlowPreferences {
     private const val KEY_OVERLAY_SIZE = "overlay_size"
     private const val KEY_OVERLAY_TRANSPARENCY = "overlay_transparency"
     private const val KEY_OVERLAY_COLOR_INDEX = "overlay_color_index"
+    private const val KEY_OVERLAY_POS_X = "overlay_position_x"
+    private const val KEY_OVERLAY_POS_Y = "overlay_position_y"
     private const val KEY_VIGIA_ACTIVE = "vigia_active"
 
     fun ensureDefaults(context: Context) {
@@ -31,6 +34,8 @@ object UserFlowPreferences {
             .putFloat(KEY_OVERLAY_SIZE, 64f)
             .putFloat(KEY_OVERLAY_TRANSPARENCY, 1.0f)
             .putInt(KEY_OVERLAY_COLOR_INDEX, 0)
+            .putInt(KEY_OVERLAY_POS_X, 100)
+            .putInt(KEY_OVERLAY_POS_Y, 100)
             .apply()
     }
 
@@ -140,5 +145,22 @@ object UserFlowPreferences {
             .edit()
             .putBoolean(KEY_OVERLAY_LOCKED, locked)
             .apply()
+    }
+
+    fun getOverlayPos(context: Context): Pair<Int, Int>{
+        val preferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return Pair(
+            preferences.getInt(KEY_OVERLAY_POS_X, 0),
+            preferences.getInt(KEY_OVERLAY_POS_Y, 0)
+        )
+    }
+
+    fun setOverlayPos(context: Context, pos: Pair<Int, Int>){
+        context
+            .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit {
+                putInt(KEY_OVERLAY_POS_X, pos.first)
+                    .putInt(KEY_OVERLAY_POS_Y, pos.second)
+            }
     }
 }

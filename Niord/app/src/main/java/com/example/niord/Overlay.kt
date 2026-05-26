@@ -111,6 +111,10 @@ open class OverlayManager(private val context: Context,
 
     }
 
+    protected open fun stopMoveEvent(){
+
+    }
+
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun buildOnTouchListener(): View.OnTouchListener {
@@ -174,6 +178,8 @@ open class OverlayManager(private val context: Context,
                         clickEvent()
                         view.performClick()
                         upEvent()
+                    }else{
+                        stopMoveEvent()
                     }
                 }
 
@@ -452,6 +458,13 @@ class MainOverlayButton(
     override fun clickEvent() {
         statePacket.addIsVisible = !statePacket.addIsVisible
         additionalOverlay.setVisibility(statePacket.addIsVisible)
+    }
+
+    override fun stopMoveEvent() {
+        //Saves position
+        UserFlowPreferences.setOverlayPos(context,
+            Pair<Int, Int>(layoutParams.x, layoutParams.y)
+        )
     }
 
     override fun setVisibility(state: Boolean) {

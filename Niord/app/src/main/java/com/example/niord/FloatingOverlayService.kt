@@ -10,6 +10,7 @@ import android.view.ContextThemeWrapper
 import android.view.WindowManager
 import androidx.lifecycle.LifecycleService
 import androidx.core.app.NotificationCompat
+import com.example.niord.api.User
 
 class FloatingOverlayService : LifecycleService() {
 
@@ -39,7 +40,9 @@ class FloatingOverlayService : LifecycleService() {
 
         startForeground(1, createNotification())
 
-        buttonOverlay = MainOverlayButton(context = this)
+        val buttonPos = UserFlowPreferences.getOverlayPos(this)
+
+        buttonOverlay = MainOverlayButton(context = this, buttonPos)
         buttonOverlayInit()
 
         buttonOverlay.invoke()
