@@ -20,6 +20,8 @@ class FloatingOverlayService : LifecycleService() {
 
     private lateinit var buttonOverlay: MainOverlayButton
 
+    val permission = PermissionChecker(this)
+
     inner class LocalBinder : Binder() {
         fun getService(): FloatingOverlayService = this@FloatingOverlayService
     }
@@ -55,17 +57,21 @@ class FloatingOverlayService : LifecycleService() {
         buttonOverlay.setVisibility(true)
 
         buttonOverlay.onCallClick = { number ->
-            //if(permission.isCallPermitted(this)) {
+            if(permission.isCallPermitted()) {
                 showCallDialog(number)
-            //}
+            }
         }
 
         buttonOverlay.onVigiaClick = { isActive ->
-            showVigiaDialog(isActive)
+            if(permission.isVigiaPermitted()) {
+                showVigiaDialog(isActive)
+            }
         }
 
         buttonOverlay.onLocationClick = {
-            showSendLocationThroughSMSDialog()
+            if(permission.isSmsPermitted() and permission.isLocationPermitted()) {
+                showSendLocationThroughSMSDialog()
+            }
         }
     }
 
@@ -127,11 +133,7 @@ class FloatingOverlayService : LifecycleService() {
     }
 
     private fun startVigia() {
-        //if (!permission.isVigiaPermitted(this)) {
-         //   permission.requestVigiaPermissions { granted ->
-                startVigiaService()
-          //  }
-        //}
+        startVigiaService()
     }
 
     private fun startVigiaService() {
@@ -220,21 +222,11 @@ class FloatingOverlayService : LifecycleService() {
 
 
     fun sendUserLocationToContacts() {
-        /*
-        if (!permission.isSmsPermitted(this)) {
-
-            permission.requestSmsPermission { granted ->
-
-                if (granted) {
-                    sendUserLocationToContacts()
-                } else {
-                    Log.d("SMS", "Permissão negada")
-                }
-            }
-
-            return
+        if (!permission.isSmsPermitted()) {
+          Log.d("SMS", "Permissão negada")
+          return
         }
-         */
+
 
 
         val contatos =

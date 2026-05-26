@@ -26,6 +26,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.niord.api.ApiService
 import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.launch
+import androidx.core.graphics.toColorInt
 
 @RequiresApi(Build.VERSION_CODES.O)
 class ConfiguracaoActivity : ComponentActivity() {
@@ -84,35 +85,19 @@ class ConfiguracaoActivity : ComponentActivity() {
 
         apiService = ApiService(this)
 
-        if (!permission.isCallPermitted(this)){
-            permission.requestCallAndPhoneStatePermission {  }
-            ActivityCompat.shouldShowRequestPermissionRationale(
-                this, Manifest.permission.CALL_PHONE)
-        }
-
-        if(!permission.isVigiaPermitted(this)){
-            permission.requestVigiaPermissions{}
-        }
-        if(!permission.isSmsPermitted(this)){
-           permission.requestSmsPermission{}
-        }
-        if(!permission.isLocationPermitted(this)) {
-            permission.requestLocationPermission {}
+        if(!permission.getMissingPerms().isEmpty()) {
+            if(permission.shouldShowRationaleForPerms(permission.getMissingPerms())) {
+                showPermsRationaleDialog()
+            }else {
+                permission.fullAppRequest()
+            }
         }
 
     }
 
     override fun onResume() {
         super.onResume()
-        /*
-        if (::buttonOverlay.isInitialized) {
-            buttonOverlay.onDestroy()
-        }
-        buttonOverlayInit()*/
 
-        //Intent(this, FloatingOverlayService::class.java).also { intent ->
-         //   bindService(intent, connection, Context.BIND_AUTO_CREATE)
-        //}
 
         // Sincroniza sem disparar listeners
         syncControlsWithPreferences()
@@ -359,5 +344,29 @@ class ConfiguracaoActivity : ComponentActivity() {
             textSize = 16f
         }
     }
+    private fun showPermsRationaleDialog() {
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Permissões necessárias")
+            .setMessage("Ao negar permissões, funcionalidades relacionadas não irão funcionar corretamente.")
+            .setPositiveButton("Aceitar") { dialogInterface, _ ->
+                permission.fullAppRequest()
+            }
+            .setNegativeButton("Cancelar") { dialogInterface, _ ->
+                dialogInterface.dismiss()
+            }
+            .create()
 
+        dialog.show()
+
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.apply {
+            setTextColor("#4A6CF7".toColorInt())
+            textSize = 16f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+        }
+
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.apply {
+            setTextColor("#666666".toColorInt())
+            textSize = 16f
+        }
+    }
 }

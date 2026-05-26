@@ -87,7 +87,7 @@ class ContatosEmergenciaActivity : ComponentActivity() {
         selecionados.addAll(ContatosEmergenciaPreferences.getContatosSelecionados(this))
 
         // Check permission
-        if (permission.isContactsPermitted(this)) {
+        if (permission.isContactsPermitted()) {
             loadContatos()
             if (selecionados.isEmpty()) {
                 enterSelectionMode()
