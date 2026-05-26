@@ -10,31 +10,14 @@ import com.google.android.gms.location.Priority
 
 class LocationManager (private val context: Context){
 
-    private val permission = Permission(context)
 
     private val fusedLocationClient: FusedLocationProviderClient =
         LocationServices.getFusedLocationProviderClient(context)
 
     fun getUserLocation(callback: (Location?) -> Unit) {
 
-        if (permission.isLocationPermitted(context)) {
+        fetchLocation(callback)
 
-            fetchLocation(callback)
-
-        } else {
-
-            permission.requestLocationPermission { granted ->
-
-                if (granted) {
-
-                    fetchLocation(callback)
-
-                } else {
-
-                    callback(null)
-                }
-            }
-        }
     }
 
     @SuppressLint("MissingPermission")

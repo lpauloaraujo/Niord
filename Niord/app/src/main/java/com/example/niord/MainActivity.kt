@@ -14,10 +14,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
-import com.example.niord.CadastroActivity
-import com.example.niord.FloatingLifecycleOwner
-import com.example.niord.MainOverlayButton
-import com.example.niord.Permission
 import com.example.niord.api.ApiService
 import com.example.niord.api.LoginPost
 import kotlinx.coroutines.launch
@@ -25,11 +21,6 @@ import kotlinx.coroutines.launch
 @RequiresApi(Build.VERSION_CODES.O)
 class MainActivity : ComponentActivity() {
     private var permission = Permission(this)
-    private var lifecycleOwner = FloatingLifecycleOwner().apply {
-        onCreate()
-        onResume()
-    }
-    private lateinit var buttonOverlay: MainOverlayButton
     private lateinit var apiService: ApiService
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,7 +29,6 @@ class MainActivity : ComponentActivity() {
         UserFlowPreferences.ensureDefaults(this)
         DebugPreferences.ensureDefaults(this)
         enableEdgeToEdge()
-        buttonOverlayInit()
         setContentView(R.layout.activity_main)
         findViewById<ScrollView>(R.id.screenLogin).applyStatusBarPadding()
         setupScreenFlow()
@@ -46,13 +36,6 @@ class MainActivity : ComponentActivity() {
         apiService = ApiService(this)
     }
 
-    override fun onDestroy() {
-        if (::buttonOverlay.isInitialized) {
-            buttonOverlay.onDestroy()
-        }
-        lifecycleOwner.onDestroy()
-        super.onDestroy()
-    }
 
     suspend fun sendLogin(): Boolean{
         val loginData = LoginPost(
@@ -88,7 +71,7 @@ class MainActivity : ComponentActivity() {
 
 
         findViewById<Button>(R.id.btnStart).setOnClickListener {
-            if (UserFlowPreferences.shouldShowConfiguration(this)) {
+            if (!DebugPreferences.isDebug(this)) {
                 lifecycleScope.launch {
                     if (isLoggedIn()) {
                         openPostAuthFlow()
@@ -126,11 +109,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    fun buttonOverlayInit(){
-        buttonOverlay = MainOverlayButton(this, lifecycleOwner)
-        buttonOverlay.setVisibility(false)
-        buttonOverlay.invoke()
-    }
 
     private fun openPostAuthFlow() {
         val nextActivity = if (UserFlowPreferences.shouldShowOnboarding(this)) {

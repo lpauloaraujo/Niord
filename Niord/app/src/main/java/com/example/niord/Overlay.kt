@@ -1,6 +1,5 @@
 package com.example.niord
 
-import android.R.attr.tint
 import android.content.Context
 import android.graphics.PixelFormat
 import android.os.Build
@@ -19,11 +18,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -53,7 +50,7 @@ import com.example.niord.ui.theme.NiordTheme
 import kotlin.Pair
 import kotlin.math.abs
 
-open class OverlayManager(private val context: Context, var lifecycleOwner: FloatingLifecycleOwner,
+open class OverlayManager(private val context: Context,
     var defaultPos: Pair<Int, Int> = Pair(500, 0)
     ){
     var winManager: WindowManager? = null
@@ -61,6 +58,8 @@ open class OverlayManager(private val context: Context, var lifecycleOwner: Floa
     var floatingView: ComposeView? = null
 
     val displayMetrics = DisplayMetrics()
+
+    private val composeStateOwner = ComposeOverlayStateOwner()
 
     init {
         winManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
@@ -186,10 +185,10 @@ open class OverlayManager(private val context: Context, var lifecycleOwner: Floa
 
     fun buildView(): ComposeView {
         return ComposeView(context.applicationContext).apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
-            setViewTreeLifecycleOwner(lifecycleOwner)
-            setViewTreeViewModelStoreOwner(lifecycleOwner)
-            setViewTreeSavedStateRegistryOwner(lifecycleOwner)
+            //setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
+            setViewTreeLifecycleOwner(composeStateOwner)
+            setViewTreeViewModelStoreOwner(composeStateOwner)
+            setViewTreeSavedStateRegistryOwner(composeStateOwner)
             setContent {
                 NiordTheme {
                     composable()
@@ -268,6 +267,7 @@ open class OverlayManager(private val context: Context, var lifecycleOwner: Floa
             isInvoked = false
         }
         floatingView?.disposeComposition()
+        composeStateOwner.handleDestroy()
         //lifecycleOwner.onDestroy()
         //lifecycleOwner = null
     }
@@ -300,11 +300,38 @@ class FloatingLifecycleOwner : LifecycleOwner, ViewModelStoreOwner, SavedStateRe
     }
 }
 
+class ComposeOverlayStateOwner : LifecycleOwner, ViewModelStoreOwner, SavedStateRegistryOwner {
+
+    private val lifecycleRegistry = LifecycleRegistry(this)
+    private val savedStateController = SavedStateRegistryController.create(this)
+    private val store = ViewModelStore()
+
+    override val lifecycle: Lifecycle get() = lifecycleRegistry
+    override val savedStateRegistry: SavedStateRegistry get() = savedStateController.savedStateRegistry
+    override val viewModelStore: ViewModelStore get() = store
+
+    init {
+        // Initialize the registry to prevent state crashes
+        savedStateController.performRestore(null)
+
+        // Push the lifecycle to "RESUMED" so Compose knows it can draw
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
+    }
+
+    // Call this when the overlay is dismissed
+    fun handleDestroy() {
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+        store.clear()
+    }
+}
+
 @RequiresApi(Build.VERSION_CODES.O)
-class MainOverlayButton(var context: Context,
-                        lifecycleOwner: FloatingLifecycleOwner,
-                        localDefaultPos: Pair<Int, Int> = Pair(100, 100)) :
-    OverlayManager(context, lifecycleOwner, defaultPos = localDefaultPos){
+class MainOverlayButton(
+    var context: Context,
+    localDefaultPos: Pair<Int, Int> = Pair(100, 100)) :
+    OverlayManager(context, defaultPos = localDefaultPos){
 
     private var additionalOverlay: OverlayManager
     lateinit var expandedOffset: Pair<Int, Int>
@@ -325,7 +352,7 @@ class MainOverlayButton(var context: Context,
         dragPaddingDp = statePacket.iconSizeDp
         setOffset()
 
-        additionalOverlay = OverlayManager(context, lifecycleOwner,
+        additionalOverlay = OverlayManager(context,
             defaultPos=Pair(
                 defaultPos.first + expandedOffset.first,
                 defaultPos.second + expandedOffset.second
@@ -434,6 +461,17 @@ class MainOverlayButton(var context: Context,
         super.setVisibility(state)
     }
 
+    fun applyStatePacketPreferences(){
+        statePacket.apply {
+            iconSizeDp = UserFlowPreferences.getOverlaySize(context)
+            transparency = UserFlowPreferences.getOverlayTransparency(context)
+            colorIndex = UserFlowPreferences.getOverlayColorIndex(context)
+        }
+        dragPaddingDp = statePacket.iconSizeDp
+        additionalOverlay.setVisibility(false)
+        setOffset()
+    }
+
     private val buttonDrawables = intArrayOf(
         R.drawable.main_button,
         R.drawable.main_button_red,
@@ -528,7 +566,7 @@ class MainOverlayButton(var context: Context,
 }
 
 //Use this class as an example of use case
-class ExampleCustomOverlay(context: Context, lifecycleOwner: FloatingLifecycleOwner) : OverlayManager(context, lifecycleOwner){
+class ExampleCustomOverlay(context: Context, lifecycleOwner: FloatingLifecycleOwner) : OverlayManager(context){
     //It's possible to have the mutable variables inside the composable
     //But changing the variables is limited by functions only inside the composable
     class StatePacket{

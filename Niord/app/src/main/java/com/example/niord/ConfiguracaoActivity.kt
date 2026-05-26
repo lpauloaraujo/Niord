@@ -3,13 +3,14 @@ package com.example.niord
 import android.Manifest
 import android.app.AlertDialog
 import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.PackageManager
-import android.net.Uri
+import android.content.ServiceConnection
 import android.os.Build
 import android.os.Bundle
+import android.os.IBinder
 import android.provider.Settings
 import android.util.Log
 import android.view.WindowManager
@@ -21,35 +22,40 @@ import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.niord.api.ApiService
-import com.example.niord.api.ErrorResponse
-import com.example.niord.api.User
-import io.ktor.client.call.body
 import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.O)
 class ConfiguracaoActivity : ComponentActivity() {
     private var permission = Permission(this)
-    private var callMonitor: CallMonitor? = null
-
-    private var lifecycleOwner = FloatingLifecycleOwner().apply {
-        onCreate()
-        onResume()
-    }
 
     private lateinit var apiService: ApiService
-    private lateinit var buttonOverlay: MainOverlayButton
-    private lateinit var locationManager: LocationManager
 
     private val overlayReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (::buttonOverlay.isInitialized) {
-                val isEnabled = UserFlowPreferences.isOverlayEnabled(this@ConfiguracaoActivity)
-                applyOverlayEnabledState(isEnabled, false)
+            val isEnabled = UserFlowPreferences.isOverlayEnabled(this@ConfiguracaoActivity)
+            if(isEnabled){
+                mService?.setVisibility(true)
+                mService?.refresh()
             }
+        }
+    }
+
+    private var mService: FloatingOverlayService? = null
+    private var mBound = false
+
+    private val connection = object : ServiceConnection {
+        override fun onServiceConnected(className: ComponentName, service: IBinder) {
+            val binder = service as FloatingOverlayService.LocalBinder
+            mService = binder.getService()
+            mBound = true
+        }
+
+        override fun onServiceDisconnected(arg0: ComponentName) {
+            mBound = false
+            mService = null
         }
     }
 
@@ -65,8 +71,6 @@ class ConfiguracaoActivity : ComponentActivity() {
             registerReceiver(overlayReceiver, filter)
         }
 
-
-        locationManager = LocationManager(this)
 
         findViewById<android.view.View>(R.id.main).applyStatusBarPadding()
         setupControls()
@@ -85,18 +89,34 @@ class ConfiguracaoActivity : ComponentActivity() {
             ActivityCompat.shouldShowRequestPermissionRationale(
                 this, Manifest.permission.CALL_PHONE)
         }
+
+        if(!permission.isVigiaPermitted(this)){
+            permission.requestVigiaPermissions{}
+        }
+        if(!permission.isSmsPermitted(this)){
+           permission.requestSmsPermission{}
+        }
+        if(!permission.isLocationPermitted(this)) {
+            permission.requestLocationPermission {}
+        }
+
     }
 
     override fun onResume() {
         super.onResume()
+        /*
         if (::buttonOverlay.isInitialized) {
             buttonOverlay.onDestroy()
         }
-        buttonOverlayInit()
-        
+        buttonOverlayInit()*/
+
+        //Intent(this, FloatingOverlayService::class.java).also { intent ->
+         //   bindService(intent, connection, Context.BIND_AUTO_CREATE)
+        //}
+
         // Sincroniza sem disparar listeners
         syncControlsWithPreferences()
-        
+
         val isEnabled = UserFlowPreferences.isOverlayEnabled(this)
         applyOverlayEnabledState(isEnabled, requestPermissionIfNeeded = false)
     }
@@ -107,33 +127,37 @@ class ConfiguracaoActivity : ComponentActivity() {
         } catch (e: Exception) {
             e.printStackTrace()
         }
-        if (::buttonOverlay.isInitialized) {
-            buttonOverlay.onDestroy()
+        if (mBound) {
+            unbindService(connection)
+            mBound = false
         }
-        lifecycleOwner.onDestroy()
         super.onDestroy()
     }
 
-    private fun buttonOverlayInit() {
-        buttonOverlay = MainOverlayButton(this, lifecycleOwner)
-        buttonOverlay.isDraggable = !UserFlowPreferences.isOverlayLocked(this)
-        buttonOverlay.statePacket.vigiaActive = VigiaService.isRunning
-        buttonOverlay.setVisibility(false)
+    private fun startOverlay(){
+        //permission.getOverlayPermissions{}
+        if (Settings.canDrawOverlays(this)) {
+            val intent = Intent(this, FloatingOverlayService::class.java)
+            this.startForegroundService(intent) // or startService(intent) on older Android versions
 
-        buttonOverlay.onCallClick = { number ->
-            if(permission.isCallPermitted(this)) {
-                showCallDialog(number)
+            //Initiates Binder
+            Intent(this, FloatingOverlayService::class.java).also { intent ->
+               bindService(intent, connection, Context.BIND_AUTO_CREATE)
             }
         }
 
-        buttonOverlay.onVigiaClick = { isActive ->
-            showVigiaDialog(isActive)
-        }
 
-        buttonOverlay.onLocationClick = {
-            showSendLocationThroughSMSDialog()
-        }
     }
+
+    private fun endOverlay(){
+        if (mBound) {
+            unbindService(connection)
+            mBound = false
+        }
+        val intent = Intent(this, FloatingOverlayService::class.java)
+        this.stopService(intent)
+    }
+
 
     private fun setupControls() {
         val checkboxDesativar = findViewById<CheckBox>(R.id.checkboxDesativar)
@@ -170,6 +194,7 @@ class ConfiguracaoActivity : ComponentActivity() {
         }
 
         itemPersonalizar.setOnClickListener {
+            mService?.setVisibility(false)
             startActivity(Intent(this, FloatingButtonCustomizationActivity::class.java))
         }
 
@@ -191,81 +216,6 @@ class ConfiguracaoActivity : ComponentActivity() {
     }
 
 
-    fun sendUserLocationToContacts() {
-
-        if (!permission.isSmsPermitted(this)) {
-
-            permission.requestSmsPermission { granted ->
-
-                if (granted) {
-                    sendUserLocationToContacts()
-                } else {
-                    Log.d("SMS", "Permissão negada")
-                }
-            }
-
-            return
-        }
-
-        val contatos =
-            ContatosEmergenciaManager.getNumerosContatosSelecionados(this)
-
-        if (contatos.isEmpty()) {
-
-            Log.d("SMS", "Nenhum contato selecionado")
-            return
-        }
-
-        locationManager.getUserLocation { location ->
-
-            if (location != null) {
-
-                val mapsLink =
-                    "https://maps.google.com/?q=${location.latitude},${location.longitude}"
-
-                val smsManager =
-                    android.telephony.SmsManager.getDefault()
-
-                contatos.forEach { (telefone, nome) ->
-
-                    val numeroLimpo =
-                        telefone.replace(Regex("[^0-9+]"), "")
-
-                    val mensagem =
-                        "Olá $nome! Minha localização atual: $mapsLink"
-
-                    try {
-
-                        smsManager.sendTextMessage(
-                            numeroLimpo,
-                            null,
-                            mensagem,
-                            null,
-                            null
-                        )
-
-                        Log.d(
-                            "SMS",
-                            "Mensagem enviada para $numeroLimpo"
-                        )
-
-                    } catch (e: Exception) {
-
-                        Log.e(
-                            "SMS",
-                            "Erro ao enviar SMS para $numeroLimpo",
-                            e
-                        )
-                    }
-                }
-
-            } else {
-
-                Log.d("LOCATION", "Sem localização")
-            }
-        }
-    }
-
     private fun openAccountSecurityFlow() {
         startActivity(Intent(this, AccountSecurityActivity::class.java))
     }
@@ -280,10 +230,7 @@ class ConfiguracaoActivity : ComponentActivity() {
     ) {
         if (!enabled) {
             UserFlowPreferences.setOverlayEnabled(this, false)
-            if (::buttonOverlay.isInitialized) {
-                buttonOverlay.setVisibility(false)
-                buttonOverlay.dismiss()
-            }
+            endOverlay()
             updateFixControlState(false)
             return
         }
@@ -304,16 +251,13 @@ class ConfiguracaoActivity : ComponentActivity() {
         }
 
         UserFlowPreferences.setOverlayEnabled(this, true)
-        buttonOverlay.invoke()
-        buttonOverlay.setVisibility(true)
+        startOverlay()
         updateFixControlState(true)
     }
 
     private fun applyOverlayLockedState(locked: Boolean) {
         UserFlowPreferences.setOverlayLocked(this, locked)
-        if (::buttonOverlay.isInitialized) {
-            buttonOverlay.isDraggable = !locked
-        }
+        mService?.fixOverlay(locked)
     }
 
     private fun syncControlsWithPreferences() {
@@ -416,180 +360,4 @@ class ConfiguracaoActivity : ComponentActivity() {
         }
     }
 
-    private fun showVigiaDialog(isActive: Boolean) {
-        if (isActive) {
-            showVigiaDeactivateDialog()
-        } else {
-            showVigiaActivateDialog()
-        }
-    }
-
-    private fun showVigiaActivateDialog() {
-        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
-            this,
-            R.style.CustomAlertDialog
-        )
-            .setTitle("Ativar Niord Vigia?")
-            .setMessage(
-                "O app vai monitorar o áudio do seu aparelho em segundo plano para identificar " +
-                    "ameaças, brigas ou comportamentos perigosos."
-            )
-            .setPositiveButton("Ativar Proteção") { _, _ -> startVigia() }
-            .setNegativeButton("Cancelar", null)
-            .create()
-        dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
-        dialog.show()
-    }
-
-    private fun showVigiaDeactivateDialog() {
-        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
-            this,
-            R.style.CustomAlertDialog
-        )
-            .setTitle("Desativar Niord Vigia?")
-            .setMessage("O monitoramento de áudio em segundo plano será encerrado.")
-            .setPositiveButton("Desativar") { _, _ -> stopVigia() }
-            .setNegativeButton("Cancelar", null)
-            .create()
-        dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
-        dialog.show()
-    }
-
-    private fun showVigiaActivatedDialog() {
-        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
-            this,
-            R.style.CustomAlertDialog
-        )
-            .setTitle("Niord Vigia Ativado")
-            .setMessage("O monitoramento de áudio está rodando em segundo plano.")
-            .setPositiveButton("Entendi", null)
-            .create()
-        dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
-        dialog.show()
-    }
-
-    private fun startVigia() {
-        if (!permission.isVigiaPermitted(this)) {
-            permission.requestVigiaPermissions { granted ->
-                if (granted) startVigiaService()
-            }
-            return
-        }
-        startVigiaService()
-    }
-
-    private fun startVigiaService() {
-        VigiaService.start(this)
-        UserFlowPreferences.setVigiaActive(this, true)
-        buttonOverlay.statePacket.vigiaActive = true
-        showVigiaActivatedDialog()
-    }
-
-    private fun stopVigia() {
-        VigiaService.stop(this)
-        UserFlowPreferences.setVigiaActive(this, false)
-        buttonOverlay.statePacket.vigiaActive = false
-    }
-
-    private fun showCallDialog(number: String) {
-
-        val title: String
-        val message: String
-        val positiveText: String
-        val negativeText: String
-
-        when (number) {
-
-            "144" -> {
-                title = "Ligar para Emergência?"
-                message = "Você será direcionado para a chamada telefônica. Confirme para discar imediatamente."
-                positiveText = "Ligar Agora"
-                negativeText = "Cancelar"
-            }
-
-            "1052" -> {
-                title = "Ligar para a Polícia?"
-                message = "Você será direcionado para a chamada telefônica. Confirme para discar imediatamente."
-                positiveText = "Ligar Agora"
-                negativeText = "Cancelar"
-            }
-
-            else -> {
-                title = "Chamada"
-                message = "Deseja realmente ligar para $number?"
-                positiveText = "Confirmar"
-                negativeText = "Cancelar"
-            }
-        }
-
-        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
-            this,
-            R.style.CustomAlertDialog
-        )
-            .setTitle(title)
-            .setMessage(message)
-            .setPositiveButton(positiveText) { _, _ ->
-
-                        // 🔹 cria o monitor
-                        callMonitor = CallMonitor(
-                            context = this,
-                            onCallStarted = {
-                                runOnUiThread {
-                                }
-                            },
-                            onCallEnded = {
-                                runOnUiThread {
-
-                                    callMonitor?.stop()
-                                    callMonitor = null
-
-                                    if (number == "144") {
-                                        runOnUiThread {
-                                            val intent = Intent(this, PosEmergenciaActivity::class.java)
-                                            startActivity(intent)
-                                        }
-                                    } else if (number == "1052") {
-                                        runOnUiThread {
-                                            val intent = Intent(this, PosPoliciaActivity::class.java)
-                                            startActivity(intent)
-                                        }
-                                    }
-                                }
-                            }
-                        )
-
-                        callMonitor?.start()
-                        CallManager().toCall(this, number)
-
-            }
-            .setNegativeButton(negativeText, null)
-            .create()
-        dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
-        dialog.show()
-    }
-
-    fun showSendLocationThroughSMSDialog() {
-
-        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
-            this,
-            R.style.CustomAlertDialog
-        )
-            .setTitle("Compartilhar Localização via SMS?")
-            .setMessage(
-                "Todos os seus contatos de emergência receberão um link " +
-                        "com sua localização atual."
-            )
-            .setPositiveButton("Compartilhar Agora") { _, _ ->
-
-                sendUserLocationToContacts()
-            }
-            .setNegativeButton("Cancelar", null)
-            .create()
-
-        dialog.window?.setType(
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-        )
-
-        dialog.show()
-    }
 }
