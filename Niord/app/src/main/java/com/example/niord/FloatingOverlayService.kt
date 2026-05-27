@@ -225,17 +225,17 @@ class FloatingOverlayService : LifecycleService() {
 
     private fun showSMSConfirmationDialog(boolean: Boolean) {
 
-        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
+        val builder = com.google.android.material.dialog.MaterialAlertDialogBuilder(
             themedContext,
             R.style.CustomAlertDialog
         )
 
         if (boolean) {
-            dialog.setTitle("Localização Enviada")
+            builder.setTitle("Localização Enviada")
                 .setMessage("Sua localização atual foi enviada para os seus contatos de emergência via SMS.")
                 .setPositiveButton("Fechar", null)
         } else {
-            dialog.setTitle("Não foi possível enviar sua localização")
+            builder.setTitle("Não foi possível enviar sua localização")
                 .setMessage("Sua localização atual não foi enviada para os seus contatos de emergência via SMS.")
                 .setPositiveButton("Tentar novamente") { _, _ ->
                     sendUserLocationToContacts()
@@ -243,24 +243,27 @@ class FloatingOverlayService : LifecycleService() {
                 .setNegativeButton("Cancelar", null)
         }
 
+        val dialog = builder.create()
+
+        dialog.window?.setType(
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+        )
+
         dialog.show()
 
     }
 
-
     fun sendUserLocationToContacts() {
+
         if (!permission.isSmsPermitted()) {
-          Log.d("SMS", "Permissão negada")
-          return
+            Log.d("SMS", "Permissão negada")
+            return
         }
-
-
 
         val contatos =
             ContatosEmergenciaManager.getNumerosContatosSelecionados(this)
 
         if (contatos.isEmpty()) {
-
             Log.d("SMS", "Nenhum contato selecionado")
             return
         }
@@ -274,6 +277,9 @@ class FloatingOverlayService : LifecycleService() {
 
                 val smsManager =
                     getSystemService(android.telephony.SmsManager::class.java)
+
+                var successCount = 0
+                var errorCount = 0
 
                 contatos.forEach { (telefone, nome) ->
 
@@ -293,24 +299,29 @@ class FloatingOverlayService : LifecycleService() {
                             null
                         )
 
+                        successCount++
+
                         Log.d(
                             "SMS",
                             "Mensagem enviada para $numeroLimpo"
                         )
 
-                        showSMSConfirmationDialog(true)
-
                     } catch (e: Exception) {
+
+                        errorCount++
 
                         Log.e(
                             "SMS",
                             "Erro ao enviar SMS para $numeroLimpo",
                             e
                         )
-
-                        showSMSConfirmationDialog(false)
                     }
                 }
+
+                // 🔹 mostra apenas um popup final
+                showSMSConfirmationDialog(
+                    successCount > 0 && errorCount == 0
+                )
 
             } else {
 
