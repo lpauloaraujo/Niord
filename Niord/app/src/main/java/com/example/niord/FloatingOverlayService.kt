@@ -223,6 +223,30 @@ class FloatingOverlayService : LifecycleService() {
         dialog.show()
     }
 
+    private fun showSMSConfirmationDialog(boolean: Boolean) {
+
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
+            themedContext,
+            R.style.CustomAlertDialog
+        )
+
+        if (boolean) {
+            dialog.setTitle("Localização Enviada")
+                .setMessage("Sua localização atual foi enviada para os seus contatos de emergência via SMS.")
+                .setPositiveButton("Fechar", null)
+        } else {
+            dialog.setTitle("Não foi possível enviar sua localização")
+                .setMessage("Sua localização atual não foi enviada para os seus contatos de emergência via SMS.")
+                .setPositiveButton("Tentar novamente") { _, _ ->
+                    sendUserLocationToContacts()
+                }
+                .setNegativeButton("Cancelar", null)
+        }
+
+        dialog.show()
+
+    }
+
 
     fun sendUserLocationToContacts() {
         if (!permission.isSmsPermitted()) {
@@ -249,7 +273,7 @@ class FloatingOverlayService : LifecycleService() {
                     "https://maps.google.com/?q=${location.latitude},${location.longitude}"
 
                 val smsManager =
-                    android.telephony.SmsManager.getDefault()
+                    getSystemService(android.telephony.SmsManager::class.java)
 
                 contatos.forEach { (telefone, nome) ->
 
@@ -274,6 +298,8 @@ class FloatingOverlayService : LifecycleService() {
                             "Mensagem enviada para $numeroLimpo"
                         )
 
+                        showSMSConfirmationDialog(true)
+
                     } catch (e: Exception) {
 
                         Log.e(
@@ -281,6 +307,8 @@ class FloatingOverlayService : LifecycleService() {
                             "Erro ao enviar SMS para $numeroLimpo",
                             e
                         )
+
+                        showSMSConfirmationDialog(false)
                     }
                 }
 
