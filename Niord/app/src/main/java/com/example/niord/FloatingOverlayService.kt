@@ -93,7 +93,7 @@ class FloatingOverlayService : LifecycleService() {
         }
 
         buttonOverlay.onAlertClick ={
-            sendHelpRequest()
+            showAlertDialog()
         }
     }
 
@@ -113,7 +113,6 @@ class FloatingOverlayService : LifecycleService() {
                         var sendFrame: Frame? = null
                         val loc: Location? =
                             locationManager.fetchLocationRet(Priority.PRIORITY_LOW_POWER)
-                        println(loc)
                         if(loc != null) {
                             val data = LocationSchema(
                                 loc.latitude,
@@ -143,6 +142,38 @@ class FloatingOverlayService : LifecycleService() {
             }
 
         }
+    }
+
+    private fun showAlertDialog(){
+        val dialog = MaterialAlertDialogBuilder(
+            themedContext,
+            R.style.CustomAlertDialog
+        )
+            .setTitle("Alertar usuários próximos?")
+            .setMessage(
+                "Motoristas próximos serão notificados com o seu pedido de alerta."
+            )
+            .setPositiveButton("Enviar Alerta") { _, _ -> showAlertDialogChoice() }
+            .setNegativeButton("Cancelar", null)
+            .create()
+        dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+        dialog.show()
+    }
+
+    private fun showAlertDialogChoice(){
+        val dialog = MaterialAlertDialogBuilder(
+            themedContext,
+            R.style.CustomAlertDialog
+        )
+            .setTitle("Qual o tipo de alerta?")
+            .setMessage(
+                "O tipo de alerta será mostrado para os motoristas próximos."
+            )
+            .setPositiveButton("Assalto") { _, _ -> sendHelpRequest("robbery") }
+            .setNegativeButton("Acidente") { _, _ -> sendHelpRequest("accident") }
+            .create()
+        dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+        dialog.show()
     }
 
     private fun showVigiaDialog(isActive: Boolean) {
