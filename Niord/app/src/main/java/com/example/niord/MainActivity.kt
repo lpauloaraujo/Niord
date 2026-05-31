@@ -32,6 +32,7 @@ class MainActivity : ComponentActivity() {
         setContentView(R.layout.activity_main)
         findViewById<ScrollView>(R.id.screenLogin).applyStatusBarPadding()
         setupScreenFlow()
+        VoiceRecognitionManager(this).loadModel()
 
         apiService = ApiService(this)
     }
