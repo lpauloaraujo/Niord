@@ -143,7 +143,7 @@ class CadastroActivity : ComponentActivity() {
             email = binding.editEmail.text.toString().trim(),
             password = binding.editSenha.text.toString(),
             //Remove the '-' for agreed formatting with the API
-            registrationPlate = binding.editPlaca.text.toString().trim().filter {c -> c != '-'},
+            registrationPlate = normalizePlate(binding.editPlaca.text.toString()),
             cpf = cpfPlainToFormatted(binding.editCpf.text.toString().filter { c -> c.isDigit() }),
             telephone = binding.editTelefone.text.toString().trim(),
             bloodType = binding.spinnerTipoSanguineo.selectedItem.toString().ifEmpty{ null }
