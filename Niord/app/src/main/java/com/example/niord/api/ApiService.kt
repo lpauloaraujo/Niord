@@ -10,14 +10,69 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import com.example.niord.api.ApiClient
+import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.client.request.delete
 import io.ktor.http.cookies
+import io.ktor.websocket.Frame
+import io.ktor.websocket.readText
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.time.delay
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration.Companion.seconds
 
 
 class ApiService(context: Context){
     var apiClient = ApiClient.createHttpClient(context)
     suspend fun greet(): String {
         return apiClient.get("greet").body<HttpResponse>().body<String>()
+    }
+
+    suspend fun askHelp(askData: HelpAsk): HttpResponse{
+        return apiClient.post("/help/ask"){
+            contentType(ContentType.Application.Json)
+            setBody(askData)
+        }
+    }
+
+    suspend fun connectWsOverwatch(inCallback: suspend (Frame.Text) -> Unit, outCallback: suspend () -> Frame?){
+        try {
+            apiClient.webSocket(path = "/ws/") {
+
+                val periodicSenderJob = launch {
+                    while (isActive) {
+                        try {
+                            val sendFrame = outCallback()
+                            if (sendFrame != null) {
+                                send(sendFrame)
+                            }
+                            delay(5.seconds)
+                        } catch (e: CancellationException) {
+                            break
+                        } catch (e: Exception) {
+                            println("Failed to send periodic message: ${e.localizedMessage}")
+                        }
+                    }
+                }
+
+                try {
+                    incoming.consumeEach { frame ->
+                        if (frame is Frame.Text) {
+                            inCallback(frame)
+                        }
+                    }
+                } finally {
+                    periodicSenderJob.cancelAndJoin()
+                    println("Connection closed. Periodic sender stopped.")
+                }
+
+            }
+        } catch (e: Exception) {
+            println(e.localizedMessage)
+        }
     }
 
     suspend fun getUser(): HttpResponse{

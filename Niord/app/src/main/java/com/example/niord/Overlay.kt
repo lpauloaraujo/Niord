@@ -540,7 +540,7 @@ class MainOverlayButton(
 
     var onVigiaClick: ((Boolean) -> Unit)? = null
     var onLocationClick: (() -> Unit)? = null
-
+    var onAlertClick: (() -> Unit)? = null
 
     @Composable
     fun ComposableUnit(statePacket: StatePacket){
@@ -549,7 +549,7 @@ class MainOverlayButton(
         val buttons: List<@Composable () -> Unit> = listOf(
             {IconBox(R.drawable.health, secondarySize, onClick = {onCallClick?.invoke("144")})},
             {IconBox(R.drawable.cops, secondarySize, onClick = {onCallClick?.invoke("1052")})},
-            {IconBox(R.drawable.alert, secondarySize)},
+            {IconBox(R.drawable.alert, secondarySize, onClick = {onAlertClick?.invoke()})},
             {
                 IconBox(
                     R.drawable.plt_vigia,

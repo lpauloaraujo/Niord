@@ -3,14 +3,25 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Intent
+import android.location.Location
 import android.os.Binder
 import android.os.IBinder
+import android.telephony.SmsManager
 import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.WindowManager
 import androidx.lifecycle.LifecycleService
 import androidx.core.app.NotificationCompat
-import com.example.niord.api.User
+import androidx.lifecycle.lifecycleScope
+import com.example.niord.api.ApiService
+import com.example.niord.api.HelpAsk
+import com.example.niord.api.LocationSchema
+import com.google.android.gms.location.Priority
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import io.ktor.websocket.Frame
+import io.ktor.websocket.readText
+import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 
 class FloatingOverlayService : LifecycleService() {
 
@@ -22,6 +33,8 @@ class FloatingOverlayService : LifecycleService() {
     private lateinit var buttonOverlay: MainOverlayButton
 
     val permission = PermissionChecker(this)
+
+    private lateinit var apiService: ApiService
 
     inner class LocalBinder : Binder() {
         fun getService(): FloatingOverlayService = this@FloatingOverlayService
@@ -37,6 +50,7 @@ class FloatingOverlayService : LifecycleService() {
         super.onCreate()
 
         locationManager = LocationManager(this)
+        apiService = ApiService(this)
 
         startForeground(1, createNotification())
 
@@ -44,6 +58,7 @@ class FloatingOverlayService : LifecycleService() {
 
         buttonOverlay = MainOverlayButton(context = this, buttonPos)
         buttonOverlayInit()
+        initOverwatch()
 
         buttonOverlay.invoke()
     }
@@ -76,12 +91,59 @@ class FloatingOverlayService : LifecycleService() {
                 showSendLocationThroughSMSDialog()
             }
         }
+
+        buttonOverlay.onAlertClick ={
+            sendHelpRequest()
+        }
     }
 
     fun refresh(){
         buttonOverlay.applyStatePacketPreferences()
     }
 
+    fun initOverwatch(){
+        if(permission.isLocationPermitted()) {
+            lifecycleScope.launch {
+
+                apiService.connectWsOverwatch(
+                    { frame ->
+                        println(frame.readText())
+                    },
+                    suspend {
+                        var sendFrame: Frame? = null
+                        val loc: Location? =
+                            locationManager.fetchLocationRet(Priority.PRIORITY_LOW_POWER)
+                        println(loc)
+                        if(loc != null) {
+                            val data = LocationSchema(
+                                loc.latitude,
+                                loc.longitude
+                            )
+                            sendFrame = Frame.Text(Json.encodeToString(data))
+                        }
+                        sendFrame
+                    }
+                )
+            }
+        }
+    }
+
+    private fun sendHelpRequest(type: String){
+        locationManager.getUserLocation { loc ->
+            if (loc != null) {
+                val data = HelpAsk(
+                    latitude = loc.latitude,
+                    longitude = loc.longitude,
+                    type = type
+                )
+
+                lifecycleScope.launch {
+                    apiService.askHelp(data)
+                }
+            }
+
+        }
+    }
 
     private fun showVigiaDialog(isActive: Boolean) {
         if (isActive) {
@@ -92,7 +154,7 @@ class FloatingOverlayService : LifecycleService() {
     }
 
     private fun showVigiaActivateDialog() {
-        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
+        val dialog = MaterialAlertDialogBuilder(
             themedContext,
             R.style.CustomAlertDialog
         )
@@ -109,7 +171,7 @@ class FloatingOverlayService : LifecycleService() {
     }
 
     private fun showVigiaDeactivateDialog() {
-        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
+        val dialog = MaterialAlertDialogBuilder(
             themedContext,
             R.style.CustomAlertDialog
         )
@@ -123,7 +185,7 @@ class FloatingOverlayService : LifecycleService() {
     }
 
     private fun showVigiaActivatedDialog() {
-        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
+        val dialog = MaterialAlertDialogBuilder(
             themedContext,
             R.style.CustomAlertDialog
         )
@@ -183,7 +245,7 @@ class FloatingOverlayService : LifecycleService() {
             }
         }
 
-        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
+        val dialog = MaterialAlertDialogBuilder(
             themedContext,
             R.style.CustomAlertDialog
         )
@@ -249,7 +311,7 @@ class FloatingOverlayService : LifecycleService() {
                     "https://maps.google.com/?q=${location.latitude},${location.longitude}"
 
                 val smsManager =
-                    android.telephony.SmsManager.getDefault()
+                    SmsManager.getDefault()
 
                 contatos.forEach { (telefone, nome) ->
 
@@ -293,7 +355,7 @@ class FloatingOverlayService : LifecycleService() {
 
     fun showSendLocationThroughSMSDialog() {
 
-        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
+        val dialog = MaterialAlertDialogBuilder(
             themedContext,
             R.style.CustomAlertDialog
         )
