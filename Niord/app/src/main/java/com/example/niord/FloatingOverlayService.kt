@@ -1,15 +1,20 @@
 package com.example.niord
+import android.R.attr.label
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Intent
 import android.location.Location
+import android.net.Uri
 import android.os.Binder
+import android.os.Build
 import android.os.IBinder
 import android.telephony.SmsManager
 import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.WindowManager
+import android.widget.Toast
 import androidx.lifecycle.LifecycleService
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.lifecycleScope
@@ -31,6 +36,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Duration.Companion.seconds
+import androidx.core.net.toUri
 
 class FloatingOverlayService : LifecycleService() {
 
@@ -49,6 +55,8 @@ class FloatingOverlayService : LifecycleService() {
 
     private var alertState = MutableStateFlow(false)
     private var helpingState = MutableStateFlow(false)
+
+    private var helpingStateWait = MutableStateFlow(false)
     private var helpingStateId = MutableStateFlow(-1)
 
     val locationChannel = Channel<Frame>(Channel.BUFFERED)
@@ -130,7 +138,7 @@ class FloatingOverlayService : LifecycleService() {
                             "deny" -> receiveHelpAnswer(data)
                             "robbery" -> showHelpRequest(data)
                             "accident" -> showHelpRequest(data)
-                            "acknowledge" -> startHelping(data.userId)
+                            "acknowledge" -> startHelping(data)
                             "cancel" -> endHelping(true, data.userId)
                         }
 
@@ -230,19 +238,26 @@ class FloatingOverlayService : LifecycleService() {
         }
     }
 
-    private fun startHelping(targetId: Int){
-        if(helpingState.value and (targetId == helpingStateId.value)){
+    private fun startHelping(data: HelpReceive){
+        if(!helpingStateWait.value) return
+        if(helpingState.value and (data.userId == helpingStateId.value)){
             //Confirmation of arrival
-            endHelping(false, targetId)
+            endHelping(false, data.userId)
         }else {
             helpingState.value = true
-            helpingStateId.value = targetId
-            //Open map
+            helpingStateId.value = data.userId
+            openMap(
+            Location("manual").apply{
+                latitude = data.latitude
+                longitude = data.longitude
+            }
+            )
         }
     }
 
     private fun endHelping(isCancel: Boolean, targetId: Int?){
         helpingState.value = false
+        helpingStateWait.value = false
         if(isCancel and (targetId == helpingStateId.value)) {
             val dialog = MaterialAlertDialogBuilder(
                 themedContext,
@@ -259,9 +274,10 @@ class FloatingOverlayService : LifecycleService() {
         }
     }
 
-    private fun answerHelpRequest(data: HelpReceive){
+    private fun answerHelpRequest(targetId: Int){
         if(helpingState.value) return //Ignore if helping someone else
-        sendAnswerRequest(type = "accept", targetId = data.userId)
+        sendAnswerRequest(type = "accept", targetId = targetId)
+        helpingStateWait.value = true
     }
 
     private fun denyHelpRequest(){
@@ -269,39 +285,89 @@ class FloatingOverlayService : LifecycleService() {
         endHelping(false, 0)
     }
 
+    private fun openMap(location: Location){
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        val channelId = "map_navigation_channel"
+        val notificationId = 67
+
+        val channel = NotificationChannel(
+            channelId,
+            "Map Alerts",
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            description = "Notifications to open map coordinates"
+        }
+        notificationManager.createNotificationChannel(channel)
+
+
+        val latitude = location.latitude
+        val longitude = location.longitude
+        val uriString = "geo:$latitude,$longitude?q=$latitude,$longitude($label)"
+        val mapIntent = Intent(Intent.ACTION_VIEW, uriString.toUri()).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            mapIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(android.R.drawable.ic_dialog_map) // Replace with your app's map/location icon
+            .setContentTitle("Acompanhar pedido de ajuda")
+            .setContentText("Clique para abrir o mapa na posição de ajuda")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(false)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        notificationManager.notify(notificationId, notification)
+    }
+
     private fun showHelpRequest(data: HelpReceive){
         if(alertState.value) return //Ignore if user is currently asking for help
-        when (data.type) {
-            "robbery" -> {
-                val dialog = MaterialAlertDialogBuilder(
-                    themedContext,
-                    R.style.CustomAlertDialog
-                )
-                    .setTitle("Um motorista disparou uma alerta de assalto")
-                    .setMessage(
-                        "O alerta foi disparado a X km de distância"
+        if(helpingState.value and (data.type == "accident")) return
+        val targetLoc = Location("manual").apply {
+            latitude = data.latitude
+            longitude = data.longitude
+        }
+        locationManager.getUserLocation { location ->
+            val distanceMeters = location?.distanceTo(targetLoc)?.toInt()
+            when (data.type) {
+                "robbery" -> {
+                    val dialog = MaterialAlertDialogBuilder(
+                        themedContext,
+                        R.style.CustomAlertDialog
                     )
-                    .setPositiveButton("Ver no mapa") { _, _ ->  }
-                    .setNegativeButton("Ok") { _, _ -> {} }
-                    .create()
+                        .setTitle("Um motorista disparou uma alerta de assalto")
+                        .setMessage(
+                            "O alerta foi disparado a ${distanceMeters}m de distância"
+                        )
+                        .setPositiveButton("Ver no mapa") { _, _ -> openMap(targetLoc)}
+                        .setNegativeButton("Ok") { _, _ -> {} }
+                        .create()
 
-                dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
-                dialog.show()
-            }
-            "accident" -> {
-                val dialog = MaterialAlertDialogBuilder(
-                    themedContext,
-                    R.style.CustomAlertDialog
-                )
-                    .setTitle("Um motorista disparou uma alerta de acidente")
-                    .setMessage(
-                        "O alerta foi disparado a X m de distância. \nVocê pode ajudar?"
+                    dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+                    dialog.show()
+                }
+
+                "accident" -> {
+                    val dialog = MaterialAlertDialogBuilder(
+                        themedContext,
+                        R.style.CustomAlertDialog
                     )
-                    .setPositiveButton("Ajudar") { _, _ -> answerHelpRequest(data) }
-                    .setNegativeButton("Não posso"){_, _ -> {}}
-                    .create()
-                dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
-                dialog.show()
+                        .setTitle("Um motorista disparou uma alerta de acidente")
+                        .setMessage(
+                            "O alerta foi disparado a ${distanceMeters}m de distância. \nVocê pode ajudar?"
+                        )
+                        .setPositiveButton("Ajudar") { _, _ -> answerHelpRequest(data.userId) }
+                        .setNegativeButton("Não posso") { _, _ -> {} }
+                        .create()
+                    dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+                    dialog.show()
+                }
             }
         }
     }
@@ -340,12 +406,16 @@ class FloatingOverlayService : LifecycleService() {
             themedContext,
             R.style.CustomAlertDialog
         )
-            .setTitle("Cancelar ajuda?")
+            .setTitle("Menu de acompanhamento?")
             .setMessage(
-                "O motorista será notificado."
+                "O motorista será notificado.\n" +
+                        "Clique fora da caixa para cancelar a ação"
             )
             .setPositiveButton("Cancelar Ajuda") { _, _ -> denyHelpRequest() }
-            .setNegativeButton("Continuar", null)
+            .setNegativeButton("Cheguei ao local") { _, _, ->
+                sendAnswerRequest("accept", helpingStateId.value)
+                endHelping(false, null)
+            }
             .create()
         dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
         dialog.show()
@@ -644,8 +714,8 @@ class FloatingOverlayService : LifecycleService() {
         manager.createNotificationChannel(channel)
 
         return NotificationCompat.Builder(themedContext, channelId)
-            .setContentTitle("Widget Active")
-            .setContentText("Your floating widget is running on screen.")
+            .setContentTitle("Overlay Niord")
+            .setContentText("O overlay Niord está ativo na tela.")
             .setSmallIcon(R.drawable.main_button)
             .build()
     }
