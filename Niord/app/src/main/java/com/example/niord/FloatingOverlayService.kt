@@ -23,9 +23,14 @@ import com.google.android.gms.location.Priority
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.time.Duration.Companion.seconds
 
 class FloatingOverlayService : LifecycleService() {
 
@@ -42,7 +47,11 @@ class FloatingOverlayService : LifecycleService() {
 
     private val receivedIds = CopyOnWriteArrayList<Int>()
 
-    private var alertState = false
+    private var alertState = MutableStateFlow(false)
+    private var helpingState = MutableStateFlow(false)
+    private var helpingStateId = MutableStateFlow(-1)
+
+    val locationChannel = Channel<Frame>(Channel.BUFFERED)
 
     inner class LocalBinder : Binder() {
         fun getService(): FloatingOverlayService = this@FloatingOverlayService
@@ -72,7 +81,7 @@ class FloatingOverlayService : LifecycleService() {
     }
 
     override fun onDestroy() {
-
+        alertCancel()
         buttonOverlay.onDestroy()
         super.onDestroy()
     }
@@ -119,38 +128,45 @@ class FloatingOverlayService : LifecycleService() {
                         when(data.type) {
                             "accept" -> receiveHelpAnswer(data)
                             "deny" -> receiveHelpAnswer(data)
+                            "robbery" -> showHelpRequest(data)
+                            "accident" -> showHelpRequest(data)
+                            "acknowledge" -> startHelping(data.userId)
+                            "cancel" -> endHelping(true, data.userId)
                         }
 
                     },
-                    suspend {
-                        var sendFrame: Frame? = null
-                        val loc: Location? =
-                            locationManager.fetchLocationRet(Priority.PRIORITY_LOW_POWER)
-                        if(loc != null) {
-                            val data = LocationSchema(
-                                loc.latitude,
-                                loc.longitude
-                            )
-                            sendFrame = Frame.Text(Json.encodeToString(data))
-                        }
-                        sendFrame
-                    }
+                    locationChannel
                 )
             }
+
+            lifecycleScope.launch {
+                while(isActive) {
+                    val loc: Location? =
+                        locationManager.fetchLocationRet(Priority.PRIORITY_LOW_POWER)
+                    if (loc != null) {
+                        val data = LocationSchema(
+                            loc.latitude,
+                            loc.longitude
+                        )
+                        locationChannel.send(Frame.Text(Json.encodeToString(data)))
+                    }
+                    delay(5.seconds)
+                }
+             }
         }
     }
 
     private fun receiveHelpAnswer(data: HelpReceive){
-        if(!alertState) return
+        if(!alertState.value) return //Ignore if not in alert
 
         if(receivedIds.contains(data.userId)){
             if(data.type == "deny") {
                 receivedIds.remove(data.userId)
             }else{
-                receivedIds.clear()
                 sendAnswerRequest(type = "acknowledge", targetId = data.userId)
-                alertState = false
+                alertState.value = false
                 showAlertHelpArrived()
+                alertCancel()
             }
         }else if(data.type == "accept"){
             sendAnswerRequest(type = "acknowledge", targetId = data.userId)
@@ -169,7 +185,7 @@ class FloatingOverlayService : LifecycleService() {
                 lifecycleScope.launch {
                     val response = apiService.askHelp(data)
                     if((response.status.value == 200) and (type == "accident")){
-                        alertState = true
+                        alertState.value = true
                     }
                 }
             }
@@ -195,7 +211,7 @@ class FloatingOverlayService : LifecycleService() {
     }
 
     private fun alertCancel(){
-        alertState = false
+        alertState.value = false
         if(receivedIds.isNotEmpty()){
             locationManager.getUserLocation { loc ->
                 if (loc != null) {
@@ -214,6 +230,81 @@ class FloatingOverlayService : LifecycleService() {
         }
     }
 
+    private fun startHelping(targetId: Int){
+        if(helpingState.value and (targetId == helpingStateId.value)){
+            //Confirmation of arrival
+            endHelping(false, targetId)
+        }else {
+            helpingState.value = true
+            helpingStateId.value = targetId
+            //Open map
+        }
+    }
+
+    private fun endHelping(isCancel: Boolean, targetId: Int?){
+        helpingState.value = false
+        if(isCancel and (targetId == helpingStateId.value)) {
+            val dialog = MaterialAlertDialogBuilder(
+                themedContext,
+                R.style.CustomAlertDialog
+            )
+                .setTitle("Apoio cancelado")
+                .setMessage(
+                    "O motorista cancelou o pedido ou já está sendo ajudado."
+                )
+                .setPositiveButton("Ok") { _, _ -> {}}
+                .create()
+            dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+            dialog.show()
+        }
+    }
+
+    private fun answerHelpRequest(data: HelpReceive){
+        if(helpingState.value) return //Ignore if helping someone else
+        sendAnswerRequest(type = "accept", targetId = data.userId)
+    }
+
+    private fun denyHelpRequest(){
+        sendAnswerRequest("deny", helpingStateId.value)
+        endHelping(false, 0)
+    }
+
+    private fun showHelpRequest(data: HelpReceive){
+        if(alertState.value) return //Ignore if user is currently asking for help
+        when (data.type) {
+            "robbery" -> {
+                val dialog = MaterialAlertDialogBuilder(
+                    themedContext,
+                    R.style.CustomAlertDialog
+                )
+                    .setTitle("Um motorista disparou uma alerta de assalto")
+                    .setMessage(
+                        "O alerta foi disparado a X km de distância"
+                    )
+                    .setPositiveButton("Ver no mapa") { _, _ ->  }
+                    .setNegativeButton("Ok") { _, _ -> {} }
+                    .create()
+
+                dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+                dialog.show()
+            }
+            "accident" -> {
+                val dialog = MaterialAlertDialogBuilder(
+                    themedContext,
+                    R.style.CustomAlertDialog
+                )
+                    .setTitle("Um motorista disparou uma alerta de acidente")
+                    .setMessage(
+                        "O alerta foi disparado a X m de distância. \nVocê pode ajudar?"
+                    )
+                    .setPositiveButton("Ajudar") { _, _ -> answerHelpRequest(data) }
+                    .setNegativeButton("Não posso"){_, _ -> {}}
+                    .create()
+                dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+                dialog.show()
+            }
+        }
+    }
 
     private fun showAlertHelpArrived(){
         val dialog = MaterialAlertDialogBuilder(
@@ -231,11 +322,33 @@ class FloatingOverlayService : LifecycleService() {
     }
 
     private fun showAlertDialog(){
-        if(alertState){
+        if(!apiService.isWebsocketConnected.value){
+            initOverwatch()
+        }
+        if(alertState.value){
             showAlertDialogTrack()
-        }else{
+        }else if(helpingState.value){
+            showAlertDialogHelping()
+        } else{
             showAlertDialogAsk()
         }
+    }
+
+    private fun showAlertDialogHelping(){
+
+        val dialog = MaterialAlertDialogBuilder(
+            themedContext,
+            R.style.CustomAlertDialog
+        )
+            .setTitle("Cancelar ajuda?")
+            .setMessage(
+                "O motorista será notificado."
+            )
+            .setPositiveButton("Cancelar Ajuda") { _, _ -> denyHelpRequest() }
+            .setNegativeButton("Continuar", null)
+            .create()
+        dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+        dialog.show()
     }
 
     private fun showAlertDialogTrack(){

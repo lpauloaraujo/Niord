@@ -16,8 +16,10 @@ import io.ktor.http.cookies
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.time.delay
@@ -27,6 +29,7 @@ import kotlin.time.Duration.Companion.seconds
 
 class ApiService(context: Context){
     var apiClient = ApiClient.createHttpClient(context)
+    val isWebsocketConnected = MutableStateFlow(false)
     suspend fun greet(): String {
         return apiClient.get("greet").body<HttpResponse>().body<String>()
     }
@@ -51,18 +54,16 @@ class ApiService(context: Context){
             setBody(answerData)
         }
     }
-    suspend fun connectWsOverwatch(inCallback: suspend (Frame.Text) -> Unit, outCallback: suspend () -> Frame?){
+    suspend fun connectWsOverwatch(inCallback: suspend (Frame.Text) -> Unit, outChannel: Channel<Frame>){
         try {
             apiClient.webSocket(path = "/ws/") {
-
+                isWebsocketConnected.value = true
                 val periodicSenderJob = launch {
                     while (isActive) {
                         try {
-                            val sendFrame = outCallback()
-                            if (sendFrame != null) {
-                                send(sendFrame)
+                            for (frame in outChannel){
+                                send(frame)
                             }
-                            delay(5.seconds)
                         } catch (e: CancellationException) {
                             break
                         } catch (e: Exception) {
@@ -74,6 +75,7 @@ class ApiService(context: Context){
                 try {
                     incoming.consumeEach { frame ->
                         if (frame is Frame.Text) {
+                            println(frame.readText())
                             inCallback(frame)
                         }
                     }
@@ -85,6 +87,8 @@ class ApiService(context: Context){
             }
         } catch (e: Exception) {
             println(e.localizedMessage)
+        } finally {
+            isWebsocketConnected.value = false
         }
     }
 
