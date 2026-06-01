@@ -165,6 +165,7 @@ class FloatingOverlayService : LifecycleService() {
                     longitude = loc.longitude,
                     type = type
                 )
+                receivedIds.clear()
                 lifecycleScope.launch {
                     val response = apiService.askHelp(data)
                     if((response.status.value == 200) and (type == "accident")){
