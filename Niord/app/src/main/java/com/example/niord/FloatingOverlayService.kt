@@ -6,15 +6,12 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.location.Location
-import android.net.Uri
 import android.os.Binder
-import android.os.Build
 import android.os.IBinder
 import android.telephony.SmsManager
 import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.WindowManager
-import android.widget.Toast
 import androidx.lifecycle.LifecycleService
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.lifecycleScope
@@ -286,10 +283,11 @@ class FloatingOverlayService : LifecycleService() {
         endHelping(false, 0)
     }
 
-    private fun openMap(location: Location){
+    private fun openMap(location: Location, notId: Int = 67,
+                        title: String = "Acompanhar pedido de ajuda",
+                        subTitle: String = "Clique para abrir o mapa na posição de ajuda"){
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         val channelId = "map_navigation_channel"
-        val notificationId = 67
 
         val channel = NotificationChannel(
             channelId,
@@ -316,15 +314,15 @@ class FloatingOverlayService : LifecycleService() {
         )
 
         val notification = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(android.R.drawable.ic_dialog_map) // Replace with your app's map/location icon
-            .setContentTitle("Acompanhar pedido de ajuda")
-            .setContentText("Clique para abrir o mapa na posição de ajuda")
+            .setSmallIcon(android.R.drawable.ic_dialog_map)
+            .setContentTitle(title)
+            .setContentText(subTitle)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(false)
             .setContentIntent(pendingIntent)
             .build()
 
-        notificationManager.notify(notificationId, notification)
+        notificationManager.notify(notId, notification)
     }
 
     private fun showHelpRequest(data: HelpReceive){
@@ -346,7 +344,12 @@ class FloatingOverlayService : LifecycleService() {
                         .setMessage(
                             "O alerta foi disparado a ${distanceMeters}m de distância"
                         )
-                        .setPositiveButton("Ver no mapa") { _, _ -> openMap(targetLoc)}
+                        .setPositiveButton("Ver no mapa") { _, _ ->
+                            openMap(targetLoc,
+                                notId = 42,
+                                title = "Alerta de assalto",
+                                subTitle = "Clique para abrir na " +
+                                    "localização do alerta de assalto")}
                         .setNegativeButton("Ok") { _, _ -> {} }
                         .create()
 
