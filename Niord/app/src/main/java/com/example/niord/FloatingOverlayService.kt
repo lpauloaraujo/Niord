@@ -14,7 +14,10 @@ import androidx.lifecycle.LifecycleService
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.niord.api.ApiService
+import com.example.niord.api.HelpAnswer
+import com.example.niord.api.HelpAnswerMulti
 import com.example.niord.api.HelpAsk
+import com.example.niord.api.HelpReceive
 import com.example.niord.api.LocationSchema
 import com.google.android.gms.location.Priority
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -22,6 +25,7 @@ import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import java.util.concurrent.CopyOnWriteArrayList
 
 class FloatingOverlayService : LifecycleService() {
 
@@ -35,6 +39,10 @@ class FloatingOverlayService : LifecycleService() {
     val permission = PermissionChecker(this)
 
     private lateinit var apiService: ApiService
+
+    private val receivedIds = CopyOnWriteArrayList<Int>()
+
+    private var alertState = false
 
     inner class LocalBinder : Binder() {
         fun getService(): FloatingOverlayService = this@FloatingOverlayService
@@ -107,7 +115,12 @@ class FloatingOverlayService : LifecycleService() {
 
                 apiService.connectWsOverwatch(
                     { frame ->
-                        println(frame.readText())
+                        val data = Json.decodeFromString<HelpReceive>(frame.readText())
+                        when(data.type) {
+                            "accept" -> receiveHelpAnswer(data)
+                            "deny" -> receiveHelpAnswer(data)
+                        }
+
                     },
                     suspend {
                         var sendFrame: Frame? = null
@@ -127,6 +140,23 @@ class FloatingOverlayService : LifecycleService() {
         }
     }
 
+    private fun receiveHelpAnswer(data: HelpReceive){
+        if(!alertState) return
+
+        if(receivedIds.contains(data.userId)){
+            if(data.type == "deny") {
+                receivedIds.remove(data.userId)
+            }else{
+                receivedIds.clear()
+                sendAnswerRequest(type = "acknowledge", targetId = data.userId)
+                alertState = false
+                showAlertHelpArrived()
+            }
+        }else if(data.type == "accept"){
+            sendAnswerRequest(type = "acknowledge", targetId = data.userId)
+            receivedIds.add(data.userId)
+        }
+    }
     private fun sendHelpRequest(type: String){
         locationManager.getUserLocation { loc ->
             if (loc != null) {
@@ -135,16 +165,96 @@ class FloatingOverlayService : LifecycleService() {
                     longitude = loc.longitude,
                     type = type
                 )
-
                 lifecycleScope.launch {
-                    apiService.askHelp(data)
+                    val response = apiService.askHelp(data)
+                    if((response.status.value == 200) and (type == "accident")){
+                        alertState = true
+                    }
                 }
             }
 
         }
     }
 
+    private fun sendAnswerRequest(type: String, targetId: Int){
+        locationManager.getUserLocation { loc ->
+            if (loc != null) {
+                val data = HelpAnswer(
+                    latitude = loc.latitude,
+                    longitude = loc.longitude,
+                    type = type,
+                    targetId = targetId
+                )
+                lifecycleScope.launch {
+                    apiService.answerHelp(data)
+                }
+            }
+
+        }
+    }
+
+    private fun alertCancel(){
+        alertState = false
+        if(receivedIds.isNotEmpty()){
+            locationManager.getUserLocation { loc ->
+                if (loc != null) {
+                    val data = HelpAnswerMulti(
+                        latitude = loc.latitude,
+                        longitude = loc.longitude,
+                        type = "cancel",
+                        targetIds = receivedIds.toList()
+                    )
+                    lifecycleScope.launch {
+                        apiService.answerHelpMulti(data)
+                    }
+                }
+
+            }
+        }
+    }
+
+
+    private fun showAlertHelpArrived(){
+        val dialog = MaterialAlertDialogBuilder(
+            themedContext,
+            R.style.CustomAlertDialog
+        )
+            .setTitle("Um motorista chegou ao seu local")
+            .setMessage(
+                "Um motorista que estava a seu caminho chegou."
+            )
+            .setPositiveButton("Ok") { _, _ -> {}}
+            .create()
+        dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+        dialog.show()
+    }
+
     private fun showAlertDialog(){
+        if(alertState){
+            showAlertDialogTrack()
+        }else{
+            showAlertDialogAsk()
+        }
+    }
+
+    private fun showAlertDialogTrack(){
+        val dialog = MaterialAlertDialogBuilder(
+            themedContext,
+            R.style.CustomAlertDialog
+        )
+            .setTitle("Cancelar alerta?")
+            .setMessage(
+                "Há ${receivedIds.size} motorista(s) a seu caminho.\n" +
+                        "Motoristas a caminho serão notificados."
+            )
+            .setPositiveButton("Cancelar Alerta") { _, _ -> alertCancel() }
+            .setNegativeButton("Continuar", null)
+            .create()
+        dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+        dialog.show()
+    }
+
+    private fun showAlertDialogAsk(){
         val dialog = MaterialAlertDialogBuilder(
             themedContext,
             R.style.CustomAlertDialog

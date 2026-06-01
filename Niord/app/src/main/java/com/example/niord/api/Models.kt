@@ -94,6 +94,15 @@ data class HelpAsk(
 )
 
 @Serializable
+data class HelpReceive(
+    val latitude: Double,
+    val longitude: Double,
+    @SerialName("user_id")
+    val userId: Int,
+    val type: String
+)
+
+@Serializable
 data class HelpAnswer(
     val latitude: Double,
     val longitude: Double,
@@ -101,3 +110,12 @@ data class HelpAnswer(
     val targetId: Int,
     val type: String
 )
+@Serializable
+data class HelpAnswerMulti(
+    val latitude: Double,
+    val longitude: Double,
+    @SerialName("target_ids")
+    val targetIds: List<Int>,
+    val type: String
+)
+

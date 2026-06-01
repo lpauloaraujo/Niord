@@ -35,7 +35,6 @@ class RedisConnectionManager:
                     pass
 
     async def send_to_id(self, target_id: int, geo_data: GeoModel):
-        #type should be HelpType.NONE to identify as an acception
         try:
             await (
                     self.local_connections[target_id].

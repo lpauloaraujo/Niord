@@ -38,6 +38,19 @@ class ApiService(context: Context){
         }
     }
 
+    suspend fun answerHelp(answerData: HelpAnswer): HttpResponse{
+        return apiClient.post("/help/answer"){
+            contentType(ContentType.Application.Json)
+            setBody(answerData)
+        }
+    }
+
+    suspend fun answerHelpMulti(answerData: HelpAnswerMulti): HttpResponse{
+        return apiClient.post("/help/answer_multi"){
+            contentType(ContentType.Application.Json)
+            setBody(answerData)
+        }
+    }
     suspend fun connectWsOverwatch(inCallback: suspend (Frame.Text) -> Unit, outCallback: suspend () -> Frame?){
         try {
             apiClient.webSocket(path = "/ws/") {
