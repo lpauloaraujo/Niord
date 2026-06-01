@@ -90,6 +90,7 @@ class FloatingOverlayService : LifecycleService() {
 
     override fun onDestroy() {
         alertCancel()
+        endHelping(true, null)
         buttonOverlay.onDestroy()
         super.onDestroy()
     }
