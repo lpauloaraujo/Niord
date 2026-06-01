@@ -26,7 +26,7 @@ class RedisConnectionManager:
                 unit="m"
                 )
         for u in nearby_users:
-            if u != location.user_id:
+            if int(u) != location.user_id:
                 try:
                     conn = self.local_connections.get(int(u))
                     if conn:
