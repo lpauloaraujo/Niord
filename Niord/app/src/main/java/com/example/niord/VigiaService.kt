@@ -8,16 +8,25 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
+import android.util.Log
+import android.view.ContextThemeWrapper
+import android.view.WindowManager
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import org.json.JSONObject
+import org.vosk.android.RecognitionListener
+import java.lang.Exception
 
-// Foreground service that keeps Niord Vigia monitoring alive while the app is in background.
-// The actual audio capture + NLP pipeline lives in startMonitoring()/stopMonitoring(); for
-// now we only hold the foreground microphone slot and notify the user that vigia is active.
-class VigiaService : android.app.Service() {
+class VigiaService : android.app.Service(), RecognitionListener {
 
+    private lateinit var voiceRecognition: VoiceRecognitionManager
+    private val mainHandler = Handler(Looper.getMainLooper())
+
+    val themedContext = ContextThemeWrapper(this, R.style.Theme_Niord)
     companion object {
         const val CHANNEL_ID = "niord_vigia_channel"
         const val NOTIFICATION_ID = 4205
@@ -45,7 +54,12 @@ class VigiaService : android.app.Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    @RequiresApi(Build.VERSION_CODES.O)
+
+    override fun onCreate() {
+        voiceRecognition = VoiceRecognitionManager(this)
+    }
+
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_STOP -> {
@@ -80,12 +94,17 @@ class VigiaService : android.app.Service() {
         super.onDestroy()
     }
 
-    // TODO(US-005 follow-up): capture audio chunks with MediaRecorder/AudioRecord and stream
-    // them to the backend NLP pipeline for threat detection. Keeping a no-op stub for now so
-    // the activation flow can be exercised end-to-end.
-    private fun startMonitoring() {}
+    private fun startMonitoring() {
+        voiceRecognition.loadModel {
+            mainHandler.post {
+                voiceRecognition.startListening(this)
+            }
+        }
+    }
 
-    private fun stopMonitoring() {}
+    private fun stopMonitoring() {
+        voiceRecognition.stopListening()
+    }
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun ensureChannel() {
@@ -120,5 +139,42 @@ class VigiaService : android.app.Service() {
             .setContentIntent(pendingIntent)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .build()
+    }
+
+    override fun onPartialResult(hypothesis: String?) {
+        val text = JSONObject(hypothesis ?: "{}").optString("text")
+        if(text.isNotEmpty()) {
+            Log.d("VOSK_DEBUG", "Parcial: $hypothesis")
+        }
+    }
+
+    override fun onResult(hypothesis: String?) {
+        Log.d("VOSK_DEBUG", "Resultado: $hypothesis")
+
+        val text = JSONObject(hypothesis ?: "{}").optString("text")
+        if(text.isNotEmpty()) {
+            val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
+                themedContext,
+                R.style.CustomAlertDialog
+            )
+                .setTitle("Fala detectada")
+                .setMessage("Você falou: $text.")
+                .setPositiveButton("Ok") { _, _ -> }
+                .create()
+            dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+            dialog.show()
+        }
+    }
+
+    override fun onFinalResult(hypothesis: String?) {
+        Log.d("VOSK_DEBUG", "Final: $hypothesis")
+    }
+
+    override fun onError(exception: Exception?) {
+        Log.e("VOSK_DEBUG", "Erro: ${exception?.message}")
+    }
+
+    override fun onTimeout() {
+        Log.d("VOSK_DEBUG", "Timeout")
     }
 }

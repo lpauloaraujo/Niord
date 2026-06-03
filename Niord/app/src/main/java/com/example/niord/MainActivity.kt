@@ -23,8 +23,6 @@ class MainActivity : ComponentActivity() {
     private var permission = Permission(this)
     private lateinit var apiService: ApiService
 
-    private lateinit var voiceManager: VoiceRecognitionManager
-
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
@@ -34,15 +32,12 @@ class MainActivity : ComponentActivity() {
         setContentView(R.layout.activity_main)
         findViewById<ScrollView>(R.id.screenLogin).applyStatusBarPadding()
         setupScreenFlow()
-        voiceManager = VoiceRecognitionManager(this)
-        voiceManager.loadModel()
 
         apiService = ApiService(this)
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        voiceManager.releaseModel()
     }
 
 
