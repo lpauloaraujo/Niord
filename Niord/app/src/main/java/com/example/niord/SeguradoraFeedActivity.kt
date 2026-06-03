@@ -1,4 +1,4 @@
-package com.example.niord // Troque para o pacote do seu app
+package com.example.niord
 
 import android.annotation.SuppressLint
 import android.os.Bundle
@@ -7,6 +7,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -28,6 +29,14 @@ class SeguradoraFeedActivity : AppCompatActivity() {
         val btnRejeitar = findViewById<FloatingActionButton>(R.id.btnRejeitar)
         val btnAprovar = findViewById<FloatingActionButton>(R.id.btnAprovar)
 
+        // 1. Encontra o botão de voltar na tela
+        val btnVoltar = findViewById<ImageButton>(R.id.btnVoltar)
+
+        // 2. Adiciona a ação de clique para voltar à tela anterior
+        btnVoltar.setOnClickListener {
+            finish()
+        }
+
         carregarSeguradoras()
 
         // Lógica para clicar no botão "X"
@@ -42,15 +51,14 @@ class SeguradoraFeedActivity : AppCompatActivity() {
     }
 
     private fun carregarSeguradoras() {
-        // Lista fictícia. Substitua pelos seus dados reais.
-        // CUIDADO: Garanta que os R.drawable existam, ou o app vai fechar.
+        // Lista fictícia.
         val lista = listOf(
             Seguradora(1, "Forti-Mora", "Voltada para motociclistas...", R.drawable.ic_launcher_foreground), // Troque pelas suas logos
             Seguradora(2, "Gran-Vox", "Pensada para entregadores...", R.drawable.ic_launcher_foreground),
             Seguradora(3, "Segura-Lastit", "Especializada em carros...", R.drawable.ic_launcher_foreground)
         )
 
-        // Adicionamos de trás para frente para que a primeira seguradora fique no TOPO da pilha
+
         for (seguradora in lista.reversed()) {
             val cardView = LayoutInflater.from(this).inflate(R.layout.item_seguradora_card, cardContainer, false)
 
@@ -139,7 +147,7 @@ class SeguradoraFeedActivity : AppCompatActivity() {
 
     private fun onApprove() {
         Toast.makeText(this, "Você curtiu! Ir para detalhes...", Toast.LENGTH_SHORT).show()
-        // Aqui você pode colocar o código para abrir a Activity de Detalhes (Intent)
+
     }
 
     private fun onReject() {

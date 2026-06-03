@@ -1,4 +1,4 @@
-package com.example.niord // Lembre-se de verificar se este é o seu pacote
+package com.example.niord
 
 import android.content.Intent
 import android.os.Bundle
@@ -10,25 +10,52 @@ class SeguradoraInicialActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.seguradora_inicial) // Conecta com o seu XML
+        // Inicializa o app mostrando a tela principal de recomendações
+        mostrarTelaInicial()
+    }
 
-        // Encontra os botões na tela
+
+    private fun mostrarTelaInicial() {
+        setContentView(R.layout.seguradora_inicial)
+
         val btnRecommendations = findViewById<MaterialButton>(R.id.btnRecommendations)
+        val btnAddInsurance = findViewById<MaterialButton>(R.id.btnAddInsurance)
         val btnBack = findViewById<ImageButton>(R.id.btnBack)
 
-        // (Opcional) Se quiser já deixar o botão de "Adicionar a sua" mapeado
-        // val btnAddInsurance = findViewById<MaterialButton>(R.id.btnAddInsurance)
-
-        // AÇÃO: Ao clicar em "Ver recomendações"
+        // Botão: Ver Recomendações -> Abre a outra Activity de cards (Tinder)
         btnRecommendations.setOnClickListener {
-            // Cria a intenção de ir para a SeguradoraFeedActivity
             val intent = Intent(this, SeguradoraFeedActivity::class.java)
             startActivity(intent)
         }
 
-        // AÇÃO: Ao clicar na setinha de voltar no topo
+        // Botão: Adicionar a sua seguradora -> Muda o layout nesta mesma Activity
+        btnAddInsurance.setOnClickListener {
+            mostrarTelaFormulario()
+        }
+
+        // Setinha de voltar da tela inicial
         btnBack.setOnClickListener {
-            finish() // Fecha esta tela e volta para a anterior
+            finish()
+        }
+    }
+
+
+    private fun mostrarTelaFormulario() {
+        // Trocamos o layout atual pelo layout do formulário
+        setContentView(R.layout.adicionar_seguradora)
+
+        // Como o layout mudou, buscamos os botões do NOVO layout
+        val btnVoltar = findViewById<ImageButton>(R.id.btnVoltar)
+        val btnConfirmar = findViewById<MaterialButton>(R.id.btnConfirmar)
+
+        // Se clicar em voltar no formulário, recarregamos a tela inicial
+        btnVoltar.setOnClickListener {
+            mostrarTelaInicial()
+        }
+
+        // Ação do botão confirmar do formulário
+        btnConfirmar.setOnClickListener {
+            // Sua lógica de validação do formulário entra aqui depois
         }
     }
 }
