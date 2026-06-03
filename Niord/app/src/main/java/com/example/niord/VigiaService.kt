@@ -23,8 +23,10 @@ import java.lang.Exception
 
 class VigiaService : android.app.Service(), RecognitionListener {
 
-    private lateinit var voiceRecognition: VoiceRecognitionManager
+    private var voiceRecognition: VoiceRecognitionManager? = null
     private val mainHandler = Handler(Looper.getMainLooper())
+    private lateinit var sttManager: GoogleOfflineSTTManager
+    private var useGoogleSTT = true
 
     val themedContext = ContextThemeWrapper(this, R.style.Theme_Niord)
     companion object {
@@ -56,7 +58,33 @@ class VigiaService : android.app.Service(), RecognitionListener {
 
 
     override fun onCreate() {
-        voiceRecognition = VoiceRecognitionManager(this)
+        sttManager = GoogleOfflineSTTManager(
+            context = this,
+            onResultReady = { text ->
+                // Update UI or process text string here
+                Log.d("STT_SUCCESS", "Recognized: $text")
+                debugDialogSTT(text)
+            },
+            onErrorOccurred = { error, code ->
+                Log.e("STT_ERROR", error)
+                if(code >= 12){//Non available language
+                    sttManager.destroy()
+                    useGoogleSTT = false
+                    if(voiceRecognition == null){//Restart because of race condition
+                        voiceRecognition = VoiceRecognitionManager(this)
+                        stopMonitoring()
+                        startMonitoring()
+                    }
+                }
+            }
+        )
+        if(sttManager.isRecognizerNull()){
+            voiceRecognition = VoiceRecognitionManager(this)
+            useGoogleSTT = false
+            Log.d("Vigia_STT", "Using VOSK")
+        }else{
+            Log.d("Vigia_STT", "Using Google STT")
+        }
     }
 
 
@@ -91,19 +119,39 @@ class VigiaService : android.app.Service(), RecognitionListener {
     override fun onDestroy() {
         stopMonitoring()
         isRunning = false
+        sttManager.destroy()
+        voiceRecognition?.releaseModel()
         super.onDestroy()
     }
 
     private fun startMonitoring() {
-        voiceRecognition.loadModel {
-            mainHandler.post {
-                voiceRecognition.startListening(this)
+        if(useGoogleSTT) {
+            sttManager.startListening()
+        }else{
+            voiceRecognition?.loadModel {
+                mainHandler.post {
+                    voiceRecognition?.startListening(this)
+                }
             }
         }
     }
 
     private fun stopMonitoring() {
-        voiceRecognition.stopListening()
+        voiceRecognition?.stopListening()
+        sttManager.stopListening()
+    }
+
+    private fun debugDialogSTT(text: String){
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
+            themedContext,
+            R.style.CustomAlertDialog
+        )
+            .setTitle("Fala detectada")
+            .setMessage("Você falou: $text.")
+            .setPositiveButton("Ok") { _, _ -> }
+            .create()
+        dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+        dialog.show()
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -153,16 +201,7 @@ class VigiaService : android.app.Service(), RecognitionListener {
 
         val text = JSONObject(hypothesis ?: "{}").optString("text")
         if(text.isNotEmpty()) {
-            val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
-                themedContext,
-                R.style.CustomAlertDialog
-            )
-                .setTitle("Fala detectada")
-                .setMessage("Você falou: $text.")
-                .setPositiveButton("Ok") { _, _ -> }
-                .create()
-            dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
-            dialog.show()
+            debugDialogSTT(text)
         }
     }
 
