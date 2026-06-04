@@ -63,7 +63,7 @@ class VigiaService : android.app.Service(), RecognitionListener {
             onResultReady = { text ->
                 // Update UI or process text string here
                 Log.d("STT_SUCCESS", "Recognized: $text")
-                debugDialogSTT(text)
+                receiveSTT(text)
             },
             onErrorOccurred = { error, code ->
                 Log.e("STT_ERROR", error)
@@ -141,6 +141,10 @@ class VigiaService : android.app.Service(), RecognitionListener {
         sttManager.stopListening()
     }
 
+    private fun receiveSTT(text: String){//Joined call from models
+        debugDialogSTT(text)
+    }
+
     private fun debugDialogSTT(text: String){
         val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
             themedContext,
@@ -201,7 +205,7 @@ class VigiaService : android.app.Service(), RecognitionListener {
 
         val text = JSONObject(hypothesis ?: "{}").optString("text")
         if(text.isNotEmpty()) {
-            debugDialogSTT(text)
+            receiveSTT(text)
         }
     }
 
