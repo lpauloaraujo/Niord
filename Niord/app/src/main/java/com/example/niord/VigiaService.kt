@@ -27,6 +27,7 @@ class VigiaService : android.app.Service(), RecognitionListener {
     private val mainHandler = Handler(Looper.getMainLooper())
     private lateinit var sttManager: GoogleOfflineSTTManager
     private var useGoogleSTT = true
+    private lateinit var threatClassifier: ThreatClassifier
 
     val themedContext = ContextThemeWrapper(this, R.style.Theme_Niord)
     companion object {
@@ -58,26 +59,7 @@ class VigiaService : android.app.Service(), RecognitionListener {
 
 
     override fun onCreate() {
-        sttManager = GoogleOfflineSTTManager(
-            context = this,
-            onResultReady = { text ->
-                // Update UI or process text string here
-                Log.d("STT_SUCCESS", "Recognized: $text")
-                receiveSTT(text)
-            },
-            onErrorOccurred = { error, code ->
-                Log.e("STT_ERROR", error)
-                if(code >= 12){//Non available language
-                    sttManager.destroy()
-                    useGoogleSTT = false
-                    if(voiceRecognition == null){//Restart because of race condition
-                        voiceRecognition = VoiceRecognitionManager(this)
-                        stopMonitoring()
-                        startMonitoring()
-                    }
-                }
-            }
-        )
+        initSTT()
         if(sttManager.isRecognizerNull()){
             voiceRecognition = VoiceRecognitionManager(this)
             useGoogleSTT = false
@@ -85,8 +67,9 @@ class VigiaService : android.app.Service(), RecognitionListener {
         }else{
             Log.d("Vigia_STT", "Using Google STT")
         }
-    }
 
+        threatClassifier = ThreatClassifier(this)
+    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
@@ -141,17 +124,42 @@ class VigiaService : android.app.Service(), RecognitionListener {
         sttManager.stopListening()
     }
 
-    private fun receiveSTT(text: String){//Joined call from models
-        debugDialogSTT(text)
+    private fun initSTT(){
+        sttManager = GoogleOfflineSTTManager(
+            context = this,
+            onResultReady = { text ->
+                // Update UI or process text string here
+                Log.d("STT_SUCCESS", "Recognized: $text")
+                receiveSTT(text)
+            },
+            onErrorOccurred = { error, code ->
+                Log.e("STT_ERROR", error)
+                if(code >= 12){//Non available language
+                    sttManager.destroy()
+                    useGoogleSTT = false
+                    if(voiceRecognition == null){//Restart because of race condition
+                        voiceRecognition = VoiceRecognitionManager(this)
+                        stopMonitoring()
+                        startMonitoring()
+                    }
+                }
+            }
+        )
     }
 
-    private fun debugDialogSTT(text: String){
+    private fun receiveSTT(text: String){//Joined call from models
+        val isThreat = threatClassifier.isActiveThreat(text.lowercase())
+        debugDialogSTT(text, isThreat)
+    }
+
+    private fun debugDialogSTT(text: String, threat: Boolean){
         val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
             themedContext,
             R.style.CustomAlertDialog
         )
             .setTitle("Fala detectada")
-            .setMessage("Você falou: $text.")
+            .setMessage("Você falou: $text.\n" +
+                    "É perigo: $threat")
             .setPositiveButton("Ok") { _, _ -> }
             .create()
         dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)

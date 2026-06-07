@@ -43,6 +43,20 @@ android {
         compose = true
         viewBinding = true
     }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+    aaptOptions {
+        noCompress("tflite", "lite")
+    }
+
+    androidResources {
+        noCompress.add("tflite")
+    }
+
 }
 
 dependencies {
@@ -74,4 +88,5 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.google.play.services.location)
     implementation(libs.vosk.android)
+    implementation(libs.tasks.text)
 }
