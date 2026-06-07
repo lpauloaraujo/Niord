@@ -20,6 +20,7 @@ import androidx.core.content.ContextCompat
 import org.json.JSONObject
 import org.vosk.android.RecognitionListener
 import java.lang.Exception
+import kotlin.time.measureTimedValue
 
 class VigiaService : android.app.Service(), RecognitionListener {
 
@@ -104,6 +105,7 @@ class VigiaService : android.app.Service(), RecognitionListener {
         isRunning = false
         sttManager.destroy()
         voiceRecognition?.releaseModel()
+        threatClassifier.close()
         super.onDestroy()
     }
 
@@ -148,7 +150,10 @@ class VigiaService : android.app.Service(), RecognitionListener {
     }
 
     private fun receiveSTT(text: String){//Joined call from models
-        val isThreat = threatClassifier.isActiveThreat(text.lowercase())
+        val (isThreat, timeTaken) = measureTimedValue {
+            threatClassifier.isActiveThreat(text.lowercase())
+        }
+        Log.d("TFLITE_TIME", timeTaken.toString())
         debugDialogSTT(text, isThreat)
     }
 

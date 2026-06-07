@@ -49,7 +49,7 @@ class FloatingOverlayService : LifecycleService() {
     }
 
     override fun onDestroy() {
-
+        stopVigia()
         buttonOverlay.onDestroy()
         super.onDestroy()
     }
