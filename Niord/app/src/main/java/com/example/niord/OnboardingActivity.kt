@@ -16,7 +16,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 class OnboardingActivity : ComponentActivity() {
     private lateinit var root: View
     private lateinit var pageImage: ImageView
-
+    private lateinit var pageCharacter: ImageView
     private var currentPage = 0
     private var touchStartX = 0f
 
@@ -25,7 +25,8 @@ class OnboardingActivity : ComponentActivity() {
         enableEdgeToEdge()
         window.statusBarColor = Color.TRANSPARENT
         window.navigationBarColor = Color.TRANSPARENT
-        setContentView(R.layout.onboarding)
+        setContentView(R.layout.onboarding2)
+        pageCharacter = findViewById(R.id.imgOnboardingCharacter)
         hideSystemBars()
 
         root = findViewById(R.id.onboardingRoot)
@@ -84,7 +85,8 @@ class OnboardingActivity : ComponentActivity() {
 
     private fun renderPage(index: Int) {
         currentPage = index
-        pageImage.setImageResource(pages[index])
+        pageImage.setImageResource(pages[index]) // Sets the Text Vector
+        pageCharacter.setImageResource(characters[index]) // Sets the Character PNG
     }
 
     private fun finishOnboarding() {
@@ -98,17 +100,26 @@ class OnboardingActivity : ComponentActivity() {
     }
 
     companion object {
-        private const val SWIPE_THRESHOLD = 80f
-
         @DrawableRes
         private val pages = intArrayOf(
-            R.drawable.get_started_2,
-            R.drawable.get_started_3,
-            R.drawable.get_started_4,
-            R.drawable.get_started_5,
-            R.drawable.get_started_6,
-            R.drawable.get_started_7,
-            R.drawable.get_started_8
+            R.layout.onboarding2, // Ensure all these are XML Vectors
+            R.layout.onboarding3, // CAMBIAR todos!
+            R.layout.onboarding3,
+            R.layout.onboarding3,
+            R.layout.onboarding3,
+            R.layout.onboarding3,
+            R.layout.onboarding3
+        )
+
+        @DrawableRes
+        private val characters = intArrayOf(
+            R.drawable.onboarding2, // PNG for page 1
+            R.drawable.onboarding3, // PNG for page 2
+            R.drawable.onboarding4,
+            R.drawable.onboarding5,
+            R.drawable.onboarding6,
+            R.drawable.onboarding7,
+            R.drawable.onboarding8_1  // POR ENQUANTO
         )
     }
 }
