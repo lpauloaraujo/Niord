@@ -100,6 +100,8 @@ class OnboardingActivity : ComponentActivity() {
     }
 
     companion object {
+        private const val SWIPE_THRESHOLD = 100
+
         @DrawableRes
         private val pages = intArrayOf(
             R.layout.onboarding2, // Ensure all these are XML Vectors

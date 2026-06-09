@@ -9,20 +9,21 @@
         android:layout_height="400dp" />
 
     <ImageView
-        android:id="@+id/imgOnboardingCharacter"
-        android:layout_width="match_parent"
-        android:layout_height="360dp"
-        android:layout_marginTop="40dp"
-        android:src="@drawable/onboarding2"
-        android:scaleType="fitCenter" />
-
-    <ImageView
         android:id="@+id/imgOnboardingPage"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:adjustViewBounds="true"
-        android:src="@drawable/getstarted2"
+        android:src="@drawable/bg_getstarted2"
         android:scaleType="centerCrop" />
+
+    <ImageView
+        android:id="@+id/imgOnboardingCharacter"
+        android:layout_width="match_parent"
+        android:layout_height="360dp"
+        app:layout_constraintLeft_toLeftOf=""
+        android:layout_marginTopPercent="100"
+        android:src="@drawable/char_onboarding_2"
+        android:scaleType="fitCenter" />
 
     <TextView
         android:id="@+id/btnSkipOnboarding"

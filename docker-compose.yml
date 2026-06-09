@@ -7,7 +7,7 @@ services:
         condition: service_started
     build: ./server
     image: niord
-    ports: ["80:80"]
+    ports: ["8000:80"]
     env_file: ./server/.env
     container_name: server
 
@@ -20,5 +20,3 @@ services:
     image: postgres
     env_file: ./.env
     container_name: database
-
-
