@@ -1,6 +1,5 @@
 package com.example.niord
 
-import android.Manifest
 import android.database.Cursor
 import android.os.Build
 import android.os.Bundle
@@ -14,10 +13,8 @@ import android.view.MotionEvent
 import android.view.View
 import android.content.Intent
 import android.net.Uri
-import android.view.ViewGroup
 import android.widget.CheckBox
 import android.widget.EditText
-import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -25,7 +22,6 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
-import androidx.core.content.ContextCompat
 import java.text.Normalizer
 import kotlin.math.abs
 import android.util.Log
@@ -38,7 +34,6 @@ class ContatosEmergenciaActivity : ComponentActivity() {
     private lateinit var contatosSelecionadosList: LinearLayout
     private lateinit var emptyStateContatos: TextView
     private lateinit var emptyStateSelecionados: TextView
-    private lateinit var permissionDialogOverlay: FrameLayout
     private lateinit var btnBuscarContatos: ImageButton
     private lateinit var btnLimparBusca: ImageButton
     private lateinit var btnAction: ImageButton
@@ -63,7 +58,6 @@ class ContatosEmergenciaActivity : ComponentActivity() {
         contatosSelecionadosList = findViewById(R.id.contatosSelecionadosList)
         emptyStateContatos = findViewById(R.id.emptyStateContatos)
         emptyStateSelecionados = findViewById(R.id.emptyStateSelecionados)
-        permissionDialogOverlay = findViewById(R.id.permissionDialogOverlay)
         btnBuscarContatos = findViewById(R.id.btnBuscarContatos)
         btnLimparBusca = findViewById(R.id.btnLimparBusca)
         btnAction = findViewById(R.id.btnAction)
@@ -81,7 +75,6 @@ class ContatosEmergenciaActivity : ComponentActivity() {
         }
 
         setupSearch()
-        setupPermissionDialog()
 
         // Load saved contact ids and names from previous sessions
         selecionados.addAll(ContatosEmergenciaPreferences.getContatosSelecionados(this))
@@ -89,14 +82,10 @@ class ContatosEmergenciaActivity : ComponentActivity() {
         // Check permission
         if (permission.isContactsPermitted(this)) {
             loadContatos()
-            if (selecionados.isEmpty()) {
-                enterSelectionMode()
-            } else {
-                populateSelecionadosContatos()
-                enterSelectedMode()
-            }
+            populateSelecionadosContatos()
+            enterSelectedMode()
         } else {
-            showPermissionRequest()
+            requestContactsPermission()
         }
     }
 
@@ -134,32 +123,16 @@ class ContatosEmergenciaActivity : ComponentActivity() {
         searchContatos.clearFocus()
     }
 
-    private fun setupPermissionDialog() {
-        findViewById<android.widget.Button>(R.id.btnPermitirPermissao).setOnClickListener {
-            permission.requestContactsPermission { granted ->
-                permissionDialogOverlay.visibility = View.GONE
-                if (granted) {
-                    loadContatos()
-                    if (selecionados.isEmpty()) {
-                        enterSelectionMode()
-                    } else {
-                        populateSelecionadosContatos()
-                        enterSelectedMode()
-                    }
-                } else {
-                    showPermissionDeniedMessage()
-                }
+    private fun requestContactsPermission() {
+        permission.requestContactsPermission { granted ->
+            if (granted) {
+                loadContatos()
+                populateSelecionadosContatos()
+                enterSelectedMode()
+            } else {
+                showPermissionDeniedMessage()
             }
         }
-
-        findViewById<android.widget.Button>(R.id.btnNegarPermissao).setOnClickListener {
-            permissionDialogOverlay.visibility = View.GONE
-            showPermissionDeniedMessage()
-        }
-    }
-
-    private fun showPermissionRequest() {
-        permissionDialogOverlay.visibility = View.VISIBLE
     }
 
     private fun showPermissionDeniedMessage() {
@@ -305,11 +278,6 @@ class ContatosEmergenciaActivity : ComponentActivity() {
     }
 
     private fun confirmSelection() {
-        if (selecionados.isEmpty()) {
-            Toast.makeText(this, "Selecione pelo menos um contato", Toast.LENGTH_SHORT).show()
-            return
-        }
-
         populateSelecionadosContatos()
         ContatosEmergenciaPreferences.salvarContatosSelecionados(this, selecionados.toList())
         enterSelectedMode()
@@ -400,27 +368,41 @@ class ContatosEmergenciaActivity : ComponentActivity() {
         checkbox.isChecked = selecionados.contains(contato.id)
 
         checkbox.setOnClickListener {
-            if (checkbox.isChecked) {
-                if (selecionados.size < 5) {
-                    selecionados.add(contato.id)
-                } else {
-                    checkbox.isChecked = false
-                    Toast.makeText(
-                        this,
-                        "Máximo de 5 contatos atingido",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            } else {
-                selecionados.remove(contato.id)
-            }
+            setContatoSelecionado(contato, checkbox.isChecked, checkbox)
         }
 
         itemView.setOnClickListener {
-            checkbox.isChecked = !checkbox.isChecked
+            val shouldSelect = !checkbox.isChecked
+            if (setContatoSelecionado(contato, shouldSelect, checkbox)) {
+                checkbox.isChecked = shouldSelect
+            }
         }
 
         return itemView
+    }
+
+    private fun setContatoSelecionado(
+        contato: ContatoEmergencia,
+        shouldSelect: Boolean,
+        checkbox: CheckBox
+    ): Boolean {
+        return if (shouldSelect) {
+            if (selecionados.size < 5 || selecionados.contains(contato.id)) {
+                selecionados.add(contato.id)
+                true
+            } else {
+                checkbox.isChecked = false
+                Toast.makeText(
+                    this,
+                    "Máximo de 5 contatos atingido",
+                    Toast.LENGTH_SHORT
+                ).show()
+                false
+            }
+        } else {
+            selecionados.remove(contato.id)
+            true
+        }
     }
 
     private fun createSwipeToDeleteTouchListener(
