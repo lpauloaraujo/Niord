@@ -215,7 +215,7 @@ class ConfiguracaoActivity : ComponentActivity() {
     }
 
     private fun openSeguradorasFlow() {
-        startActivity(Intent(this, SeguradoraFeedActivity::class.java))
+        startActivity(Intent(this, SeguradoraInicialActivity::class.java))
     }
 
     private fun applyOverlayEnabledState(
