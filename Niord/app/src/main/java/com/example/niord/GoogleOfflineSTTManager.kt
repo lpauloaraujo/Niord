@@ -8,6 +8,7 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.util.Log
+import androidx.compose.ui.util.fastJoinToString
 import java.util.Locale
 
 class GoogleOfflineSTTManager(
@@ -21,6 +22,25 @@ class GoogleOfflineSTTManager(
     private lateinit var recognizerIntent: Intent
 
     private val mainHandler = Handler(Looper.getMainLooper())
+
+    private var resultsQueue = ArrayDeque<String>(20)
+    private var lastPartialResult = ""
+
+    private val dangerWords: Set<String> =
+        setOf(
+            "assalto", "perdeu", "reage", "armado",
+            "peça", "calado", "cala",
+            "quieto", "grita", "morrer",
+            "atirar",
+
+            "passa", "desce", "sai",
+            "entra", "destrava", "abre",
+
+            "carro", "moto", "chave",
+            "celular", "carteira",
+
+            "trás", "costas", "frente", "chão"
+        )
 
     init {
         initializeRecognizer()
@@ -79,7 +99,9 @@ class GoogleOfflineSTTManager(
             override fun onResults(results: Bundle?) {
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 if (!matches.isNullOrEmpty()) {
-                    onResultReady(matches[0]) // The first element has the highest confidence
+                    //onResultReady(matches[0]) // The first element has the highest confidence
+                    Log.d("STT_RESULT", matches[0])
+                    lastPartialResult = ""
                 }
                 //restartListening()
             }
@@ -87,7 +109,18 @@ class GoogleOfflineSTTManager(
             override fun onPartialResults(partialResults: Bundle?) {
                 val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 if (!matches.isNullOrEmpty()) {
-                    //onResultReady(matches[0])
+                    val result = matches[0]
+                    val newWords = extractNewWords(splitResult(result))
+                    updateLastWord(splitResult(result))
+                    if (newWords.isNotEmpty()) {
+                        addWordsToQueue(newWords)
+                        lastPartialResult = result
+                        if(hasDangerWord(resultsQueue)){
+                            onResultReady(resultsQueue.fastJoinToString(" "))
+                        }
+                    }
+                    Log.d("STT_PARTIAL", result)
+                    Log.d("STT_PARTIAL", resultsQueue.toString())
                 }
             }
 
@@ -111,6 +144,41 @@ class GoogleOfflineSTTManager(
                 }
             }, 100)
         }
+    }
+
+    private fun getPrevious(): List<String>{
+        return splitResult(lastPartialResult)
+    }
+
+    private fun splitResult(fullPhrase: String): List<String>{
+        return fullPhrase.trim().split("\\s+".toRegex()).filter { it.isNotEmpty() }
+    }
+    private fun extractNewWords(current: List<String>): List<String> {
+        val previous = getPrevious()
+        return if (current.size > previous.size) current.drop(previous.size) else emptyList()
+    }
+
+    private fun updateLastWord(current: List<String>){
+        //If the size is the same update the last word, ensuring full word result
+        //partial 1: good mor
+        //partial 2: good mornin
+        //partial 3: good morning
+        val previous = getPrevious()
+        if(previous.size == current.size){
+            resultsQueue.removeLast()
+            resultsQueue.add(current.last())
+        }
+    }
+
+    private fun addWordsToQueue(words: List<String>) {
+        for (word in words) {
+            if (resultsQueue.size >= 20) resultsQueue.removeFirst()
+            resultsQueue.addLast(word)
+        }
+    }
+
+    private fun hasDangerWord(queue: ArrayDeque<String>): Boolean{
+        return queue.takeLast(10).any {it.lowercase() in dangerWords}
     }
 
     fun startListening() {
