@@ -82,16 +82,17 @@ class OnboardingActivity : ComponentActivity() {
 
     private fun renderPage(index: Int) {
         currentPage = index
-        pageImage.setImageResource(pages[index]) // Sets the Text Vector
+        pageImage.setImageResource(pages[index])
     }
 
     private fun finishOnboarding() {
         UserFlowPreferences.setOnboardingCompleted(this, true)
         UserFlowPreferences.setOnboardingAvailable(this, false)
         UserFlowPreferences.setShowConfiguration(this, true)
-        startActivity(Intent(this, ConfiguracaoActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        })
+        val intent = Intent(this, ConfiguracaoActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        startActivity(intent)
         finish()
     }
 

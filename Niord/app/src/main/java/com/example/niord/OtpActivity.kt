@@ -163,8 +163,7 @@ class OtpActivity : ComponentActivity() {
 
         dialogBinding.root.postDelayed({
             dialog.dismiss()
-            //openConfigurationFlow()
-            finish()
+            openConfigurationFlow()
         }, SUCCESS_DELAY_MILLIS)
     }
 
