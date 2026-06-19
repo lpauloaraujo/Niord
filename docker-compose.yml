@@ -20,5 +20,10 @@ services:
     image: postgres
     env_file: ./.env
     container_name: database
-
-
+  waha:
+    image: devlikeapro/waha:latest
+    env_file: ./waha/.env
+    container_name: waha
+    ports:
+      - "3000:3000"
+    
