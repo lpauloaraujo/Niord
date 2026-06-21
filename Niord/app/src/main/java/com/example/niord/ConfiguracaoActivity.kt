@@ -154,6 +154,7 @@ class ConfiguracaoActivity : ComponentActivity() {
         val itemAlterarDados = findViewById<RelativeLayout>(R.id.itemAlterarDados)
         val itemContatosEmergencia = findViewById<RelativeLayout>(R.id.itemContatosEmergencia)
         val itemPersonalizar = findViewById<RelativeLayout>(R.id.itemPersonalizarBotao)
+        val itemSeguradoras = findViewById<RelativeLayout>(R.id.itemSeguradoras)
 
         // Listeners apenas para interações do usuário
         checkboxDesativar.setOnClickListener {
@@ -195,6 +196,10 @@ class ConfiguracaoActivity : ComponentActivity() {
             openAccountSecurityFlow()
         }
 
+        itemSeguradoras.setOnClickListener {
+            openSeguradorasFlow()
+        }
+
         itemContatosEmergencia.setOnClickListener {
             openContatosEmergenciaFlow()
         }
@@ -207,6 +212,10 @@ class ConfiguracaoActivity : ComponentActivity() {
 
     private fun openContatosEmergenciaFlow() {
         startActivity(Intent(this, ContatosEmergenciaActivity::class.java))
+    }
+
+    private fun openSeguradorasFlow() {
+        startActivity(Intent(this, SeguradoraInicialActivity::class.java))
     }
 
     private fun applyOverlayEnabledState(

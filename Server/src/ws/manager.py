@@ -26,7 +26,7 @@ class RedisConnectionManager:
                 unit="m"
                 )
         for u in nearby_users:
-            if u != location.user_id:
+            if int(u) != location.user_id:
                 try:
                     conn = self.local_connections.get(int(u))
                     if conn:
@@ -35,7 +35,6 @@ class RedisConnectionManager:
                     pass
 
     async def send_to_id(self, target_id: int, geo_data: GeoModel):
-        #type should be HelpType.NONE to identify as an acception
         try:
             await (
                     self.local_connections[target_id].

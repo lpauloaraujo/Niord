@@ -76,4 +76,5 @@ dependencies {
     implementation(libs.ktor.client.logging)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.google.play.services.location)
+    implementation(libs.kotlinx.coroutines.play.services)
 }
