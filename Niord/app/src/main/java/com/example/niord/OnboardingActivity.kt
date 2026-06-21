@@ -16,7 +16,6 @@ import androidx.core.view.WindowInsetsControllerCompat
 class OnboardingActivity : ComponentActivity() {
     private lateinit var root: View
     private lateinit var pageImage: ImageView
-
     private var currentPage = 0
     private var touchStartX = 0f
 
@@ -25,7 +24,7 @@ class OnboardingActivity : ComponentActivity() {
         enableEdgeToEdge()
         window.statusBarColor = Color.TRANSPARENT
         window.navigationBarColor = Color.TRANSPARENT
-        setContentView(R.layout.onboarding)
+        setContentView(R.layout.onboarding2)
         hideSystemBars()
 
         root = findViewById(R.id.onboardingRoot)
@@ -51,7 +50,6 @@ class OnboardingActivity : ComponentActivity() {
                     when {
                         delta < -SWIPE_THRESHOLD -> goForward()
                         delta > SWIPE_THRESHOLD -> goBack()
-                        else -> goForward()
                     }
                     true
                 }
@@ -91,14 +89,15 @@ class OnboardingActivity : ComponentActivity() {
         UserFlowPreferences.setOnboardingCompleted(this, true)
         UserFlowPreferences.setOnboardingAvailable(this, false)
         UserFlowPreferences.setShowConfiguration(this, true)
-        startActivity(Intent(this, ConfiguracaoActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        })
+        val intent = Intent(this, ConfiguracaoActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        startActivity(intent)
         finish()
     }
 
     companion object {
-        private const val SWIPE_THRESHOLD = 80f
+        private const val SWIPE_THRESHOLD = 100
 
         @DrawableRes
         private val pages = intArrayOf(

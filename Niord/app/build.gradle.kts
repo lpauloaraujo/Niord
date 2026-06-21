@@ -59,6 +59,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.unit)
     implementation(libs.material)
     implementation(libs.androidx.cardview)
+    implementation(libs.androidx.lifecycle.service)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -72,4 +73,5 @@ dependencies {
     implementation(libs.ktor.client.logging)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.google.play.services.location)
+    implementation(libs.kotlinx.coroutines.play.services)
 }
