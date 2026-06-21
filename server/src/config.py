@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     TOKEN_EXPIRE_SECONDS: int = 0
     ALGO:str = ""
 
-    WAHA_BASE_URL = "http://waha:3000"
+    WAHA_BASE_URL:str = "http://waha:3000"
 
     model_config = SettingsConfigDict(env_file='./.env')
 

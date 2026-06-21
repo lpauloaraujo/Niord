@@ -51,7 +51,7 @@ object ApiClient {
 
             // 3. Optional: Default Request (Base URL)
             defaultRequest{
-                host = "10.0.2.2"
+                host = "192.168.100.25"
                 port = 8000
             }
         }

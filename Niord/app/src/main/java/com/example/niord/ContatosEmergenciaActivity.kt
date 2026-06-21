@@ -238,14 +238,14 @@ class ContatosEmergenciaActivity : ComponentActivity() {
                 val phoneMatch = numericQuery.isNotEmpty() &&
                     contato.telefone.replace(Regex("[^0-9]"), "").contains(numericQuery)
                 val matches = nomeMatch || phoneMatch
-                Log.d("ContatosEmergencia", "  contato: nome='${contato.nome}', nomeMatch=$nomeMatch, phoneMatch=$phoneMatch, final=$matches")
+                //Log.d("ContatosEmergencia", "  contato: nome='${contato.nome}', nomeMatch=$nomeMatch, phoneMatch=$phoneMatch, final=$matches")
                 matches
             }
         )
 
         Log.d("ContatosEmergencia", "filterContatos DONE: filtered=${filteredContatos.size} contatos")
         filteredContatos.forEachIndexed { i, c ->
-            Log.d("ContatosEmergencia", "    [$i] ${c.nome}")
+            //Log.d("ContatosEmergencia", "    [$i] ${c.nome}")
         }
         updateContatosListView()
     }

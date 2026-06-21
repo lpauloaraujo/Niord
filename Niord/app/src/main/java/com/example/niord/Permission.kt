@@ -133,7 +133,7 @@ open class PermissionChecker(private val context: Context) {
             ) == PackageManager.PERMISSION_GRANTED
         } else true
 
-        return mic && notif
+        return mic && notif && isLocationPermitted()
     }
 
     fun isCallPermitted(): Boolean {

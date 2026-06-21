@@ -653,7 +653,7 @@ class FloatingOverlayService : LifecycleService() {
                 contatos.forEach { (telefone, nome) ->
 
                     val numeroLimpo =
-                        telefone.replace(Regex("[^0-9+]"), "")
+                        telefone.replace(Regex("""\D"""), "")
 
                     val mensagem =
                         "Olá $nome! Minha localização atual: $mapsLink"

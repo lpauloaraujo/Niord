@@ -1,6 +1,7 @@
 package com.example.niord.api
 
 import android.content.Context
+import android.util.Log
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.patch
@@ -174,9 +175,10 @@ class ApiService(context: Context){
         body: WahaSendLocRequest
     ): HttpResponse {
         return apiClient.post("whatsapp/sendLoc"){
+            Log.d("LOC", body.toString())
             contentType(ContentType.Application.Json)
             setBody(
-                WahaSendLocRequest
+                body
             )
         }
     }

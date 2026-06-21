@@ -76,6 +76,7 @@ async def send_text(payload: WhatsAppMessageRequest):
 async def send_loc(payload: WhatsAppLocRequest):
 
     chat_id = f"{payload.phoneNumber}@c.us"
+    print(chat_id)
 
     try:
         async with httpx.AsyncClient() as client:
@@ -92,6 +93,7 @@ async def send_loc(payload: WhatsAppLocRequest):
             )
 
         if response.status_code >= 400:
+            print(response)
             raise HTTPException(
                 status_code=500,
                 detail=create_detail(
@@ -102,7 +104,8 @@ async def send_loc(payload: WhatsAppLocRequest):
 
         return {"detail": "Mensagem enviada com sucesso"}
 
-    except Exception:
+    except Exception as e:
+        print(e)
         raise HTTPException(
             status_code=500,
             detail=create_detail(

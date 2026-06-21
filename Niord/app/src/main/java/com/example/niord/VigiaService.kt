@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.os.Binder
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -17,18 +18,29 @@ import android.view.WindowManager
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.LifecycleService
+import androidx.lifecycle.lifecycleScope
+import com.example.niord.api.ApiService
+import com.example.niord.api.User
+import com.example.niord.api.WahaSendLocRequest
+import io.ktor.client.call.body
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 import org.vosk.android.RecognitionListener
 import java.lang.Exception
 import kotlin.time.measureTimedValue
 
-class VigiaService : android.app.Service(), RecognitionListener {
+class VigiaService : LifecycleService(), RecognitionListener {
 
     private var voiceRecognition: VoiceRecognitionManager? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     private lateinit var sttManager: GoogleOfflineSTTManager
     private var useGoogleSTT = true
     private lateinit var threatClassifier: ThreatClassifier
+
+    private lateinit var apiService: ApiService
+    private lateinit var locationManager: LocationManager
+    private lateinit var permission: PermissionChecker
 
     val themedContext = ContextThemeWrapper(this, R.style.Theme_Niord)
     companion object {
@@ -56,10 +68,20 @@ class VigiaService : android.app.Service(), RecognitionListener {
         }
     }
 
-    override fun onBind(intent: Intent?): IBinder? = null
+    inner class LocalBinder : Binder() {
+        fun getService(): VigiaService = this@VigiaService
+    }
+
+    private val binder = LocalBinder()
+
+    override fun onBind(intent: Intent): IBinder {
+        super.onBind(intent)
+        return binder
+    }
 
 
     override fun onCreate() {
+        super.onCreate()
         initSTT()
         if(sttManager.isRecognizerNull()){
             voiceRecognition = VoiceRecognitionManager(this)
@@ -68,11 +90,14 @@ class VigiaService : android.app.Service(), RecognitionListener {
         }else{
             Log.d("Vigia_STT", "Using Google STT")
         }
-
+        apiService = ApiService(this)
+        locationManager = LocationManager(this)
         threatClassifier = ThreatClassifier(this)
+        permission = PermissionChecker(this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        super.onStartCommand(intent, flags, startId)
         when (intent?.action) {
             ACTION_STOP -> {
                 stopMonitoring()
@@ -155,6 +180,51 @@ class VigiaService : android.app.Service(), RecognitionListener {
         }
         Log.d("TFLITE_TIME", timeTaken.toString())
         debugDialogSTT(text, isThreat)
+        if(isThreat){
+            sendThreatMessageToContacts(text)
+        }
+    }
+
+    private fun sendThreatMessageToContacts(threat: String){
+        if(!permission.isContactsPermitted()) return
+        val contacts = ContatosEmergenciaManager.getNumerosContatosSelecionados(this)
+        if(contacts.isEmpty()) return
+        locationManager.getUserLocation { location ->
+            if (location != null){
+                contacts.forEach { (number, name) ->
+                    val telephoneNumber =
+                        number.replace(Regex("""\D"""), "")
+
+                    Log.d("Contato", telephoneNumber)
+                        lifecycleScope.launch {
+
+                            try {
+                                val response = apiService.getUser()
+                                var extraString = ""
+                                Log.d("VIGIA", "Enviando mensagem para $telephoneNumber")
+                                if(response.status.value == 200){
+                                    val user = response.body<User>()
+                                    extraString = " por ${user.name}"
+                                }else{
+                                    Log.d("VIGIA", "Usuário não logado")
+                                }
+                                apiService.sendWhatssapLoc(
+                                    WahaSendLocRequest(
+                                        phoneNumber = telephoneNumber,
+                                        title = "Alerta detectado pelo Niord Vigia!",
+                                        message = "A seguinte fala foi detectada$extraString: $threat",
+                                        latitude = location.latitude,
+                                        longitude = location.longitude
+                                    )
+                                )
+                            }catch (e: Exception){
+                                Log.e("VIGIA_SEND", e.toString())
+                            }
+                        }
+                }
+
+            }
+        }
     }
 
     private fun debugDialogSTT(text: String, threat: Boolean){
