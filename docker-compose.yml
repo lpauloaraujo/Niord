@@ -26,4 +26,8 @@ services:
     container_name: waha
     ports:
       - "3000:3000"
-    
+    volumes:
+      - waha_session_data:/app/.sessions
+
+volumes:
+  waha_session_data:

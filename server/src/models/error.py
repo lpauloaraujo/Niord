@@ -4,6 +4,7 @@ from pydantic import BaseModel
 class ErrorType:
     conflict: str = "conflict"
     invalid: str = "invalid"
+    external: str = "external"
 
 class Detail(BaseModel):
     message: str
