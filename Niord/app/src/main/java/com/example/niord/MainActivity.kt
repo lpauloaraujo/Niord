@@ -3,6 +3,7 @@ package com.example.niord
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
@@ -61,7 +62,9 @@ class MainActivity : ComponentActivity() {
             //Verifies response from auth protected endpoint
             val response = apiService.isAuth()
             if(response.status.value == 200) return true
-        }catch (e: Exception){}
+        }catch (e: Exception){
+            Log.e("AUTH_ERR", e.toString())
+        }
         return false
     }
 

@@ -172,11 +172,14 @@ class OtpActivity : ComponentActivity() {
         UserFlowPreferences.setOnboardingAvailable(this, true)
         UserFlowPreferences.setOverlayEnabled(this, false)
         UserFlowPreferences.setOverlayLocked(this, false)
+        /*
         val nextActivity = if (UserFlowPreferences.shouldShowOnboarding(this)) {
             OnboardingActivity::class.java
         } else {
             ConfiguracaoActivity::class.java
         }
+         */
+        val nextActivity = MainActivity::class.java
         val intent = Intent(this, nextActivity).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
         }
