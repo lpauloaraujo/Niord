@@ -16,11 +16,12 @@ class RedisEngine:
             decode_responses=True
         )
         self.pubsub = self.client.pubsub()
+        self.client.expire("user_locations", 300)
 
     async def ping_connection(self) -> bool:
         """Explicit async ping to verify the connection on startup."""
         try:
-            self.client.ping()
+            await self.client.ping()
             print("Redis connected")
             return True
         except Exception as e:

@@ -6,3 +6,5 @@ class HelpType(str, Enum):
     NONE = "none"
     ACCEPT = "accept"
     DENY = "deny"
+    ACKNOWLEDGE = "acknowledge"
+    CANCEL = "cancel"

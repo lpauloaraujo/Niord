@@ -10,8 +10,10 @@ import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.http.Cookie
 import io.ktor.http.Url
+import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.util.date.GMTDate
 import kotlinx.serialization.json.Json
@@ -19,12 +21,20 @@ import java.util.concurrent.ConcurrentHashMap
 
 
 object ApiClient {
-    private const val BASE_URL = "http://192.168.100.25/"
+    private const val BASE_URL = "http:///"
     fun createHttpClient(context: Context): HttpClient {
         return HttpClient(OkHttp) {
             // 1. Serialization (JSON to Data Classes)
             install(ContentNegotiation) {
                 json(Json {
+                    ignoreUnknownKeys = true
+                    prettyPrint = true
+                })
+            }
+
+            install(WebSockets){
+                pingIntervalMillis = 20000
+                contentConverter = KotlinxWebsocketSerializationConverter(Json {
                     ignoreUnknownKeys = true
                     prettyPrint = true
                 })
@@ -40,8 +50,9 @@ object ApiClient {
             }
 
             // 3. Optional: Default Request (Base URL)
-            defaultRequest {
-                url(BASE_URL)
+            defaultRequest{
+                host = "10.0.2.2"
+                port = 8000
             }
         }
     }

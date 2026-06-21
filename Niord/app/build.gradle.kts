@@ -24,6 +24,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        val mockBackend = (project.findProperty("mockBackend") as? String)?.toBoolean() ?: false
+        buildConfigField("boolean", "MOCK_BACKEND", mockBackend.toString())
     }
 
     buildTypes {
@@ -42,6 +44,7 @@ android {
     buildFeatures {
         compose = true
         viewBinding = true
+        buildConfig = true
     }
 
     packaging {
@@ -89,4 +92,5 @@ dependencies {
     implementation(libs.google.play.services.location)
     implementation(libs.vosk.android)
     implementation(libs.tasks.text)
+    implementation(libs.kotlinx.coroutines.play.services)
 }

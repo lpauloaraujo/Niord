@@ -14,5 +14,10 @@ class GeoSchemaAnswer(GeoSchema):
     target_id: int
     type: HelpType
 
+class GeoSchemaAnswerMulti(GeoSchema):
+    target_ids: list[int]
+    type: HelpType
+
+
 class GeoModel(GeoSchemaHelp):
     user_id: int
