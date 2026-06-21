@@ -97,4 +97,15 @@ class ApiService(context: Context){
             )
         }
     }
+
+    suspend fun sendWhatssapLoc(
+        body: WahaSendLocRequest
+    ): HttpResponse {
+        return apiClient.post("whatsapp/sendLoc"){
+            contentType(ContentType.Application.Json)
+            setBody(
+                WahaSendLocRequest
+            )
+        }
+    }
 }

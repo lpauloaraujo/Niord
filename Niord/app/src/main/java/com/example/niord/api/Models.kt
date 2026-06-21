@@ -85,6 +85,15 @@ data class WahaSendMessageRequest(
     val message: String,
 )
 
+@Serializable
+data class WahaSendLocRequest(
+    val phoneNumber: String,
+    val title: String,
+    val message: String,
+    val latitude: Double,
+    val longitude: Double
+)
+
 
 
 

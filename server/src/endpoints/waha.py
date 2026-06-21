@@ -17,6 +17,7 @@ class WhatsAppSendResponse(BaseModel):
     detail: str
 
 class WhatsAppLocRequest(WhatsAppMessageRequest):
+    title: str
     latitude: float
     longitude: float
 
@@ -83,7 +84,7 @@ async def send_loc(payload: WhatsAppLocRequest):
                 json={
                     "session": "default",
                     "chatId": chat_id,
-                    "title": payload.message,
+                    "title": payload.title + '\n' + payload.message,
                     "latitude": payload.latitude,
                     "longitude": payload.longitude
                 },
