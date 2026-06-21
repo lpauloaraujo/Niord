@@ -80,6 +80,42 @@ data class UserUpdatePatch(
 )
 
 
+@Serializable
+data class LocationSchema(
+    val latitude: Double,
+    val longitude: Double
+)
 
+@Serializable
+data class HelpAsk(
+    val latitude: Double,
+    val longitude: Double,
+    val type: String
+)
 
+@Serializable
+data class HelpReceive(
+    val latitude: Double,
+    val longitude: Double,
+    @SerialName("user_id")
+    val userId: Int,
+    val type: String
+)
+
+@Serializable
+data class HelpAnswer(
+    val latitude: Double,
+    val longitude: Double,
+    @SerialName("target_id")
+    val targetId: Int,
+    val type: String
+)
+@Serializable
+data class HelpAnswerMulti(
+    val latitude: Double,
+    val longitude: Double,
+    @SerialName("target_ids")
+    val targetIds: List<Int>,
+    val type: String
+)
 
