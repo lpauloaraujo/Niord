@@ -79,4 +79,22 @@ class ApiService(context: Context){
             }
         }
     }
+
+    suspend fun sendWhatsappMessage(
+        phoneNumber: String,
+        message: String
+    ): HttpResponse {
+
+        return apiClient.post("whatsapp/send-text") {
+
+            contentType(ContentType.Application.Json)
+
+            setBody(
+                WahaSendMessageRequest(
+                    phoneNumber = phoneNumber,
+                    message = message
+                )
+            )
+        }
+    }
 }

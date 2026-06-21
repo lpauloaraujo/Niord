@@ -10,7 +10,11 @@ import android.view.ContextThemeWrapper
 import android.view.WindowManager
 import androidx.lifecycle.LifecycleService
 import androidx.core.app.NotificationCompat
+import androidx.lifecycle.lifecycleScope
+import com.example.niord.api.ApiService
 import com.example.niord.api.User
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class FloatingOverlayService : LifecycleService() {
 
@@ -241,6 +245,11 @@ class FloatingOverlayService : LifecycleService() {
             return
         }
 
+        Log.d(
+            "LOCATION",
+            "Permissão: ${permission.isLocationPermitted()}"
+        )
+
         locationManager.getUserLocation { location ->
 
             if (location != null) {
@@ -248,8 +257,7 @@ class FloatingOverlayService : LifecycleService() {
                 val mapsLink =
                     "https://maps.google.com/?q=${location.latitude},${location.longitude}"
 
-                val smsManager =
-                    android.telephony.SmsManager.getDefault()
+                val apiService = ApiService(this)
 
                 contatos.forEach { (telefone, nome) ->
 
@@ -259,31 +267,30 @@ class FloatingOverlayService : LifecycleService() {
                     val mensagem =
                         "Olá $nome! Minha localização atual: $mapsLink"
 
-                    try {
+                    lifecycleScope.launch(Dispatchers.IO) {
 
-                        smsManager.sendTextMessage(
-                            numeroLimpo,
-                            null,
-                            mensagem,
-                            null,
-                            null
-                        )
+                        try {
 
-                        Log.d(
-                            "SMS",
-                            "Mensagem enviada para $numeroLimpo"
-                        )
+                            val apiService = ApiService(this@FloatingOverlayService)
 
-                    } catch (e: Exception) {
+                            val response = apiService.sendWhatsappMessage(
+                                numeroLimpo,
+                                mensagem
+                            )
 
-                        Log.e(
-                            "SMS",
-                            "Erro ao enviar SMS para $numeroLimpo",
-                            e
-                        )
-                    }
+                            if (response.status.value in 200..299) {
+                                Log.d("WAHA", "Mensagem enviada para $numeroLimpo")
+                            } else {
+                                Log.e("WAHA", "Falha ao enviar para $numeroLimpo: ${response.status}")
+                            }
+
+                        } catch (e: Exception) {
+
+                            Log.e("WAHA", "Erro ao enviar para $numeroLimpo", e)
+
+                        }
+                    }.start()
                 }
-
             } else {
 
                 Log.d("LOCATION", "Sem localização")

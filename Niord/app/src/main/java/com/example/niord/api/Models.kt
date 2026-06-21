@@ -79,6 +79,12 @@ data class UserUpdatePatch(
     val emailOtpCode: Int? = null
 )
 
+@Serializable
+data class WahaSendMessageRequest(
+    val phoneNumber: String,
+    val message: String,
+)
+
 
 
 
