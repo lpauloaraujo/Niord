@@ -5,18 +5,19 @@ services:
         condition: service_started
       redis:
         condition: service_started
-    build: ./server
+    build: ./Server
     image: niord
     ports: ["8000:80"]
     env_file: ./server/.env
     container_name: server
 
   redis:
-    build: ./redis
+    build: ./Redis
     image: redis 
-    env_file: ./redis/.env
+    env_file: ./Redis/.env
     container_name: redis_db 
   db:
     image: postgres
     env_file: ./.env
     container_name: database
+

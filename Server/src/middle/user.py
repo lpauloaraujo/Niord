@@ -21,6 +21,7 @@ def get_user_by_cpf(session: SessionDep, cpf:str) -> User | None:
     return session.query(User).filter(User.cpf == cpf).one_or_none()
 
 def is_valid_plate(plate: str) -> bool:
+    plate = normalize_plate(plate)
     if len(plate) != 7:
         return False
     return verify_plate(plate) or verify_old_plate(plate)
@@ -38,6 +39,9 @@ def verify_old_plate(plate: str) -> bool:
     if plate[3:7].isdigit() and plate[0:3].isalpha():
         return True
     return False
+
+def normalize_plate(plate: str) -> str:
+    return plate.strip().upper().replace("-", "")
 
 def is_valid_cpf(cpf: str) -> bool:
     splitted = split_cpf(cpf)
@@ -117,4 +121,3 @@ def check_cpf_validity(cpf: list[str]) -> bool:
         return False
 
     return True
-

@@ -23,7 +23,7 @@ def get_user(session: SessionDep, access_token_decoded: TokenDecoded = Depends(a
 
 
 @router.post("/email-otp", status_code=200, responses={401: {"model": ErrorMessage}})
-def request_email_update_otp(
+async def request_email_update_otp(
     session: SessionDep,
     email: EmailStr,
     access_token_decoded: TokenDecoded = Depends(allow_authenticated)
@@ -40,13 +40,13 @@ def request_email_update_otp(
             create_detail(message="Email já em uso", type=ErrorType.conflict, field="email")
         )
 
-    otp_code = redis.create_otp(new_email)
+    otp_code = await redis.create_otp(new_email)
     print(otp_code)
     return {"detail": "Código enviado"}
 
 
 @router.patch("/", response_model=UserPublic, responses={401: {"model": ErrorMessage}})
-def update_user(
+async def update_user(
     user_update: UserUpdate,
     session: SessionDep,
     access_token_decoded: TokenDecoded = Depends(allow_authenticated)
@@ -83,7 +83,7 @@ def update_user(
         if user_update.email_otp_code is None:
             raise HTTPException(401, create_detail(message="Código OTP obrigatório", field="email_otp_code"))
 
-        otp_check = redis.check_otp(new_email, user_update.email_otp_code)
+        otp_check = await redis.check_otp(new_email, user_update.email_otp_code)
         if otp_check is None:
             raise HTTPException(404, create_detail(message="Email não aguarda OTP ou expirou", field="email_otp_code"))
         if not otp_check:

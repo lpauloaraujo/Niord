@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 
 object ApiClient {
+    private const val BASE_URL = "http:///"
     fun createHttpClient(context: Context): HttpClient {
         return HttpClient(OkHttp) {
             // 1. Serialization (JSON to Data Classes)
@@ -50,8 +51,8 @@ object ApiClient {
 
             // 3. Optional: Default Request (Base URL)
             defaultRequest{
-                host = "192.168.100.25"
-                port = 80
+                host = "10.0.2.2"
+                port = 8000
             }
         }
     }

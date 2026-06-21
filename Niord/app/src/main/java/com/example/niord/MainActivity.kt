@@ -39,9 +39,25 @@ class MainActivity : ComponentActivity() {
 
 
     suspend fun sendLogin(): Boolean{
+        val emailField = findViewById<TextView>(R.id.editEmailCpf)
+        val passwordField = findViewById<TextView>(R.id.editSenhaLogin)
+        val email = emailField.text.toString().trim()
+        val password = passwordField.text.toString()
+        var valid = true
+
+        if (email.isBlank()) {
+            emailField.error = "Email obrigatório"
+            valid = false
+        }
+        if (password.isBlank()) {
+            passwordField.error = "Senha obrigatória"
+            valid = false
+        }
+        if (!valid) return false
+
         val loginData = LoginPost(
-            email=findViewById<TextView>(R.id.editEmailCpf).text.toString(),
-            password = findViewById<TextView>(R.id.editSenhaLogin).text.toString()
+            email = email,
+            password = password
         )
         try {
             val response = apiService.sendLoginData(loginData)
@@ -49,10 +65,12 @@ class MainActivity : ComponentActivity() {
                 return true
             }else{
                 val credentialsMessage = "Credenciais Inválidas"
-                findViewById<TextView>(R.id.editSenhaLogin).error = credentialsMessage
-                findViewById<TextView>(R.id.editEmailCpf).error = credentialsMessage
+                passwordField.error = credentialsMessage
+                emailField.error = credentialsMessage
             }
-        }catch(e: Exception){}
+        }catch(e: Exception){
+            passwordField.error = "Não foi possível conectar ao servidor"
+        }
 
         return false
     }
