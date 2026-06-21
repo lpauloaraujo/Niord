@@ -74,6 +74,14 @@
             android:windowSoftInputMode="adjustResize" >
         </activity>
         <activity
+            android:name=".SeguradoraInicialActivity"
+            android:windowSoftInputMode="adjustResize" >
+        </activity>
+        <activity
+            android:name=".SeguradoraFeedActivity"
+            android:windowSoftInputMode="adjustResize" >
+        </activity>
+        <activity
             android:name=".FloatingButtonCustomizationActivity"
             android:windowSoftInputMode="adjustResize" >
         </activity>
