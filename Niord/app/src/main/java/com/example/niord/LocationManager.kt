@@ -26,9 +26,19 @@ class LocationManager (private val context: Context){
         fusedLocationClient.getCurrentLocation(
             Priority.PRIORITY_HIGH_ACCURACY,
             null
-        ).addOnSuccessListener { location ->
-            callback(location)
-        }
+        )
+            .addOnSuccessListener { location ->
+                Log.d("LOCATION", "Success: $location")
+                callback(location)
+            }
+            .addOnFailureListener { e ->
+                Log.e("LOCATION", "Failure", e)
+                callback(null)
+            }
+            .addOnCanceledListener {
+                Log.e("LOCATION", "Canceled")
+                callback(null)
+            }
     }
 
 }

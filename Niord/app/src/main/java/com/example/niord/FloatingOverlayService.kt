@@ -245,6 +245,11 @@ class FloatingOverlayService : LifecycleService() {
             return
         }
 
+        Log.d(
+            "LOCATION",
+            "Permissão: ${permission.isLocationPermitted()}"
+        )
+
         locationManager.getUserLocation { location ->
 
             if (location != null) {
