@@ -3,10 +3,11 @@ from pydantic import BaseModel
 import httpx
 
 from src.models.error import ErrorMessage, create_detail, ErrorType
+from src.config import get_settings
 
 router = APIRouter(prefix="/whatsapp")
+WAHA_BASE_URL = get_settings().WAHA_BASE_URL
 
-WAHA_BASE_URL = "http://localhost:3000"
 
 class WhatsAppMessageRequest(BaseModel):
     phoneNumber: str
@@ -53,7 +54,8 @@ async def send_text(payload: WhatsAppMessageRequest):
 
         return {"detail": "Mensagem enviada com sucesso"}
 
-    except Exception:
+    except Exception as e:
+        print(e)
         raise HTTPException(
             status_code=500,
             detail=create_detail(
