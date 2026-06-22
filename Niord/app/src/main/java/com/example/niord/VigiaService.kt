@@ -181,7 +181,7 @@ class VigiaService : LifecycleService(), RecognitionListener {
             threatClassifier.isActiveThreat(text.lowercase())
         }
         Log.d("TFLITE_TIME", timeTaken.toString())
-        debugDialogSTT(text, isThreat)
+        //debugDialogSTT(text, isThreat)
         if(isThreat){
             messageDebouncer.process {
                 sendThreatMessageToContacts(text)
