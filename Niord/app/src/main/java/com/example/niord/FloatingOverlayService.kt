@@ -669,6 +669,7 @@ class FloatingOverlayService : LifecycleService() {
         }
         if(!permission.isContactsPermitted()){
             Log.d("SMS", "Nenhum contato selecionado")
+            showLocationErrorDialog("Nenhum contato de emergência foi configurado.")
             return
         }
         val contatos =
