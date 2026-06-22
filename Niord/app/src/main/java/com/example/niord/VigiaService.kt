@@ -212,14 +212,14 @@ class VigiaService : LifecycleService(), RecognitionListener {
                                 }else{
                                     Log.d("VIGIA", "Usuário não logado")
                                 }
-                                apiService.sendWhatssapLoc(
-                                    WahaSendLocRequest(
+                                apiService.sendWhatsappMessage(
                                         phoneNumber = telephoneNumber,
-                                        title = "Alerta detectado pelo Niord Vigia!",
-                                        message = "A seguinte fala foi detectada$extraString: $threat",
-                                        latitude = location.latitude,
-                                        longitude = location.longitude
-                                    )
+                                        message = "Alerta Niord Vigia!\n" +
+                                                "Fala suspeita detectada$extraString:\n'$threat'" +
+                                                "\nLocalização: ${
+                                                    mapsStringBuilder(location.latitude, 
+                                                    location.longitude)
+                                                }",
                                 )
                             }catch (e: Exception){
                                 Log.e("VIGIA_SEND", e.toString())

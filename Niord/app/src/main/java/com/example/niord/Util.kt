@@ -10,6 +10,10 @@ import kotlin.math.max
 import kotlin.math.min
 
 
+fun mapsStringBuilder(latitude: Double, longitude: Double): String{
+    return "https://maps.google.com/?q=${latitude},${longitude}"
+}
+
 fun dpToPx(context: Context, dpValue: Float): Int {
     return TypedValue.applyDimension(
         TypedValue.COMPLEX_UNIT_DIP,
