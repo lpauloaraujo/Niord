@@ -32,6 +32,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.serialization.json.Json
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Duration.Companion.seconds
@@ -617,6 +618,49 @@ class FloatingOverlayService : LifecycleService() {
         dialog.show()
     }
 
+    private fun showLocationSentDialog() {
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
+            themedContext,
+            R.style.CustomAlertDialog
+        )
+            .setTitle("Localização Compartilhada")
+            .setMessage("Sua localização foi enviada para os contatos de emergência.")
+            .setPositiveButton("OK", null)
+            .create()
+
+        dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+        dialog.show()
+    }
+
+    private fun showLocationErrorDialog(message: String) {
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
+            themedContext,
+            R.style.CustomAlertDialog
+        )
+            .setTitle("Falha ao Compartilhar")
+            .setMessage(message)
+            .setPositiveButton("OK", null)
+            .create()
+
+        dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+        dialog.show()
+    }
+
+    private fun showLocationPartialDialog(enviados: Int, total: Int) {
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
+            themedContext,
+            R.style.CustomAlertDialog
+        )
+            .setTitle("Envio Parcial")
+            .setMessage(
+                "A localização foi enviada para $enviados de $total contatos de emergência."
+            )
+            .setPositiveButton("OK", null)
+            .create()
+
+        dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+        dialog.show()
+    }
 
     fun sendUserLocationToContacts() {
         if (!permission.isSmsPermitted()) {
@@ -624,14 +668,12 @@ class FloatingOverlayService : LifecycleService() {
           return
         }
 
-
-
         val contatos =
             ContatosEmergenciaManager.getNumerosContatosSelecionados(this)
 
         if (contatos.isEmpty()) {
-
             Log.d("SMS", "Nenhum contato selecionado")
+            showLocationErrorDialog("Nenhum contato de emergência foi configurado.")
             return
         }
 
@@ -644,11 +686,12 @@ class FloatingOverlayService : LifecycleService() {
 
             if (location != null) {
 
+                val totalContatos = contatos.size
+                val sucessos = AtomicInteger(0)
+                val finalizados = AtomicInteger(0)
+
                 val mapsLink =
                     "https://maps.google.com/?q=${location.latitude},${location.longitude}"
-
-                val smsManager =
-                    SmsManager.getDefault()
 
                 contatos.forEach { (telefone, nome) ->
 
@@ -669,20 +712,45 @@ class FloatingOverlayService : LifecycleService() {
 
                             if (response.status.value in 200..299) {
                                 Log.d("WAHA", "Mensagem enviada para $numeroLimpo")
+                                sucessos.incrementAndGet()
                             } else {
-                                Log.e("WAHA", "Falha ao enviar para $numeroLimpo: ${response.status}")
+                                Log.e(
+                                    "WAHA",
+                                    "Falha ao enviar para $numeroLimpo: ${response.status}"
+                                )
                             }
 
                         } catch (e: Exception) {
 
                             Log.e("WAHA", "Erro ao enviar para $numeroLimpo", e)
 
+                        } finally {
+
+                            if (finalizados.incrementAndGet() == totalContatos) {
+
+                                launch(Dispatchers.Main) {
+
+                                    when (val enviados = sucessos.get()) {
+                                        totalContatos -> {
+                                            showLocationSentDialog()
+                                        }
+                                        0 -> {
+                                            showLocationErrorDialog(
+                                                "Não foi possível enviar a localização para nenhum contato."
+                                            )
+                                        }
+                                        else -> {
+                                            showLocationPartialDialog(enviados, totalContatos)
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }.start()
                 }
             } else {
-
                 Log.d("LOCATION", "Sem localização")
+                    showLocationErrorDialog("Não foi possível obter sua localização atual. Verifique se a localização do dispositivo está ativada.")
             }
         }
     }
@@ -693,7 +761,7 @@ class FloatingOverlayService : LifecycleService() {
             themedContext,
             R.style.CustomAlertDialog
         )
-            .setTitle("Compartilhar Localização via SMS?")
+            .setTitle("Compartilhar Localização via Whatsapp?")
             .setMessage(
                 "Todos os seus contatos de emergência receberão um link " +
                         "com sua localização atual."
