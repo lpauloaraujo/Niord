@@ -40,7 +40,7 @@ async def register(session: SessionDep, background: BackgroundTasks, userData: U
     await redis.add_to_verify_user(userData)
     otp_code = await redis.create_otp(userData.email)
     #Avoid response delay from sending the email
-    #background.add_task(send_mail_code, userData.email, otp_code)
+    background.add_task(send_mail_code, userData.email, otp_code)
     print(otp_code)
 
     return userData

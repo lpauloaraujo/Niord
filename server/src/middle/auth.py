@@ -10,6 +10,11 @@ import jwt
 from datetime import timedelta, timezone, datetime
 from fastapi import Response, HTTPException, status, Cookie, Depends
 from typing import Annotated
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+
 
 async def send_mail_code(email_str: str, code: int):
     recipient_mail = NameEmail._validate(email_str).email
@@ -19,19 +24,27 @@ async def send_mail_code(email_str: str, code: int):
 
 
 async def send_mail(email_recipients: list[str], message: str):
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-                get_settings().EMAIL_URL,
-                headers={"Authorization": f"Bearer {get_settings().EMAIL_API_KEY}"},
-                json={
-                    "from": {"email":get_settings().EMAIL_FROM, 
-                             "name": get_settings().EMAIL_NAME},
-                    "to": [{"email": e for e in email_recipients}],
-                    "subject": "Código de confirmação",
-                    "text": message
-                    }
-                ) 
-    return response 
+    GMAIL_USER = get_settings().EMAIL_FROM
+    GMAIL_APP_PASSWORD = get_settings().EMAIL_API_KEY
+
+    for email in email_recipients:
+        subject = "Código de confirmação Niord!"
+        body = message
+
+        msg = MIMEMultipart()
+        msg["From"] = GMAIL_USER
+        msg["To"] = email
+        msg["Subject"] = subject
+        msg.attach(MIMEText(body, "plain"))
+
+        try:
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+                server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
+                server.sendmail(GMAIL_USER, email, msg.as_string())
+            print("Email sent successfully!")
+        except Exception as e:
+            print(f"Failed to send email: {e}")
+    return True
 
 
 def add_user_db(session: SessionDep, userData: UserCredentials, verified: bool = False):
