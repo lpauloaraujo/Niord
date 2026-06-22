@@ -667,7 +667,10 @@ class FloatingOverlayService : LifecycleService() {
           Log.d("SMS", "Permissão negada")
           return
         }
-
+        if(!permission.isContactsPermitted()){
+            Log.d("SMS", "Nenhum contato selecionado")
+            return
+        }
         val contatos =
             ContatosEmergenciaManager.getNumerosContatosSelecionados(this)
 
