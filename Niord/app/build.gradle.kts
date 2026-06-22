@@ -24,6 +24,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        val mockBackend = (project.findProperty("mockBackend") as? String)?.toBoolean() ?: false
+        buildConfigField("boolean", "MOCK_BACKEND", mockBackend.toString())
     }
 
     buildTypes {
@@ -42,7 +44,22 @@ android {
     buildFeatures {
         compose = true
         viewBinding = true
+        buildConfig = true
     }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+    aaptOptions {
+        noCompress("tflite", "lite")
+    }
+
+    androidResources {
+        noCompress.add("tflite")
+    }
+
 }
 
 dependencies {
@@ -74,4 +91,6 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.google.play.services.location)
     implementation(libs.vosk.android)
+    implementation(libs.tasks.text)
+    implementation(libs.kotlinx.coroutines.play.services)
 }

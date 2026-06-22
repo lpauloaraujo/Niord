@@ -7,17 +7,44 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.os.Binder
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
+import android.util.Log
+import android.view.ContextThemeWrapper
+import android.view.WindowManager
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.LifecycleService
+import androidx.lifecycle.lifecycleScope
+import com.example.niord.api.ApiService
+import com.example.niord.api.User
+import com.example.niord.api.WahaSendLocRequest
+import io.ktor.client.call.body
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import org.json.JSONObject
+import org.vosk.android.RecognitionListener
+import java.lang.Exception
+import kotlin.time.measureTimedValue
 
-// Foreground service that keeps Niord Vigia monitoring alive while the app is in background.
-// The actual audio capture + NLP pipeline lives in startMonitoring()/stopMonitoring(); for
-// now we only hold the foreground microphone slot and notify the user that vigia is active.
-class VigiaService : android.app.Service() {
+class VigiaService : LifecycleService(), RecognitionListener {
 
+    private var voiceRecognition: VoiceRecognitionManager? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private lateinit var sttManager: GoogleOfflineSTTManager
+    private var useGoogleSTT = true
+    private lateinit var threatClassifier: ThreatClassifier
+
+    private lateinit var apiService: ApiService
+    private lateinit var locationManager: LocationManager
+    private lateinit var permission: PermissionChecker
+    private var messageDebouncer: Debouncer = Debouncer(delayMs = 30 * 1000)
+
+    val themedContext = ContextThemeWrapper(this, R.style.Theme_Niord)
     companion object {
         const val CHANNEL_ID = "niord_vigia_channel"
         const val NOTIFICATION_ID = 4205
@@ -43,10 +70,36 @@ class VigiaService : android.app.Service() {
         }
     }
 
-    override fun onBind(intent: Intent?): IBinder? = null
+    inner class LocalBinder : Binder() {
+        fun getService(): VigiaService = this@VigiaService
+    }
 
-    @RequiresApi(Build.VERSION_CODES.O)
+    private val binder = LocalBinder()
+
+    override fun onBind(intent: Intent): IBinder {
+        super.onBind(intent)
+        return binder
+    }
+
+
+    override fun onCreate() {
+        super.onCreate()
+        initSTT()
+        if(sttManager.isRecognizerNull()){
+            voiceRecognition = VoiceRecognitionManager(this)
+            useGoogleSTT = false
+            Log.d("Vigia_STT", "Using VOSK")
+        }else{
+            Log.d("Vigia_STT", "Using Google STT")
+        }
+        apiService = ApiService(this)
+        locationManager = LocationManager(this)
+        threatClassifier = ThreatClassifier(this)
+        permission = PermissionChecker(this)
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        super.onStartCommand(intent, flags, startId)
         when (intent?.action) {
             ACTION_STOP -> {
                 stopMonitoring()
@@ -77,15 +130,120 @@ class VigiaService : android.app.Service() {
     override fun onDestroy() {
         stopMonitoring()
         isRunning = false
+        sttManager.destroy()
+        voiceRecognition?.releaseModel()
+        threatClassifier.close()
         super.onDestroy()
     }
 
-    // TODO(US-005 follow-up): capture audio chunks with MediaRecorder/AudioRecord and stream
-    // them to the backend NLP pipeline for threat detection. Keeping a no-op stub for now so
-    // the activation flow can be exercised end-to-end.
-    private fun startMonitoring() {}
+    private fun startMonitoring() {
+        if(useGoogleSTT) {
+            sttManager.startListening()
+        }else{
+            voiceRecognition?.loadModel {
+                mainHandler.post {
+                    voiceRecognition?.startListening(this)
+                }
+            }
+        }
+    }
 
-    private fun stopMonitoring() {}
+    private fun stopMonitoring() {
+        voiceRecognition?.stopListening()
+        sttManager.stopListening()
+    }
+
+    private fun initSTT(){
+        sttManager = GoogleOfflineSTTManager(
+            context = this,
+            onResultReady = { text ->
+                // Update UI or process text string here
+                Log.d("STT_SUCCESS", "Recognized: $text")
+                receiveSTT(text)
+            },
+            onErrorOccurred = { error, code ->
+                Log.e("STT_ERROR", error)
+                if(code >= 12){//Non available language
+                    sttManager.destroy()
+                    useGoogleSTT = false
+                    if(voiceRecognition == null){//Restart because of race condition
+                        voiceRecognition = VoiceRecognitionManager(this)
+                        stopMonitoring()
+                        startMonitoring()
+                    }
+                }
+            }
+        )
+    }
+
+    private fun receiveSTT(text: String){//Joined call from models
+        val (isThreat, timeTaken) = measureTimedValue {
+            threatClassifier.isActiveThreat(text.lowercase())
+        }
+        Log.d("TFLITE_TIME", timeTaken.toString())
+        debugDialogSTT(text, isThreat)
+        if(isThreat){
+            messageDebouncer.process {
+                sendThreatMessageToContacts(text)
+            }
+        }
+    }
+
+    private fun sendThreatMessageToContacts(threat: String){
+        if(!permission.isContactsPermitted()) return
+        val contacts = ContatosEmergenciaManager.getNumerosContatosSelecionados(this)
+        if(contacts.isEmpty()) return
+        locationManager.getUserLocation { location ->
+            if (location != null){
+                contacts.forEach { (number, name) ->
+                    val telephoneNumber =
+                        number.replace(Regex("""\D"""), "")
+
+                    Log.d("Contato", telephoneNumber)
+                        lifecycleScope.launch {
+
+                            try {
+                                val response = apiService.getUser()
+                                var extraString = ""
+                                Log.d("VIGIA", "Enviando mensagem para $telephoneNumber")
+                                if(response.status.value == 200){
+                                    val user = response.body<User>()
+                                    extraString = " por ${user.name}"
+                                }else{
+                                    Log.d("VIGIA", "Usuário não logado")
+                                }
+                                apiService.sendWhatssapLoc(
+                                    WahaSendLocRequest(
+                                        phoneNumber = telephoneNumber,
+                                        title = "Alerta detectado pelo Niord Vigia!",
+                                        message = "A seguinte fala foi detectada$extraString: $threat",
+                                        latitude = location.latitude,
+                                        longitude = location.longitude
+                                    )
+                                )
+                            }catch (e: Exception){
+                                Log.e("VIGIA_SEND", e.toString())
+                            }
+                        }
+                }
+
+            }
+        }
+    }
+
+    private fun debugDialogSTT(text: String, threat: Boolean){
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(
+            themedContext,
+            R.style.CustomAlertDialog
+        )
+            .setTitle("Fala detectada")
+            .setMessage("Você falou: $text.\n" +
+                    "É perigo: $threat")
+            .setPositiveButton("Ok") { _, _ -> }
+            .create()
+        dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+        dialog.show()
+    }
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun ensureChannel() {
@@ -120,5 +278,33 @@ class VigiaService : android.app.Service() {
             .setContentIntent(pendingIntent)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .build()
+    }
+
+    override fun onPartialResult(hypothesis: String?) {
+        val text = JSONObject(hypothesis ?: "{}").optString("text")
+        if(text.isNotEmpty()) {
+            Log.d("VOSK_DEBUG", "Parcial: $hypothesis")
+        }
+    }
+
+    override fun onResult(hypothesis: String?) {
+        Log.d("VOSK_DEBUG", "Resultado: $hypothesis")
+
+        val text = JSONObject(hypothesis ?: "{}").optString("text")
+        if(text.isNotEmpty()) {
+            receiveSTT(text)
+        }
+    }
+
+    override fun onFinalResult(hypothesis: String?) {
+        Log.d("VOSK_DEBUG", "Final: $hypothesis")
+    }
+
+    override fun onError(exception: Exception?) {
+        Log.e("VOSK_DEBUG", "Erro: ${exception?.message}")
+    }
+
+    override fun onTimeout() {
+        Log.d("VOSK_DEBUG", "Timeout")
     }
 }

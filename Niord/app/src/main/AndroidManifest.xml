@@ -6,6 +6,13 @@
         android:name="android.hardware.telephony"
         android:required="false" />
 
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="geo" />
+        </intent>
+    </queries>
+
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.CALL_PHONE"/>
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
@@ -20,6 +27,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SEND_SMS" />
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -75,6 +83,14 @@
             android:windowSoftInputMode="adjustResize" >
         </activity>
         <activity
+            android:name=".SeguradoraInicialActivity"
+            android:windowSoftInputMode="adjustResize" >
+        </activity>
+        <activity
+            android:name=".SeguradoraFeedActivity"
+            android:windowSoftInputMode="adjustResize" >
+        </activity>
+        <activity
             android:name=".FloatingButtonCustomizationActivity"
             android:windowSoftInputMode="adjustResize" >
         </activity>
@@ -84,7 +100,7 @@
             android:foregroundServiceType="microphone" />
         <service
             android:name=".FloatingOverlayService"
-            android:foregroundServiceType="specialUse"
+            android:foregroundServiceType="location"
             android:enabled="true"
             android:exported="false" />
     </application>

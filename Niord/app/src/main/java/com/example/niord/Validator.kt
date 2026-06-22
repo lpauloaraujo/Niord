@@ -118,21 +118,21 @@ fun validatePhoneDetailed(phone: String): FieldValidationResult {
 }
 
 fun validatePlateDetailed(plate: String): FieldValidationResult {
-    val trimmedPlate = plate.trim().uppercase()
+    val normalizedPlate = normalizePlate(plate)
 
-    if (trimmedPlate.isEmpty()) {
+    if (normalizedPlate.isEmpty()) {
         return FieldValidationResult.Invalid("Placa obrigatória")
     }
-    if (verifyPlate(trimmedPlate) || verifyOldPlate(trimmedPlate)) {
+    if (verifyPlate(normalizedPlate) || verifyOldPlate(normalizedPlate)) {
         return FieldValidationResult.Valid
     }
 
-    return FieldValidationResult.Invalid("Use o formato ABC-1234 ou ABC1D23")
+    return FieldValidationResult.Invalid("Use o formato ABC-1234, ABC1234 ou ABC1D23")
 }
 
 fun validatePlate(plate: String): Boolean{
-
-    return verifyPlate(plate)|| verifyOldPlate(plate)
+    val normalizedPlate = normalizePlate(plate)
+    return verifyPlate(normalizedPlate)|| verifyOldPlate(normalizedPlate)
 }
 
 fun verifyPlate(plate: String): Boolean{
@@ -156,11 +156,10 @@ fun verifyPlate(plate: String): Boolean{
 }
 
 fun verifyOldPlate(unformattedPlate: String): Boolean{
-    if(unformattedPlate.length != 8){
+    if(unformattedPlate.length != 7){
         return false
     }
-    val splitted = unformattedPlate.split("-")
-    val plate = splitted.joinToString("")
+    val plate = normalizePlate(unformattedPlate)
     //ABC 1234
     for(i in 0..<3){
         if(!plate[i].isLetter()) return false
@@ -170,6 +169,10 @@ fun verifyOldPlate(unformattedPlate: String): Boolean{
     }
 
     return true
+}
+
+fun normalizePlate(plate: String): String {
+    return plate.trim().uppercase().replace("-", "")
 }
 
 fun validateCpf(cpf: String): Boolean{

@@ -5,7 +5,8 @@ import android.app.Dialog
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
-import android.os.CountDownTimer
+import android.os.Handler
+import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
@@ -29,7 +30,13 @@ import io.ktor.client.call.body
 import kotlinx.coroutines.launch
 
 class AccountDataActivity : ComponentActivity() {
-    private var otpTimer: CountDownTimer? = null
+    private val otpTimerHandler = Handler(Looper.getMainLooper())
+    private var otpCooldownEndsAt = 0L
+    private val otpTimerRunnable = object : Runnable {
+        override fun run() {
+            updateOtpTimer()
+        }
+    }
     private lateinit var apiService: ApiService
 
     private lateinit var editNome: EditText
@@ -53,7 +60,6 @@ class AccountDataActivity : ComponentActivity() {
 
     private var originalEmail = "j.almeida@outlook.com"
     private var originalPhone = "(81) 98888-8888"
-    private var emailConfirmed = false
     private var phoneConfirmed = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,7 +74,7 @@ class AccountDataActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
-        otpTimer?.cancel()
+        otpTimerHandler.removeCallbacks(otpTimerRunnable)
         super.onDestroy()
     }
 
@@ -89,6 +95,8 @@ class AccountDataActivity : ComponentActivity() {
         panelSenhaAtual = findViewById(R.id.panelSenhaAtual)
         errorText = findViewById(R.id.textErroFormulario)
         resendButton = findViewById(R.id.btnReenviarOtp)
+        resendButton.text = "Enviar código"
+        resendButton.isEnabled = true
         emailStatusText = findViewById(R.id.textStatusEmail)
         phoneStatusText = findViewById(R.id.textStatusTelefone)
     }
@@ -136,7 +144,6 @@ class AccountDataActivity : ComponentActivity() {
 
         originalEmail = user.email
         originalPhone = user.telephone
-        emailConfirmed = false
         phoneConfirmed = false
     }
 
@@ -219,7 +226,7 @@ class AccountDataActivity : ComponentActivity() {
         })
 
         editEmail.addTextChangedListener(simpleWatcher {
-            emailConfirmed = false
+            resetEmailOtpState()
             emailStatusText.visibility = View.GONE
             validateEmailField()
             hideGeneralError()
@@ -304,7 +311,7 @@ class AccountDataActivity : ComponentActivity() {
             name = "${editNome.text.toString().trim()} ${editSobrenome.text.toString().trim()}".trim(),
             email = editEmail.text.toString().trim(),
             telephone = editTelefone.text.toString().trim(),
-            registrationPlate = editPlaca.text.toString().trim().uppercase().replace("-", ""),
+            registrationPlate = normalizePlate(editPlaca.text.toString()),
             bloodType = spinnerTipoSanguineo.selectedItem?.toString()?.takeIf { it.isNotBlank() },
             newPassword = editNovaSenha.text.toString().takeIf { it.isNotBlank() },
             currentPassword = currentPassword,
@@ -354,8 +361,10 @@ class AccountDataActivity : ComponentActivity() {
 
     private fun validateEmailSecurity(): Boolean {
         panelOtpEmail.visibility = View.VISIBLE
-        if (!emailConfirmed) {
-            editOtpEmail.error = "Confirme o código antes de salvar"
+        val code = editOtpEmail.text.toString()
+        if (code.length != OTP_CODE_LENGTH || code.toIntOrNull() == null) {
+            emailStatusText.visibility = View.GONE
+            editOtpEmail.error = "Informe o código de 6 dígitos"
             return false
         }
         return true
@@ -556,14 +565,12 @@ class AccountDataActivity : ComponentActivity() {
         editOtpEmail.error = null
         val code = editOtpEmail.text.toString()
         if (code.length != OTP_CODE_LENGTH || code.toIntOrNull() == null) {
-            emailConfirmed = false
             emailStatusText.visibility = View.GONE
             editOtpEmail.error = "Código inválido"
             return
         }
 
-        emailConfirmed = true
-        emailStatusText.text = "Código informado. Salve para concluir a alteração."
+        emailStatusText.text = "Código informado. Ele será validado ao salvar."
         emailStatusText.visibility = View.VISIBLE
         Toast.makeText(this, "Código informado", Toast.LENGTH_SHORT).show()
     }
@@ -590,19 +597,32 @@ class AccountDataActivity : ComponentActivity() {
     private fun passwordChanged(): Boolean = editNovaSenha.text.toString().isNotBlank()
 
     private fun startOtpTimer() {
-        otpTimer?.cancel()
+        otpTimerHandler.removeCallbacks(otpTimerRunnable)
+        otpCooldownEndsAt = System.currentTimeMillis() + OTP_RESEND_COOLDOWN_MILLIS
         resendButton.isEnabled = false
-        otpTimer = object : CountDownTimer(60_000L, 1000L) {
-            override fun onTick(millisUntilFinished: Long) {
-                val seconds = ((millisUntilFinished + 999L) / 1000L).toInt()
-                resendButton.text = "Reenviar código em ${seconds}s"
-            }
+        updateOtpTimer()
+    }
 
-            override fun onFinish() {
-                resendButton.isEnabled = true
-                resendButton.text = "Reenviar código"
-            }
-        }.start()
+    private fun updateOtpTimer() {
+        val remainingMillis = otpCooldownEndsAt - System.currentTimeMillis()
+        if (remainingMillis <= 0L) {
+            otpTimerHandler.removeCallbacks(otpTimerRunnable)
+            resendButton.isEnabled = true
+            resendButton.text = "Reenviar código"
+            return
+        }
+
+        val seconds = ((remainingMillis + 999L) / 1000L).toInt()
+        resendButton.text = "Reenviar código em ${seconds}s"
+        otpTimerHandler.postDelayed(otpTimerRunnable, OTP_TIMER_TICK_MILLIS)
+    }
+
+    private fun resetEmailOtpState() {
+        otpTimerHandler.removeCallbacks(otpTimerRunnable)
+        otpCooldownEndsAt = 0L
+        editOtpEmail.text.clear()
+        resendButton.isEnabled = true
+        resendButton.text = "Enviar código"
     }
 
     private fun showSuccessDialog() {
@@ -633,6 +653,8 @@ class AccountDataActivity : ComponentActivity() {
 
     companion object {
         private const val OTP_CODE_LENGTH = 6
+        private const val OTP_RESEND_COOLDOWN_MILLIS = 60_000L
+        private const val OTP_TIMER_TICK_MILLIS = 250L
         private const val SUCCESS_DIALOG_DURATION_MILLIS = 1800L
     }
 }

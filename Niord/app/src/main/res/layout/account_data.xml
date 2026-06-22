@@ -128,7 +128,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="Código confirmado. Você pode salvar as alterações."
+                    android:text="Código informado. Ele será validado ao salvar."
                     android:textColor="#2E7D32"
                     android:textSize="13sp"
                     android:visibility="gone" />
@@ -140,7 +140,7 @@
                     android:layout_marginTop="6dp"
                     android:backgroundTint="#00FFFFFF"
                     android:stateListAnimator="@null"
-                    android:text="Reenviar código em 60s"
+                    android:text="Enviar código"
                     android:textAllCaps="false"
                     android:textColor="#316DF6" />
             </LinearLayout>
