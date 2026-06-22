@@ -24,6 +24,7 @@ import com.example.niord.api.ApiService
 import com.example.niord.api.User
 import com.example.niord.api.WahaSendLocRequest
 import io.ktor.client.call.body
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import org.vosk.android.RecognitionListener
@@ -41,6 +42,7 @@ class VigiaService : LifecycleService(), RecognitionListener {
     private lateinit var apiService: ApiService
     private lateinit var locationManager: LocationManager
     private lateinit var permission: PermissionChecker
+    private var messageDebouncer: Debouncer = Debouncer(delayMs = 30 * 1000)
 
     val themedContext = ContextThemeWrapper(this, R.style.Theme_Niord)
     companion object {
@@ -181,7 +183,9 @@ class VigiaService : LifecycleService(), RecognitionListener {
         Log.d("TFLITE_TIME", timeTaken.toString())
         debugDialogSTT(text, isThreat)
         if(isThreat){
-            sendThreatMessageToContacts(text)
+            messageDebouncer.process {
+                sendThreatMessageToContacts(text)
+            }
         }
     }
 

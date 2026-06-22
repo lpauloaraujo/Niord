@@ -149,7 +149,7 @@ class ContatosEmergenciaActivity : ComponentActivity() {
         allContatos.addAll(queryDeviceContacts())
         Log.d("ContatosEmergencia", "loadContatos: loaded ${allContatos.size} contacts")
         allContatos.forEachIndexed { i, c -> 
-            Log.d("ContatosEmergencia", "  [$i] id=${c.id}, nome=${c.nome}, tel=${c.telefone}") 
+            //Log.d("ContatosEmergencia", "  [$i] id=${c.id}, nome=${c.nome}, tel=${c.telefone}")
         }
 
         filterContatos("")
