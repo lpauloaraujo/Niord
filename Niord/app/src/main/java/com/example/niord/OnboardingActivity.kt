@@ -102,6 +102,7 @@ class OnboardingActivity : ComponentActivity() {
 
         @DrawableRes
         private val pages = intArrayOf(
+            R.drawable.get_started_1,
             R.drawable.get_started_2,
             R.drawable.get_started_3,
             R.drawable.get_started_4,
