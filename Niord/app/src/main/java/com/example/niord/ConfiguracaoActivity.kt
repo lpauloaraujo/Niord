@@ -17,6 +17,7 @@ import android.view.WindowManager
 import android.widget.CheckBox
 import android.widget.ImageButton
 import android.widget.RelativeLayout
+import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
@@ -146,6 +147,7 @@ class ConfiguracaoActivity : ComponentActivity() {
 
     private fun setupControls() {
         val checkboxDesativar = findViewById<CheckBox>(R.id.checkboxDesativar)
+        val txtStatusBotao = findViewById<TextView>(R.id.txtStatusBotaoFlutuante)
         val switchFixar = findViewById<SwitchCompat>(R.id.switchFixar)
         val itemDesativar = findViewById<RelativeLayout>(R.id.itemDesativarBotao)
         val itemFixar = findViewById<RelativeLayout>(R.id.itemFixarBotao)
@@ -159,6 +161,7 @@ class ConfiguracaoActivity : ComponentActivity() {
         checkboxDesativar.setOnClickListener {
             val isChecked = (it as CheckBox).isChecked
             applyOverlayEnabledState(isChecked, requestPermissionIfNeeded = true)
+            txtStatusBotao.text = if (isChecked) "Desativar Botão Flutuante" else "Ativar Botão Flutuante"
         }
 
         switchFixar.setOnClickListener {
@@ -169,6 +172,7 @@ class ConfiguracaoActivity : ComponentActivity() {
         itemDesativar.setOnClickListener {
             checkboxDesativar.isChecked = !checkboxDesativar.isChecked
             applyOverlayEnabledState(checkboxDesativar.isChecked, requestPermissionIfNeeded = true)
+            txtStatusBotao.text = if (checkboxDesativar.isChecked) "Desativar Botão Flutuante" else "Ativar Botão Flutuante"
         }
 
         itemFixar.setOnClickListener {
@@ -250,6 +254,7 @@ class ConfiguracaoActivity : ComponentActivity() {
         val isLocked = UserFlowPreferences.isOverlayLocked(this)
         
         findViewById<CheckBox>(R.id.checkboxDesativar).isChecked = isEnabled
+        findViewById<TextView>(R.id.txtStatusBotaoFlutuante).text = if (isEnabled) "Desativar Botão Flutuante" else "Ativar Botão Flutuante"
         findViewById<SwitchCompat>(R.id.switchFixar).isChecked = isLocked
         updateFixControlState(isEnabled)
     }
