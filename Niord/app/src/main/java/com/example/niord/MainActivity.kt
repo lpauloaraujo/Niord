@@ -3,6 +3,7 @@ package com.example.niord
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
@@ -13,46 +14,98 @@ import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import com.example.niord.CadastroActivity
-import com.example.niord.FloatingLifecycleOwner
-import com.example.niord.MainOverlayButton
-import com.example.niord.Permission
+import androidx.lifecycle.lifecycleScope
+import com.example.niord.api.ApiService
+import com.example.niord.api.LoginPost
+import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.O)
 class MainActivity : ComponentActivity() {
     private var permission = Permission(this)
-    private var lifecycleOwner = FloatingLifecycleOwner().apply {
-        onCreate()
-        onResume()
-    }
-    private lateinit var buttonOverlay: MainOverlayButton
+    private lateinit var apiService: ApiService
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         UserFlowPreferences.ensureDefaults(this)
+        DebugPreferences.ensureDefaults(this)
         enableEdgeToEdge()
-        buttonOverlayInit()
         setContentView(R.layout.activity_main)
         findViewById<ScrollView>(R.id.screenLogin).applyStatusBarPadding()
         setupScreenFlow()
+
+        apiService = ApiService(this)
     }
 
     override fun onDestroy() {
-        if (::buttonOverlay.isInitialized) {
-            buttonOverlay.onDestroy()
-        }
-        lifecycleOwner.onDestroy()
         super.onDestroy()
+    }
+
+
+    suspend fun sendLogin(): Boolean{
+        val emailField = findViewById<TextView>(R.id.editEmailCpf)
+        val passwordField = findViewById<TextView>(R.id.editSenhaLogin)
+        val email = emailField.text.toString().trim()
+        val password = passwordField.text.toString()
+        var valid = true
+
+        if (email.isBlank()) {
+            emailField.error = "Email obrigatório"
+            valid = false
+        }
+        if (password.isBlank()) {
+            passwordField.error = "Senha obrigatória"
+            valid = false
+        }
+        if (!valid) return false
+
+        val loginData = LoginPost(
+            email = email,
+            password = password
+        )
+        try {
+            val response = apiService.sendLoginData(loginData)
+            if(response.status.value == 200) {
+                return true
+            }else{
+                val credentialsMessage = "Credenciais Inválidas"
+                passwordField.error = credentialsMessage
+                emailField.error = credentialsMessage
+            }
+        }catch(e: Exception){
+            passwordField.error = "Não foi possível conectar ao servidor"
+        }
+
+        return false
+    }
+
+    suspend fun isLoggedIn(): Boolean{
+        try{
+            //Verifies response from auth protected endpoint
+            val response = apiService.isAuth()
+            if(response.status.value == 200) return true
+        }catch (e: Exception){
+            Log.e("AUTH_ERR", e.toString())
+        }
+        return false
     }
 
     private fun setupScreenFlow() {
         val splashScreen = findViewById<LinearLayout>(R.id.screenSplash)
         val loginScreen = findViewById<ScrollView>(R.id.screenLogin)
 
+
         findViewById<Button>(R.id.btnStart).setOnClickListener {
-            if (UserFlowPreferences.shouldShowConfiguration(this)) {
-                openPostAuthFlow()
+            if (!DebugPreferences.isDebug(this)) {
+                lifecycleScope.launch {
+                    if (isLoggedIn()) {
+                        openPostAuthFlow()
+                    } else {
+                        splashScreen.visibility = View.GONE
+                        loginScreen.visibility = View.VISIBLE
+                    }
+                }
+
             } else {
                 splashScreen.visibility = View.GONE
                 loginScreen.visibility = View.VISIBLE
@@ -65,8 +118,15 @@ class MainActivity : ComponentActivity() {
         }
 
         findViewById<Button>(R.id.btnLogin).setOnClickListener {
-            UserFlowPreferences.setShowConfiguration(this, true)
-            openPostAuthFlow()
+            if(!DebugPreferences.isDebug(this)) {
+                lifecycleScope.launch {
+                    if(sendLogin()) {
+                        openPostAuthFlow()
+                    }
+                }
+            }else{
+                openPostAuthFlow()
+            }
         }
 
         findViewById<TextView>(R.id.btnCreateAccount).setOnClickListener {
@@ -74,11 +134,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    fun buttonOverlayInit(){
-        buttonOverlay = MainOverlayButton(this, lifecycleOwner)
-        buttonOverlay.setVisibility(false)
-        buttonOverlay.invoke()
-    }
 
     private fun openPostAuthFlow() {
         val nextActivity = if (UserFlowPreferences.shouldShowOnboarding(this)) {

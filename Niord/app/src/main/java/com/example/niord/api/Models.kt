@@ -9,6 +9,17 @@ data class Tokens(
     val refresh: String?
 )
 
+@Serializable
+data class User(
+    val id: Int,
+    val registration_plate: String,
+    val email: String,
+    val telephone: String,
+    val is_verified: Boolean,
+    val name: String,
+    val cpf: String,
+    val blood_type: String? = null
+)
 
 @Serializable
 data class ErrorResponse(
@@ -33,3 +44,93 @@ data class RegisterPost(
     @SerialName("blood_type")
     val bloodType: String?
 )
+
+@Serializable
+data class LoginPost(
+    val email: String,
+    val password: String
+)
+
+@Serializable
+data class OtpResend(
+    val email: String
+)
+
+@Serializable
+data class OtpVerify(
+    val email: String,
+    val code: Int
+)
+
+@Serializable
+data class UserUpdatePatch(
+    val name: String? = null,
+    val email: String? = null,
+    @SerialName("registration_plate")
+    val registrationPlate: String? = null,
+    val telephone: String? = null,
+    @SerialName("blood_type")
+    val bloodType: String? = null,
+    @SerialName("new_password")
+    val newPassword: String? = null,
+    @SerialName("current_password")
+    val currentPassword: String? = null,
+    @SerialName("email_otp_code")
+    val emailOtpCode: Int? = null
+)
+
+@Serializable
+data class WahaSendMessageRequest(
+    val phoneNumber: String,
+    val message: String,
+)
+
+@Serializable
+data class WahaSendLocRequest(
+    val phoneNumber: String,
+    val title: String,
+    val message: String,
+    val latitude: Double,
+    val longitude: Double
+)
+
+
+@Serializable
+data class LocationSchema(
+    val latitude: Double,
+    val longitude: Double
+)
+
+@Serializable
+data class HelpAsk(
+    val latitude: Double,
+    val longitude: Double,
+    val type: String
+)
+
+@Serializable
+data class HelpReceive(
+    val latitude: Double,
+    val longitude: Double,
+    @SerialName("user_id")
+    val userId: Int,
+    val type: String
+)
+
+@Serializable
+data class HelpAnswer(
+    val latitude: Double,
+    val longitude: Double,
+    @SerialName("target_id")
+    val targetId: Int,
+    val type: String
+)
+@Serializable
+data class HelpAnswerMulti(
+    val latitude: Double,
+    val longitude: Double,
+    @SerialName("target_ids")
+    val targetIds: List<Int>,
+    val type: String
+)
+

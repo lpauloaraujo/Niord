@@ -18,11 +18,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -30,6 +28,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
@@ -49,7 +50,7 @@ import com.example.niord.ui.theme.NiordTheme
 import kotlin.Pair
 import kotlin.math.abs
 
-open class OverlayManager(private val context: Context, var lifecycleOwner: FloatingLifecycleOwner,
+open class OverlayManager(private val context: Context,
     var defaultPos: Pair<Int, Int> = Pair(500, 0)
     ){
     var winManager: WindowManager? = null
@@ -57,6 +58,8 @@ open class OverlayManager(private val context: Context, var lifecycleOwner: Floa
     var floatingView: ComposeView? = null
 
     val displayMetrics = DisplayMetrics()
+
+    private val composeStateOwner = ComposeOverlayStateOwner()
 
     init {
         winManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
@@ -105,6 +108,10 @@ open class OverlayManager(private val context: Context, var lifecycleOwner: Floa
     }
 
     protected open fun upEvent(){
+
+    }
+
+    protected open fun stopMoveEvent(){
 
     }
 
@@ -171,6 +178,8 @@ open class OverlayManager(private val context: Context, var lifecycleOwner: Floa
                         clickEvent()
                         view.performClick()
                         upEvent()
+                    }else{
+                        stopMoveEvent()
                     }
                 }
 
@@ -182,10 +191,10 @@ open class OverlayManager(private val context: Context, var lifecycleOwner: Floa
 
     fun buildView(): ComposeView {
         return ComposeView(context.applicationContext).apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
-            setViewTreeLifecycleOwner(lifecycleOwner)
-            setViewTreeViewModelStoreOwner(lifecycleOwner)
-            setViewTreeSavedStateRegistryOwner(lifecycleOwner)
+            //setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
+            setViewTreeLifecycleOwner(composeStateOwner)
+            setViewTreeViewModelStoreOwner(composeStateOwner)
+            setViewTreeSavedStateRegistryOwner(composeStateOwner)
             setContent {
                 NiordTheme {
                     composable()
@@ -255,10 +264,16 @@ open class OverlayManager(private val context: Context, var lifecycleOwner: Floa
     open fun onDestroy(){
         if(isInvoked){
             if(floatingView?.isAttachedToWindow == true){
-                winManager?.removeViewImmediate(floatingView)
+                try {
+                    winManager?.removeViewImmediate(floatingView)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
+            isInvoked = false
         }
         floatingView?.disposeComposition()
+        composeStateOwner.handleDestroy()
         //lifecycleOwner.onDestroy()
         //lifecycleOwner = null
     }
@@ -291,11 +306,38 @@ class FloatingLifecycleOwner : LifecycleOwner, ViewModelStoreOwner, SavedStateRe
     }
 }
 
+class ComposeOverlayStateOwner : LifecycleOwner, ViewModelStoreOwner, SavedStateRegistryOwner {
+
+    private val lifecycleRegistry = LifecycleRegistry(this)
+    private val savedStateController = SavedStateRegistryController.create(this)
+    private val store = ViewModelStore()
+
+    override val lifecycle: Lifecycle get() = lifecycleRegistry
+    override val savedStateRegistry: SavedStateRegistry get() = savedStateController.savedStateRegistry
+    override val viewModelStore: ViewModelStore get() = store
+
+    init {
+        // Initialize the registry to prevent state crashes
+        savedStateController.performRestore(null)
+
+        // Push the lifecycle to "RESUMED" so Compose knows it can draw
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
+    }
+
+    // Call this when the overlay is dismissed
+    fun handleDestroy() {
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+        store.clear()
+    }
+}
+
 @RequiresApi(Build.VERSION_CODES.O)
-class MainOverlayButton(var context: Context,
-                        lifecycleOwner: FloatingLifecycleOwner,
-                        localDefaultPos: Pair<Int, Int> = Pair(100, 100)) :
-    OverlayManager(context, lifecycleOwner, defaultPos = localDefaultPos){
+class MainOverlayButton(
+    var context: Context,
+    localDefaultPos: Pair<Int, Int> = Pair(100, 100)) :
+    OverlayManager(context, defaultPos = localDefaultPos){
 
     private var additionalOverlay: OverlayManager
     lateinit var expandedOffset: Pair<Int, Int>
@@ -305,14 +347,18 @@ class MainOverlayButton(var context: Context,
     var minForHorizontal: Float = 0.50f
 
     init{
-        statePacket = StatePacket()
+        statePacket = StatePacket().apply {
+            iconSizeDp = UserFlowPreferences.getOverlaySize(context)
+            transparency = UserFlowPreferences.getOverlayTransparency(context)
+            colorIndex = UserFlowPreferences.getOverlayColorIndex(context)
+        }
         composable = {MainIcon()}
         floatingView?.layoutDirection = View.LAYOUT_DIRECTION_LTR
 
         dragPaddingDp = statePacket.iconSizeDp
         setOffset()
 
-        additionalOverlay = OverlayManager(context, lifecycleOwner,
+        additionalOverlay = OverlayManager(context,
             defaultPos=Pair(
                 defaultPos.first + expandedOffset.first,
                 defaultPos.second + expandedOffset.second
@@ -346,8 +392,11 @@ class MainOverlayButton(var context: Context,
         var isVertical by mutableStateOf(true)
         var isLtr by mutableStateOf(true)
         var iconSizeDp by mutableFloatStateOf(64f)
+        var transparency by mutableFloatStateOf(1.0f)
+        var colorIndex by mutableStateOf(0)
         var subIconScale by mutableFloatStateOf(0.75f)
         var iconSpacingDp by mutableFloatStateOf(8f)
+        var vigiaActive by mutableStateOf(false)
     }
 
 
@@ -411,6 +460,13 @@ class MainOverlayButton(var context: Context,
         additionalOverlay.setVisibility(statePacket.addIsVisible)
     }
 
+    override fun stopMoveEvent() {
+        //Saves position
+        UserFlowPreferences.setOverlayPos(context,
+            Pair<Int, Int>(layoutParams.x, layoutParams.y)
+        )
+    }
+
     override fun setVisibility(state: Boolean) {
         if(!state and additionalOverlay.isVisible){
             additionalOverlay.setVisibility(state)
@@ -418,69 +474,112 @@ class MainOverlayButton(var context: Context,
         super.setVisibility(state)
     }
 
+    fun applyStatePacketPreferences(){
+        statePacket.apply {
+            iconSizeDp = UserFlowPreferences.getOverlaySize(context)
+            transparency = UserFlowPreferences.getOverlayTransparency(context)
+            colorIndex = UserFlowPreferences.getOverlayColorIndex(context)
+        }
+        dragPaddingDp = statePacket.iconSizeDp
+        additionalOverlay.setVisibility(false)
+        setOffset()
+    }
+
+    private val buttonDrawables = intArrayOf(
+        R.drawable.main_button,
+        R.drawable.main_button_red,
+        R.drawable.main_button_purple,
+        R.drawable.main_button_green
+    )
 
     @Composable
-    fun IconBox(resource: Int, sizeDp: Float, enabled: Boolean = true, onClick: () -> Unit = {}){
+    fun MainIcon(){
+        IconBox(R.drawable.main_button, statePacket.iconSizeDp, enabled = false, isMainIcon = true)
+    }
+
+    @Composable
+    fun IconBox(resource: Int,
+                sizeDp: Float,
+                enabled: Boolean = true,
+                useTint: Boolean = true,
+                isMainIcon: Boolean = false,
+                tint: Color? = null,
+                onClick: () -> Unit = {}){
+
+        val actualResource = if (isMainIcon) {
+            buttonDrawables.getOrElse(statePacket.colorIndex) { R.drawable.main_button }
+        } else {
+            resource
+        }
+        val colorFilter = tint?.let { ColorFilter.tint(it) }
         if(enabled) {
-            Box (modifier = Modifier.requiredSize(sizeDp.dp), propagateMinConstraints = true){
+            Box (modifier = Modifier.requiredSize(sizeDp.dp).alpha(statePacket.transparency), propagateMinConstraints = true){
                 IconButton(onClick = onClick) {
                     Image(
                         modifier = Modifier.size(sizeDp.dp),
-                        painter = painterResource(resource),
+                        painter = painterResource(actualResource),
                         contentDescription = "Icon",
+                        colorFilter = colorFilter,
                     )
                 }
             }
         } else{
             Image(
-                painter = painterResource(resource),
+                painter = painterResource(actualResource),
                 contentDescription = "Icon",
-                modifier = Modifier.size(sizeDp.dp)
+                modifier = Modifier.size(sizeDp.dp).alpha(statePacket.transparency),
+                colorFilter = colorFilter,
             )
         }
 
     }
 
-    var secondaryButtonSize = statePacket.iconSizeDp * statePacket.subIconScale
-
     var onCallClick: ((String) -> Unit)? = null
 
-    var additionalButtons: List<@Composable ()->Unit> = listOf(
-        {IconBox(R.drawable.health, secondaryButtonSize, onClick = {onCallClick?.invoke("144")})},
-        {IconBox(R.drawable.cops, secondaryButtonSize, onClick = {onCallClick?.invoke("1052")})},
-        {IconBox(R.drawable.alert, secondaryButtonSize)},
-        {IconBox(R.drawable.plt_vigia, secondaryButtonSize)},
-        {IconBox(R.drawable.contacts, secondaryButtonSize)},
-        {IconBox(R.drawable.insurance, secondaryButtonSize)}
-    )
 
-    @Composable
-    fun MainIcon(){
-        IconBox(R.drawable.main_button, statePacket.iconSizeDp, false)
-    }
+
+    var onVigiaClick: ((Boolean) -> Unit)? = null
+    var onLocationClick: (() -> Unit)? = null
+    var onAlertClick: (() -> Unit)? = null
 
     @Composable
     fun ComposableUnit(statePacket: StatePacket){
+        val secondarySize = statePacket.iconSizeDp * statePacket.subIconScale
+        
+        val buttons: List<@Composable () -> Unit> = listOf(
+            {IconBox(R.drawable.health, secondarySize, onClick = {onCallClick?.invoke("144")})},
+            {IconBox(R.drawable.cops, secondarySize, onClick = {onCallClick?.invoke("1052")})},
+            {IconBox(R.drawable.alert, secondarySize, onClick = {onAlertClick?.invoke()})},
+            {
+                IconBox(
+                    R.drawable.plt_vigia,
+                    secondarySize,
+                    tint = if (statePacket.vigiaActive) Color(0xFFD32F2F) else null,
+                    onClick = { onVigiaClick?.invoke(statePacket.vigiaActive) }
+                )
+            },
+            {IconBox(R.drawable.contacts, secondarySize, onClick = {onLocationClick?.invoke()})},
+            {IconBox(R.drawable.insurance, secondarySize)}
+        )
+
         if (statePacket.isVertical) Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(statePacket.iconSpacingDp.dp)
         ){
-            additionalButtons.forEach { it() }
-        }
-        if (!statePacket.isVertical)
+            buttons.forEach { it() }
+        } else {
             Row( verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(statePacket.iconSpacingDp.dp)){
-                if(statePacket.isLtr) additionalButtons.forEach { it() }
-                else additionalButtons.reversed().forEach { it() }
-                //additionalButtons.forEach { it() }
+                if(statePacket.isLtr) buttons.forEach { it() }
+                else buttons.reversed().forEach { it() }
             }
-
+        }
     }
 
 }
 
 //Use this class as an example of use case
-class ExampleCustomOverlay(context: Context, lifecycleOwner: FloatingLifecycleOwner) : OverlayManager(context, lifecycleOwner){
+class ExampleCustomOverlay(context: Context, lifecycleOwner: FloatingLifecycleOwner) : OverlayManager(context){
     //It's possible to have the mutable variables inside the composable
     //But changing the variables is limited by functions only inside the composable
     class StatePacket{

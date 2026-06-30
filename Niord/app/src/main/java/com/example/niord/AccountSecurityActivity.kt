@@ -12,15 +12,23 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.lifecycleScope
+import com.example.niord.api.ApiService
+import com.example.niord.api.LoginPost
+import com.example.niord.api.User
+import io.ktor.client.call.body
+import kotlinx.coroutines.launch
 
 class AccountSecurityActivity : ComponentActivity() {
     private val prefs by lazy { getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
     private var lockTimer: CountDownTimer? = null
+    private lateinit var apiService: ApiService
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.account_security)
+        apiService = ApiService(this)
 
         findViewById<ImageView>(R.id.btnVoltar).setOnClickListener { finish() }
         findViewById<Button>(R.id.btnCancelar).setOnClickListener { finish() }
@@ -53,16 +61,61 @@ class AccountSecurityActivity : ComponentActivity() {
         val errorText = findViewById<TextView>(R.id.textErroSenha)
         val password = passwordInput.text.toString()
 
-        if (password == CURRENT_PASSWORD) {
-            prefs.edit()
-                .putInt(KEY_ATTEMPTS, 0)
-                .putLong(KEY_LOCK_UNTIL, 0L)
-                .apply()
-            startActivity(Intent(this, AccountDataActivity::class.java))
-            finish()
+        if (password.isBlank()) {
+            errorText.text = "Informe sua senha atual"
+            errorText.visibility = View.VISIBLE
             return
         }
 
+        if (DebugPreferences.isDebug(this) && password == CURRENT_PASSWORD) {
+            openAccountData()
+            return
+        }
+
+        findViewById<Button>(R.id.btnConfirmarSenha).isEnabled = false
+        errorText.visibility = View.GONE
+        lifecycleScope.launch {
+            try {
+                if (validatePasswordWithBackend(password)) {
+                    openAccountData()
+                } else {
+                    registerFailedAttempt()
+                }
+            } catch (e: Exception) {
+                errorText.text = "Não foi possível validar a senha no servidor"
+                errorText.visibility = View.VISIBLE
+            } finally {
+                findViewById<Button>(R.id.btnConfirmarSenha).isEnabled = true
+            }
+        }
+    }
+
+    private suspend fun validatePasswordWithBackend(password: String): Boolean {
+        val userResponse = apiService.getUser()
+        if (userResponse.status.value != 200) return false
+
+        val user: User = userResponse.body()
+        val loginResponse = apiService.sendLoginData(
+            LoginPost(
+                email = user.email,
+                password = password
+            )
+        )
+        return loginResponse.status.value == 200
+    }
+
+    private fun openAccountData() {
+        prefs.edit()
+            .putInt(KEY_ATTEMPTS, 0)
+            .putLong(KEY_LOCK_UNTIL, 0L)
+            .apply()
+        startActivity(Intent(this, AccountDataActivity::class.java))
+        finish()
+    }
+
+    private fun registerFailedAttempt() {
+        val passwordInput = findViewById<EditText>(R.id.editSenhaAtual)
+        val errorText = findViewById<TextView>(R.id.textErroSenha)
         val attempts = prefs.getInt(KEY_ATTEMPTS, 0) + 1
         if (attempts >= MAX_ATTEMPTS) {
             prefs.edit()
